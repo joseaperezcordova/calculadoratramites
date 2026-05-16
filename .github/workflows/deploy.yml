@@ -22,7 +22,16 @@ jobs:
         run: composer install --no-dev --optimize-autoloader --no-interaction
 
       - name: Crear .env
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          sed -i "s|APP_ENV=.*|APP_ENV=production|" .env
+          sed -i "s|APP_DEBUG=.*|APP_DEBUG=false|" .env
+          sed -i "s|APP_URL=.*|APP_URL=${{ secrets.APP_URL }}|" .env
+          sed -i "s|DB_HOST=.*|DB_HOST=${{ secrets.DB_HOST }}|" .env
+          sed -i "s|DB_DATABASE=.*|DB_DATABASE=${{ secrets.DB_DATABASE }}|" .env
+          sed -i "s|DB_USERNAME=.*|DB_USERNAME=${{ secrets.DB_USERNAME }}|" .env
+          sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${{ secrets.DB_PASSWORD }}|" .env
 
       - name: Deploy por FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
