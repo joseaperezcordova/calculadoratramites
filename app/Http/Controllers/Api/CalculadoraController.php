@@ -136,25 +136,61 @@ class CalculadoraController extends Controller
 
     /**
      * POST /api/config/guardar
-     * Si el token ya existe → actualiza config activa del trámite.
-     * Si no existe → crea trámite, config y token nuevos.
+     * tramite_id (opcional) → actualiza directo por ID.
+     * Sin tramite_id → busca por token, o crea nuevo.
      */
     public function guardar(Request $request)
     {
         $tramiteName  = $request->input('tramite_name');
         $tramiteToken = $request->input('tramite_token');
+        $tramiteId    = $request->input('tramite_id');
         $config       = $request->input('config');
 
-        // ¿Ya existe este token?
+        // 1. Si viene tramite_id, actualizar directamente sin buscar por token
+        if ($tramiteId) {
+            $tramite = Tramite::find($tramiteId);
+
+            if ($tramite) {
+                $tramite->nombre = $tramiteName;
+                $tramite->save();
+
+                // Actualizar o crear token
+                if ($tramiteToken) {
+                    TramiteToken::where('tramite_id', $tramite->id)->update(['activo' => 0]);
+                    TramiteToken::updateOrCreate(
+                        ['token' => $tramiteToken],
+                        ['tramite_id' => $tramite->id, 'activo' => 1, 'descripcion' => 'Token principal']
+                    );
+                }
+
+                // Desactivar config anterior y crear nueva versión
+                TramiteConfig::where('tramite_id', $tramite->id)
+                    ->where('activo', 1)
+                    ->update(['activo' => 0]);
+
+                TramiteConfig::create([
+                    'tramite_id' => $tramite->id,
+                    'version'    => $config['version'] ?? '1.1',
+                    'config'     => json_encode($config),
+                    'activo'     => 1,
+                ]);
+
+                return response()->json([
+                    'ok'         => true,
+                    'tramite_id' => $tramite->id,
+                    'mensaje'    => 'Configuración actualizada',
+                ]);
+            }
+        }
+
+        // 2. Sin tramite_id: buscar por token
         $tokenRecord = TramiteToken::where('token', $tramiteToken)->first();
 
         if ($tokenRecord) {
-            // Actualizar trámite existente
             $tramite = Tramite::find($tokenRecord->tramite_id);
             $tramite->nombre = $tramiteName;
             $tramite->save();
 
-            // Desactivar config anterior y crear nueva versión
             TramiteConfig::where('tramite_id', $tramite->id)
                 ->where('activo', 1)
                 ->update(['activo' => 0]);
@@ -173,7 +209,7 @@ class CalculadoraController extends Controller
             ]);
         }
 
-        // Crear trámite nuevo
+        // 3. Crear trámite nuevo
         $tramite = Tramite::create([
             'nombre' => $tramiteName,
             'activo' => 1,
