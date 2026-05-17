@@ -7,6 +7,7 @@ use App\Models\CalculoLog;
 use App\Models\Tramite;
 use App\Models\TramiteConfig;
 use App\Models\TramiteToken;
+use App\Services\FuncionesCalculo;
 use App\Services\MotorCalculadora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -267,6 +268,15 @@ class CalculadoraController extends Controller
         $tramite->update(['activo' => false]);
 
         return response()->json(['ok' => true, 'mensaje' => 'Trámite eliminado']);
+    }
+
+    /**
+     * GET /api/funciones
+     * Catálogo de funciones PHP disponibles para el builder.
+     */
+    public function funciones(): JsonResponse
+    {
+        return response()->json(['ok' => true, 'funciones' => FuncionesCalculo::catalogo()]);
     }
 
     /**

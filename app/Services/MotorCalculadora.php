@@ -69,6 +69,10 @@ class MotorCalculadora
                 $table = $op['table'] ?? [];
                 $raw   = $table[(string) $k] ?? 0;
                 $vars[$name] = is_numeric($raw) ? (float) $raw : $raw;
+            } elseif ($type === 'php_function') {
+                $fn   = $op['fn'] ?? '';
+                $args = array_map(fn($a) => $vars[$a] ?? $a, $op['args'] ?? []);
+                $vars[$name] = FuncionesCalculo::$fn(...$args);
             }
         }
 
