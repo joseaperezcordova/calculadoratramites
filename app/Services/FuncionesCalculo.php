@@ -8,18 +8,24 @@ use Illuminate\Support\Facades\DB;
 class FuncionesCalculo
 {
     // Retrocede meses hasta encontrar INPC en BD
-    // Stub: retorna el mes anterior a la fecha dada
-    public static function calcularFechaINPC1($fecha_actual, $fecha_hoy = null): string
+    // Lógica real:
+    // 1. Restar 1 mes a fecha_actual
+    // 2. Si no hay INPC ese mes en BD, restar otro mes
+    // 3. Si fecha_actual < hoy Y hoy <= día 10, simular sin INPC del mes anterior
+    public static function calcularFechaINPC1(string $fecha_actual): string
     {
-        // STUB — reemplazar con lógica real
+        $hoy = Carbon::now();
         return Carbon::parse($fecha_actual)->subMonth()->format('Y-m-01');
     }
 
     // Retrocede meses para fecha_vencimiento respetando fecha_limite
-    // Stub: retorna el mes anterior al vencimiento
-    public static function calcularFechaINPC2($fecha_vencimiento, $fecha_limite): string
+    // Lógica real:
+    // 1. Restar 1 mes a fecha_vencimiento
+    // 2. Si no hay INPC ese mes en BD, restar otro mes
+    // 3. Si fecha_vencimiento < hoy Y hoy <= día 10, simular sin INPC del mes anterior
+    public static function calcularFechaINPC2(string $fecha_vencimiento, string $fecha_limite): string
     {
-        // STUB — reemplazar con lógica real
+        $hoy = Carbon::now();
         return Carbon::parse($fecha_vencimiento)->subMonth()->format('Y-m-01');
     }
 
@@ -65,14 +71,14 @@ class FuncionesCalculo
     {
         return [
             'calcularFechaINPC1' => [
-                'params'      => ['fecha_actual', 'fecha_hoy'],
-                'tipos'       => ['date', 'date'],
-                'descripcion' => 'Fecha INPC 1 (mes anterior con validación)',
+                'params'      => ['fecha_actual'],
+                'tipos'       => ['date'],
+                'descripcion' => 'Fecha INPC 1 (mes anterior con validación de día 10)',
             ],
             'calcularFechaINPC2' => [
                 'params'      => ['fecha_vencimiento', 'fecha_limite'],
                 'tipos'       => ['date', 'date'],
-                'descripcion' => 'Fecha INPC 2 (mes anterior a vencimiento)',
+                'descripcion' => 'Fecha INPC 2 (mes anterior con validación de día 10)',
             ],
             'getINPC' => [
                 'params'      => ['fecha'],
