@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CalculoLog;
 use App\Models\Tramite;
+use App\Models\TramiteConfig;
 use App\Models\TramiteToken;
 use App\Services\MotorCalculadora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CalculadoraController extends Controller
 {
@@ -128,6 +130,97 @@ class CalculadoraController extends Controller
                 'required'   => $required,
             ],
         ]);
+    }
+
+    /**
+     * POST /api/config/guardar
+     * Si el token ya existe → actualiza la config activa del trámite.
+     * Si no existe → crea trámite, config y token nuevos.
+     */
+    public function guardarConfig(Request $request): JsonResponse
+    {
+        $tramiteName  = $request->input('tramite_name');
+        $tramiteToken = $request->input('tramite_token');
+        $config       = $request->input('config');
+
+        if (!$tramiteName || !$tramiteToken || !$config) {
+            return response()->json(['ok' => false, 'error' => 'Faltan campos: tramite_name, tramite_token, config'], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $tokenRecord = TramiteToken::where('token', $tramiteToken)->first();
+
+            if ($tokenRecord) {
+                // Token existente → actualizar config activa del trámite
+                $tramite = $tokenRecord->tramite;
+                $tramite->update(['nombre' => $tramiteName]);
+
+                // Desactivar configs anteriores y crear una nueva activa
+                $tramite->configs()->where('activo', true)->update(['activo' => false]);
+
+                TramiteConfig::create([
+                    'tramite_id' => $tramite->id,
+                    'config'     => $config,
+                    'version'    => '1.1',
+                    'activo'     => true,
+                ]);
+            } else {
+                // Token nuevo → crear trámite, config y token
+                $tramite = Tramite::create([
+                    'nombre' => $tramiteName,
+                    'activo' => true,
+                ]);
+
+                TramiteConfig::create([
+                    'tramite_id' => $tramite->id,
+                    'config'     => $config,
+                    'version'    => '1.1',
+                    'activo'     => true,
+                ]);
+
+                TramiteToken::create([
+                    'tramite_id'  => $tramite->id,
+                    'token'       => $tramiteToken,
+                    'activo'      => true,
+                    'descripcion' => 'Token principal',
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'ok'         => true,
+                'tramite_id' => $tramite->id,
+                'mensaje'    => 'Configuración guardada',
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/tramites
+     * Lista todos los trámites activos con su token principal.
+     */
+    public function listar(): JsonResponse
+    {
+        $tramites = Tramite::where('activo', true)
+            ->with(['tokens' => function ($q) {
+                $q->where('activo', true)->limit(1);
+            }])
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id'     => $t->id,
+                    'nombre' => $t->nombre,
+                    'token'  => optional($t->tokens->first())->token,
+                ];
+            });
+
+        return response()->json(['ok' => true, 'tramites' => $tramites]);
     }
 
     /**

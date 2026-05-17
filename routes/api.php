@@ -18,3 +18,7 @@ Route::get('/ping', [CalculadoraController::class, 'ping']);
 Route::post('/calcular', [CalculadoraController::class, 'calcular']);
 
 Route::get('/tramite/{id}/schema', [CalculadoraController::class, 'schema']);
+
+Route::post('/config/guardar', [CalculadoraController::class, 'guardarConfig']);
+
+Route::get('/tramites', [CalculadoraController::class, 'listar']);
