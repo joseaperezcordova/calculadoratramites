@@ -10,7 +10,6 @@ class TramiteConfig extends Model
     protected $fillable = ['tramite_id', 'config', 'version', 'activo'];
 
     protected $casts = [
-        'config' => 'array',
         'activo' => 'boolean',
     ];
 

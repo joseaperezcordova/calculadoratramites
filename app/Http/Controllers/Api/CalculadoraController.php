@@ -54,7 +54,7 @@ class CalculadoraController extends Controller
 
         $t0 = microtime(true);
 
-        $result = MotorCalculadora::ejecutar($configRecord->config, $inputs);
+        $result = MotorCalculadora::ejecutar(json_decode($configRecord->config, true), $inputs);
 
         $duracionMs = (int) round((microtime(true) - $t0) * 1000);
 
@@ -100,7 +100,8 @@ class CalculadoraController extends Controller
 
         $typeMap = ['number' => 'number', 'boolean' => 'boolean'];
 
-        foreach ($configRecord->config['inputs'] ?? [] as $input) {
+        $configData = json_decode($configRecord->config, true) ?? [];
+        foreach ($configData['inputs'] ?? [] as $input) {
             if ($input['token'] ?? false) continue; // omitir el campo idtramite
 
             $jsonType = $typeMap[$input['type'] ?? ''] ?? 'string';
@@ -135,71 +136,68 @@ class CalculadoraController extends Controller
 
     /**
      * POST /api/config/guardar
-     * Si el token ya existe → actualiza la config activa del trámite.
+     * Si el token ya existe → actualiza config activa del trámite.
      * Si no existe → crea trámite, config y token nuevos.
      */
-    public function guardarConfig(Request $request): JsonResponse
+    public function guardar(Request $request)
     {
         $tramiteName  = $request->input('tramite_name');
         $tramiteToken = $request->input('tramite_token');
         $config       = $request->input('config');
 
-        if (!$tramiteName || !$tramiteToken || !$config) {
-            return response()->json(['ok' => false, 'error' => 'Faltan campos: tramite_name, tramite_token, config'], 422);
-        }
+        // ¿Ya existe este token?
+        $tokenRecord = TramiteToken::where('token', $tramiteToken)->first();
 
-        DB::beginTransaction();
+        if ($tokenRecord) {
+            // Actualizar trámite existente
+            $tramite = Tramite::find($tokenRecord->tramite_id);
+            $tramite->nombre = $tramiteName;
+            $tramite->save();
 
-        try {
-            $tokenRecord = TramiteToken::where('token', $tramiteToken)->first();
+            // Desactivar config anterior y crear nueva versión
+            TramiteConfig::where('tramite_id', $tramite->id)
+                ->where('activo', 1)
+                ->update(['activo' => 0]);
 
-            if ($tokenRecord) {
-                // Token existente → actualizar config activa del trámite
-                $tramite = $tokenRecord->tramite;
-                $tramite->update(['nombre' => $tramiteName]);
-
-                // Desactivar configs anteriores y crear una nueva activa
-                $tramite->configs()->where('activo', true)->update(['activo' => false]);
-
-                TramiteConfig::create([
-                    'tramite_id' => $tramite->id,
-                    'config'     => $config,
-                    'version'    => '1.1',
-                    'activo'     => true,
-                ]);
-            } else {
-                // Token nuevo → crear trámite, config y token
-                $tramite = Tramite::create([
-                    'nombre' => $tramiteName,
-                    'activo' => true,
-                ]);
-
-                TramiteConfig::create([
-                    'tramite_id' => $tramite->id,
-                    'config'     => $config,
-                    'version'    => '1.1',
-                    'activo'     => true,
-                ]);
-
-                TramiteToken::create([
-                    'tramite_id'  => $tramite->id,
-                    'token'       => $tramiteToken,
-                    'activo'      => true,
-                    'descripcion' => 'Token principal',
-                ]);
-            }
-
-            DB::commit();
+            TramiteConfig::create([
+                'tramite_id' => $tramite->id,
+                'version'    => $config['version'] ?? '1.1',
+                'config'     => json_encode($config),
+                'activo'     => 1,
+            ]);
 
             return response()->json([
                 'ok'         => true,
                 'tramite_id' => $tramite->id,
-                'mensaje'    => 'Configuración guardada',
+                'mensaje'    => 'Configuración actualizada',
             ]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
         }
+
+        // Crear trámite nuevo
+        $tramite = Tramite::create([
+            'nombre' => $tramiteName,
+            'activo' => 1,
+        ]);
+
+        TramiteConfig::create([
+            'tramite_id' => $tramite->id,
+            'version'    => $config['version'] ?? '1.1',
+            'config'     => json_encode($config),
+            'activo'     => 1,
+        ]);
+
+        TramiteToken::create([
+            'tramite_id'  => $tramite->id,
+            'token'       => $tramiteToken,
+            'descripcion' => 'Token principal',
+            'activo'      => 1,
+        ]);
+
+        return response()->json([
+            'ok'         => true,
+            'tramite_id' => $tramite->id,
+            'mensaje'    => 'Trámite creado',
+        ]);
     }
 
     /**
@@ -250,7 +248,7 @@ class CalculadoraController extends Controller
             return response()->json(['ok' => false, 'error' => 'Sin configuración activa'], 404);
         }
 
-        return response()->json(['ok' => true, 'config' => $configRecord->config]);
+        return response()->json(['ok' => true, 'config' => json_decode($configRecord->config, true)]);
     }
 
     /**

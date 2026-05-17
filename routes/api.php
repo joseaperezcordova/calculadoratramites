@@ -27,7 +27,7 @@ Route::post('/calcular', [CalculadoraController::class, 'calcular']);
 
 Route::get('/tramite/{id}/schema', [CalculadoraController::class, 'schema']);
 
-Route::post('/config/guardar', [CalculadoraController::class, 'guardarConfig']);
+Route::post('/config/guardar', [CalculadoraController::class, 'guardar']);
 
 Route::get('/tramites', [CalculadoraController::class, 'listar']);
 
