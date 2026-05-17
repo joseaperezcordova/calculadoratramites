@@ -6,18 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\CalculoLog;
 use App\Models\Tramite;
 use App\Models\TramiteConfig;
-use App\Models\TramiteToken;
 use App\Services\FuncionesCalculo;
 use App\Services\MotorCalculadora;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CalculadoraController extends Controller
 {
     /**
      * POST /api/calcular
-     * Autentica por token propio (campo idtramite), ejecuta el motor y registra el log.
      */
     public function calcular(Request $request): JsonResponse
     {
@@ -28,28 +25,18 @@ class CalculadoraController extends Controller
             return response()->json(['ok' => false, 'error' => 'Token requerido (campo idtramite)'], 401);
         }
 
-        $tokenRecord = TramiteToken::with('tramite')
-            ->where('token', $tokenStr)
-            ->where('activo', true)
-            ->first();
-
-        if (!$tokenRecord) {
-            return response()->json(['ok' => false, 'error' => 'Token inválido'], 401);
-        }
-
-        $tramite = $tokenRecord->tramite;
-
-        if (!$tramite || !$tramite->activo) {
-            return response()->json(['ok' => false, 'error' => 'Trámite inactivo'], 403);
-        }
-
-        $configRecord = $tramite->configs()
-            ->where('activo', true)
-            ->latest()
+        $configRecord = TramiteConfig::where('token', $tokenStr)
+            ->where('activo', 1)
             ->first();
 
         if (!$configRecord) {
-            return response()->json(['ok' => false, 'error' => 'Sin configuración activa para este trámite'], 422);
+            return response()->json(['ok' => false, 'error' => 'Token inválido'], 401);
+        }
+
+        $tramite = Tramite::find($configRecord->tramite_id);
+
+        if (!$tramite || !$tramite->activo) {
+            return response()->json(['ok' => false, 'error' => 'Trámite inactivo'], 403);
         }
 
         $t0 = microtime(true);
@@ -76,33 +63,26 @@ class CalculadoraController extends Controller
 
     /**
      * GET /api/tramite/{id}/schema
-     * JSON Schema de los inputs del trámite (sin el campo token).
      */
     public function schema(int $id): JsonResponse
     {
-        $tramite = Tramite::find($id);
-
-        if (!$tramite) {
-            return response()->json(['ok' => false, 'error' => 'Trámite no encontrado'], 404);
-        }
-
-        $configRecord = $tramite->configs()
-            ->where('activo', true)
-            ->latest()
+        $configRecord = TramiteConfig::where('tramite_id', $id)
+            ->where('activo', 1)
+            ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$configRecord) {
             return response()->json(['ok' => false, 'error' => 'Sin configuración activa'], 404);
         }
 
+        $tramite    = Tramite::find($id);
         $properties = [];
         $required   = [];
-
-        $typeMap = ['number' => 'number', 'boolean' => 'boolean'];
+        $typeMap    = ['number' => 'number', 'boolean' => 'boolean'];
 
         $configData = json_decode($configRecord->config, true) ?? [];
         foreach ($configData['inputs'] ?? [] as $input) {
-            if ($input['token'] ?? false) continue; // omitir el campo idtramite
+            if ($input['token'] ?? false) continue;
 
             $jsonType = $typeMap[$input['type'] ?? ''] ?? 'string';
 
@@ -126,7 +106,7 @@ class CalculadoraController extends Controller
             'ok'     => true,
             'schema' => [
                 '$schema'    => 'https://json-schema.org/draft/2020-12/schema',
-                'title'      => $tramite->nombre,
+                'title'      => $tramite->nombre ?? '',
                 'type'       => 'object',
                 'properties' => $properties,
                 'required'   => $required,
@@ -155,25 +135,13 @@ class CalculadoraController extends Controller
             $tramite->nombre = $tramiteName;
             $tramite->save();
 
-            // Actualizar token SOLO de este trámite
-            if ($tramiteToken) {
-                TramiteToken::where('tramite_id', $tramite->id)
-                    ->where('token', '!=', $tramiteToken)
-                    ->update(['activo' => 0]);
-
-                TramiteToken::updateOrCreate(
-                    ['tramite_id' => $tramite->id, 'token' => $tramiteToken],
-                    ['activo' => 1, 'descripcion' => 'Token principal']
-                );
-            }
-
-            // Desactivar config anterior SOLO de este trámite y crear nueva
             TramiteConfig::where('tramite_id', $tramite->id)
                 ->where('activo', 1)
                 ->update(['activo' => 0]);
 
             TramiteConfig::create([
                 'tramite_id' => $tramite->id,
+                'token'      => $tramiteToken,
                 'version'    => $config['version'] ?? '1.1',
                 'config'     => json_encode($config),
                 'activo'     => 1,
@@ -194,19 +162,11 @@ class CalculadoraController extends Controller
 
         TramiteConfig::create([
             'tramite_id' => $tramite->id,
+            'token'      => $tramiteToken,
             'version'    => $config['version'] ?? '1.1',
             'config'     => json_encode($config),
             'activo'     => 1,
         ]);
-
-        if ($tramiteToken) {
-            TramiteToken::create([
-                'tramite_id'  => $tramite->id,
-                'token'       => $tramiteToken,
-                'descripcion' => 'Token principal',
-                'activo'      => 1,
-            ]);
-        }
 
         return response()->json([
             'ok'         => true,
@@ -217,7 +177,6 @@ class CalculadoraController extends Controller
 
     /**
      * GET /api/tramites
-     * Lista todos los trámites activos con token, estado de config y versión.
      */
     public function listar()
     {
@@ -229,15 +188,10 @@ class CalculadoraController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-                $token = TramiteToken::where('tramite_id', $t->id)
-                    ->where('activo', 1)
-                    ->orderBy('created_at', 'desc')
-                    ->value('token');
-
                 return [
                     'id'           => $t->id,
                     'nombre'       => $t->nombre,
-                    'token'        => $token,
+                    'token'        => $config?->token,
                     'tiene_config' => $config ? true : false,
                     'version'      => $config?->version,
                     'updated_at'   => $config?->updated_at,
@@ -249,19 +203,12 @@ class CalculadoraController extends Controller
 
     /**
      * GET /api/tramites/{id}/config
-     * Devuelve el JSON completo de la tramite_config activa.
      */
     public function tramiteConfig(int $id): JsonResponse
     {
-        $tramite = Tramite::find($id);
-
-        if (!$tramite) {
-            return response()->json(['ok' => false, 'error' => 'Trámite no encontrado'], 404);
-        }
-
-        $configRecord = $tramite->configs()
-            ->where('activo', true)
-            ->latest()
+        $configRecord = TramiteConfig::where('tramite_id', $id)
+            ->where('activo', 1)
+            ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$configRecord) {
@@ -273,7 +220,6 @@ class CalculadoraController extends Controller
 
     /**
      * DELETE /api/tramites/{id}
-     * Soft-delete: marca activo = 0.
      */
     public function eliminar(int $id): JsonResponse
     {
@@ -290,7 +236,6 @@ class CalculadoraController extends Controller
 
     /**
      * GET /api/funciones
-     * Catálogo de funciones PHP disponibles para el builder.
      */
     public function funciones(): JsonResponse
     {
