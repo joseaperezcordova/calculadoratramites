@@ -136,61 +136,38 @@ class CalculadoraController extends Controller
 
     /**
      * POST /api/config/guardar
-     * tramite_id (opcional) → actualiza directo por ID.
-     * Sin tramite_id → busca por token, o crea nuevo.
+     * Con tramite_id → actualiza. Sin tramite_id → crea nuevo.
      */
     public function guardar(Request $request)
     {
+        $tramiteId    = $request->input('tramite_id');
         $tramiteName  = $request->input('tramite_name');
         $tramiteToken = $request->input('tramite_token');
-        $tramiteId    = $request->input('tramite_id');
         $config       = $request->input('config');
 
-        // 1. Si viene tramite_id, actualizar directamente sin buscar por token
         if ($tramiteId) {
+            // ── ACTUALIZAR trámite existente ──────────────────
             $tramite = Tramite::find($tramiteId);
-
-            if ($tramite) {
-                $tramite->nombre = $tramiteName;
-                $tramite->save();
-
-                // Actualizar o crear token
-                if ($tramiteToken) {
-                    TramiteToken::where('tramite_id', $tramite->id)->update(['activo' => 0]);
-                    TramiteToken::updateOrCreate(
-                        ['token' => $tramiteToken],
-                        ['tramite_id' => $tramite->id, 'activo' => 1, 'descripcion' => 'Token principal']
-                    );
-                }
-
-                // Desactivar config anterior y crear nueva versión
-                TramiteConfig::where('tramite_id', $tramite->id)
-                    ->where('activo', 1)
-                    ->update(['activo' => 0]);
-
-                TramiteConfig::create([
-                    'tramite_id' => $tramite->id,
-                    'version'    => $config['version'] ?? '1.1',
-                    'config'     => json_encode($config),
-                    'activo'     => 1,
-                ]);
-
-                return response()->json([
-                    'ok'         => true,
-                    'tramite_id' => $tramite->id,
-                    'mensaje'    => 'Configuración actualizada',
-                ]);
+            if (!$tramite) {
+                return response()->json(['ok' => false, 'mensaje' => 'Trámite no encontrado'], 404);
             }
-        }
 
-        // 2. Sin tramite_id: buscar por token
-        $tokenRecord = TramiteToken::where('token', $tramiteToken)->first();
-
-        if ($tokenRecord) {
-            $tramite = Tramite::find($tokenRecord->tramite_id);
             $tramite->nombre = $tramiteName;
             $tramite->save();
 
+            // Actualizar token SOLO de este trámite
+            if ($tramiteToken) {
+                TramiteToken::where('tramite_id', $tramite->id)
+                    ->where('token', '!=', $tramiteToken)
+                    ->update(['activo' => 0]);
+
+                TramiteToken::updateOrCreate(
+                    ['tramite_id' => $tramite->id, 'token' => $tramiteToken],
+                    ['activo' => 1, 'descripcion' => 'Token principal']
+                );
+            }
+
+            // Desactivar config anterior SOLO de este trámite y crear nueva
             TramiteConfig::where('tramite_id', $tramite->id)
                 ->where('activo', 1)
                 ->update(['activo' => 0]);
@@ -209,7 +186,7 @@ class CalculadoraController extends Controller
             ]);
         }
 
-        // 3. Crear trámite nuevo
+        // ── CREAR trámite nuevo (sin tramite_id) ──────────────
         $tramite = Tramite::create([
             'nombre' => $tramiteName,
             'activo' => 1,
@@ -222,12 +199,14 @@ class CalculadoraController extends Controller
             'activo'     => 1,
         ]);
 
-        TramiteToken::create([
-            'tramite_id'  => $tramite->id,
-            'token'       => $tramiteToken,
-            'descripcion' => 'Token principal',
-            'activo'      => 1,
-        ]);
+        if ($tramiteToken) {
+            TramiteToken::create([
+                'tramite_id'  => $tramite->id,
+                'token'       => $tramiteToken,
+                'descripcion' => 'Token principal',
+                'activo'      => 1,
+            ]);
+        }
 
         return response()->json([
             'ok'         => true,
