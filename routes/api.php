@@ -1,19 +1,20 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\CalculadoraController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes – Motor Calculadora de Trámites
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| La autenticación es mediante token propio (campo idtramite en el body).
+| No se usa auth:sanctum para estas rutas.
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::get('/ping', [CalculadoraController::class, 'ping']);
+
+Route::post('/calcular', [CalculadoraController::class, 'calcular']);
+
+Route::get('/tramite/{id}/schema', [CalculadoraController::class, 'schema']);
