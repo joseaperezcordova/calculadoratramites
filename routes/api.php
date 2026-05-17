@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Preflight OPTIONS para CORS
+Route::options('/{any}', function () {
+    return response()->json('ok', 200)
+        ->header('Access-Control-Allow-Origin',  '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+})->where('any', '.*');
+
 Route::get('/ping', [CalculadoraController::class, 'ping']);
 
 Route::post('/calcular', [CalculadoraController::class, 'calcular']);
