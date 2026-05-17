@@ -219,23 +219,28 @@ class CalculadoraController extends Controller
      * GET /api/tramites
      * Lista todos los trámites activos con token, estado de config y versión.
      */
-    public function listar(): JsonResponse
+    public function listar()
     {
-        $tramites = Tramite::where('activo', true)
-            ->with([
-                'tokens' => fn($q) => $q->where('activo', true)->limit(1),
-                'configs' => fn($q) => $q->where('activo', true)->latest()->limit(1),
-            ])
+        $tramites = Tramite::where('activo', 1)
             ->get()
             ->map(function ($t) {
-                $config = $t->configs->first();
+                $config = TramiteConfig::where('tramite_id', $t->id)
+                    ->where('activo', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $token = TramiteToken::where('tramite_id', $t->id)
+                    ->where('activo', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->value('token');
+
                 return [
                     'id'           => $t->id,
                     'nombre'       => $t->nombre,
-                    'token'        => optional($t->tokens->first())->token,
-                    'tiene_config' => (bool) $config,
-                    'version'      => $config ? ($config->version ?? '1.1') : null,
-                    'updated_at'   => $config ? $config->updated_at : null,
+                    'token'        => $token,
+                    'tiene_config' => $config ? true : false,
+                    'version'      => $config?->version,
+                    'updated_at'   => $config?->updated_at,
                 ];
             });
 
