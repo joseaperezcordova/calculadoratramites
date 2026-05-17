@@ -56,11 +56,12 @@ class CalculadoraController extends Controller
         $duracionMs = (int) round((microtime(true) - $t0) * 1000);
 
         CalculoLog::create([
-            'tramite_id'  => $tramite->id,
-            'token_usado' => $tokenStr,
-            'inputs'      => $inputs,
-            'outputs'     => $result['outputs'],
-            'duracion_ms' => $duracionMs,
+            'tramite_id'   => $tramite->id,
+            'token_usado'  => $tokenStr,
+            'inputs_json'  => $inputs,
+            'outputs_json' => $result['outputs'],
+            'tiempo_ms'    => $duracionMs,
+            'ip'           => $request->ip(),
         ]);
 
         return response()->json([
