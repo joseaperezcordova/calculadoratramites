@@ -41,7 +41,7 @@ class CalculadoraController extends Controller
         }
 
         $configRecord = $tramite->configs()
-            ->where('activa', true)
+            ->where('activo', true)
             ->latest()
             ->first();
 
@@ -83,7 +83,7 @@ class CalculadoraController extends Controller
         }
 
         $configRecord = $tramite->configs()
-            ->where('activa', true)
+            ->where('activo', true)
             ->latest()
             ->first();
 
@@ -94,14 +94,12 @@ class CalculadoraController extends Controller
         $properties = [];
         $required   = [];
 
+        $typeMap = ['number' => 'number', 'boolean' => 'boolean'];
+
         foreach ($configRecord->config['inputs'] ?? [] as $input) {
             if ($input['token'] ?? false) continue; // omitir el campo idtramite
 
-            $jsonType = match ($input['type'] ?? 'string') {
-                'number'  => 'number',
-                'boolean' => 'boolean',
-                default   => 'string',
-            };
+            $jsonType = $typeMap[$input['type'] ?? ''] ?? 'string';
 
             $prop = [
                 'type'  => $jsonType,

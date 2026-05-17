@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TramiteConfig extends Model
 {
-    protected $fillable = ['tramite_id', 'config', 'version', 'activa'];
+    protected $fillable = ['tramite_id', 'config', 'version', 'activo'];
 
     protected $casts = [
         'config' => 'array',
-        'activa' => 'boolean',
+        'activo' => 'boolean',
     ];
 
     public function tramite(): BelongsTo
