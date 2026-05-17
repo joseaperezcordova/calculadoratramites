@@ -15,9 +15,4 @@ class Tramite extends Model
     {
         return $this->hasMany(TramiteConfig::class);
     }
-
-    public function tokens(): HasMany
-    {
-        return $this->hasMany(TramiteToken::class);
-    }
 }

@@ -137,7 +137,7 @@ class CalculadoraController extends Controller
 
             TramiteConfig::where('tramite_id', $tramite->id)
                 ->where('activo', 1)
-                ->update(['activo' => 0]);
+                ->update(['activo' => 0, 'token' => null]);
 
             TramiteConfig::create([
                 'tramite_id' => $tramite->id,
@@ -191,10 +191,10 @@ class CalculadoraController extends Controller
                 return [
                     'id'           => $t->id,
                     'nombre'       => $t->nombre,
-                    'token'        => $config?->token,
+                    'token'        => $config ? $config->token : null,
                     'tiene_config' => $config ? true : false,
-                    'version'      => $config?->version,
-                    'updated_at'   => $config?->updated_at,
+                    'version'      => $config ? $config->version : null,
+                    'updated_at'   => $config ? $config->updated_at : null,
                 ];
             });
 
