@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TramiteConfig extends Model
 {
-    protected $fillable = ['tramite_id', 'config', 'version', 'activo'];
+    protected $fillable = ['tramite_id', 'token', 'version', 'config', 'activo'];
 
     protected $casts = [
         'activo' => 'boolean',
