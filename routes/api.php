@@ -22,3 +22,5 @@ Route::get('/tramite/{id}/schema', [CalculadoraController::class, 'schema']);
 Route::post('/config/guardar', [CalculadoraController::class, 'guardarConfig']);
 
 Route::get('/tramites', [CalculadoraController::class, 'listar']);
+Route::get('/tramites/{id}/config', [CalculadoraController::class, 'tramiteConfig']);
+Route::delete('/tramites/{id}', [CalculadoraController::class, 'eliminar']);

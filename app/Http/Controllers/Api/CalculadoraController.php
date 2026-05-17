@@ -203,24 +203,70 @@ class CalculadoraController extends Controller
 
     /**
      * GET /api/tramites
-     * Lista todos los trámites activos con su token principal.
+     * Lista todos los trámites activos con token, estado de config y versión.
      */
     public function listar(): JsonResponse
     {
         $tramites = Tramite::where('activo', true)
-            ->with(['tokens' => function ($q) {
-                $q->where('activo', true)->limit(1);
-            }])
+            ->with([
+                'tokens' => fn($q) => $q->where('activo', true)->limit(1),
+                'configs' => fn($q) => $q->where('activo', true)->latest()->limit(1),
+            ])
             ->get()
             ->map(function ($t) {
+                $config = $t->configs->first();
                 return [
-                    'id'     => $t->id,
-                    'nombre' => $t->nombre,
-                    'token'  => optional($t->tokens->first())->token,
+                    'id'           => $t->id,
+                    'nombre'       => $t->nombre,
+                    'token'        => optional($t->tokens->first())->token,
+                    'tiene_config' => (bool) $config,
+                    'version'      => $config ? ($config->version ?? '1.1') : null,
+                    'updated_at'   => $config ? $config->updated_at : null,
                 ];
             });
 
         return response()->json(['ok' => true, 'tramites' => $tramites]);
+    }
+
+    /**
+     * GET /api/tramites/{id}/config
+     * Devuelve el JSON completo de la tramite_config activa.
+     */
+    public function tramiteConfig(int $id): JsonResponse
+    {
+        $tramite = Tramite::find($id);
+
+        if (!$tramite) {
+            return response()->json(['ok' => false, 'error' => 'Trámite no encontrado'], 404);
+        }
+
+        $configRecord = $tramite->configs()
+            ->where('activo', true)
+            ->latest()
+            ->first();
+
+        if (!$configRecord) {
+            return response()->json(['ok' => false, 'error' => 'Sin configuración activa'], 404);
+        }
+
+        return response()->json(['ok' => true, 'config' => $configRecord->config]);
+    }
+
+    /**
+     * DELETE /api/tramites/{id}
+     * Soft-delete: marca activo = 0.
+     */
+    public function eliminar(int $id): JsonResponse
+    {
+        $tramite = Tramite::find($id);
+
+        if (!$tramite) {
+            return response()->json(['ok' => false, 'error' => 'Trámite no encontrado'], 404);
+        }
+
+        $tramite->update(['activo' => false]);
+
+        return response()->json(['ok' => true, 'mensaje' => 'Trámite eliminado']);
     }
 
     /**
