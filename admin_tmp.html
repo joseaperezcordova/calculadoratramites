@@ -1613,31 +1613,88 @@ function runEngineJS(config,inputs){
     vars[r.name]=res;
   }
 
-  // Separate vars by dependency type
-  // Order: 1) independent vars, 2) rules, 3) vars depending on rules, 4) extractors
+  // ── SORT TOPOLÓGICO ─────────────────────────────────────────
+  // Ordena variables respetando dependencias en cualquier nivel
   const allVars = config.variables||[];
-  const phpFnNames = new Set(allVars.filter(v=>v.operation?.type==='php_function').map(v=>v.name));
 
-  const extractorVars   = allVars.filter(v=>v.operation?.type==='extractor');
-  const nonExtractors   = allVars.filter(v=>v.operation?.type!=='extractor');
+  // Construir mapa de nombre → variable
+  const varMap = {};
+  allVars.forEach(v=>{ varMap[v.name]=v; });
+  const ruleMap = {};
+  (config.rules||[]).forEach(r=>{ ruleMap[r.name]=r; });
 
-  const independentVars = nonExtractors.filter(v=>{
-    const ops=[v.operation?.operands?.[0],v.operation?.operands?.[1],...(v.operation?.args||[])].map(String);
-    return !ops.some(o=>ruleNames.has(o));
+  // Obtener dependencias de una variable
+  function getVarDeps(v){
+    const op=v.operation||{};
+    let refs=[];
+    if(op.type==='math')    refs=[op.operands?.[0],op.operands?.[1]].map(String);
+    if(op.type==='custom')  refs=op.args||[];
+    if(op.type==='lookup')  refs=[op.key];
+    if(op.type==='php_function') refs=op.args||[];
+    if(op.type==='extractor')    refs=[op.src];
+    return refs.filter(r=>r&&r!=='hoy'&&r!=='today'&&isNaN(Number(r)));
+  }
+
+  // Kahn's algorithm - topological sort
+  function topoSort(variables, rules){
+    const allNames = new Set([...variables.map(v=>v.name), ...rules.map(r=>r.name)]);
+    const inDegree = {};
+    const adjList  = {}; // dep → [nodes that depend on dep]
+
+    // init
+    [...variables, ...rules].forEach(n=>{ inDegree[n.name]=0; adjList[n.name]=[]; });
+
+    // build edges
+    variables.forEach(v=>{
+      getVarDeps(v).forEach(dep=>{
+        if(allNames.has(dep)){
+          if(!adjList[dep]) adjList[dep]=[];
+          adjList[dep].push(v.name);
+          inDegree[v.name]=(inDegree[v.name]||0)+1;
+        }
+      });
+    });
+
+    // Rules also have dependencies (their if_left / if_right may reference vars)
+    rules.forEach(r=>{
+      [r.if_left, r.if_right].forEach(dep=>{
+        if(dep && allNames.has(dep) && !isNaN(Number(dep))===false){
+          if(!adjList[dep]) adjList[dep]=[];
+          adjList[dep].push(r.name);
+          inDegree[r.name]=(inDegree[r.name]||0)+1;
+        }
+      });
+    });
+
+    // Queue nodes with no dependencies
+    const queue = [...variables.map(v=>v.name), ...rules.map(r=>r.name)]
+      .filter(n=>(inDegree[n]||0)===0);
+
+    const sorted=[];
+    while(queue.length){
+      const n=queue.shift();
+      sorted.push(n);
+      (adjList[n]||[]).forEach(dep=>{
+        inDegree[dep]--;
+        if(inDegree[dep]===0) queue.push(dep);
+      });
+    }
+
+    // Any remaining (cycles) — add at end
+    [...variables.map(v=>v.name),...rules.map(r=>r.name)].forEach(n=>{
+      if(!sorted.includes(n)) sorted.push(n);
+    });
+
+    return sorted;
+  }
+
+  const sortedNames = topoSort(allVars, config.rules||[]);
+
+  // Process each node in topological order
+  sortedNames.forEach(name=>{
+    if(varMap[name])  processVar(varMap[name]);
+    else if(ruleMap[name]) processRule(ruleMap[name]);
   });
-  const dependentVars = nonExtractors.filter(v=>{
-    const ops=[v.operation?.operands?.[0],v.operation?.operands?.[1],...(v.operation?.args||[])].map(String);
-    return ops.some(o=>ruleNames.has(o));
-  });
-
-  // Pass 1: independent vars (including php_function)
-  independentVars.forEach(processVar);
-  // Pass 2: rules
-  (config.rules||[]).forEach(processRule);
-  // Pass 3: vars depending on rule results
-  dependentVars.forEach(processVar);
-  // Pass 4: extractors (need php_function objects already in vars)
-  extractorVars.forEach(processVar);
 
   const out={};
   (config.outputs||[]).forEach(o=>{
