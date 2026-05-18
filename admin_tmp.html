@@ -1348,6 +1348,43 @@ function runDebugCalc(id){
         if(found){result=!isNaN(Number(found.value))?Number(found.value):found.value;resolved=true;}
         else if(kv!==n.operandA){result='⚠ sin coincidencia';}
       }
+      else if(n.opType==='php_function'){
+        const fn=n.phpFn||'';
+        const args=(n.phpArgs||[]).map(a=>allVals[a.val]!==undefined?allVals[a.val]:(a.val||'?'));
+        formula=`<span class="df-fn">${fn}</span>(${args.map(a=>`<span class="df-val">${a}</span>`).join(', ')})`;
+        // stubs por función
+        if(fn==='getINPC'){result=132.45;resolved=true;}
+        else if(fn==='getFactorActualizacionISN'){result=1.0416;resolved=true;}
+        else if(fn==='getPorcentajeRecargosISN'){result=20.04;resolved=true;}
+        else if(fn==='calcularMesesRecargos'){result=17;resolved=true;}
+        else if(fn==='calcularPorcentajeRecargos'){result=27.99;resolved=true;}
+        else if(fn==='esExtemporaneo'){
+          try{
+            const fa=new Date(String(args[0]).split('-').reverse().join('-'));
+            const fl=new Date(String(args[1]).split('-').reverse().join('-'));
+            result=fa>fl?1:0; resolved=true;
+          }catch(e2){result=1;resolved=true;}
+        }
+        else if(fn==='restarAnios'){
+          try{const d=new Date(String(args[0]).split('-').reverse().join('-'));d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
+        }
+        else if(fn==='calcularFechaLimiteISN'){
+          const mes=parseInt(args[0])||1,anio=parseInt(args[1])||2025;
+          const ml=mes===12?1:mes+1,al=mes===12?anio+1:anio;
+          result=`17-${String(ml).padStart(2,'0')}-${al}`;resolved=true;
+        }
+        else if(fn==='calcularFechaVencimiento'){
+          try{const d=new Date(String(args[0]).split('-').reverse().join('-'));d.setDate(d.getDate()+21);result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
+        }
+        else if(fn&&fn.toLowerCase().includes('fecha')){result=new Date().toISOString().slice(0,7)+'-01';resolved=true;}
+        else{result=`[stub:${fn}]`;resolved=true;}
+      }
+      else if(n.opType==='extractor'){
+        const src=allVals[n.srcVar];
+        formula=`<span class="df-key">${esc(n.srcVar)||'?'}</span><span class="df-op">.</span><span class="df-fn">${esc(n.srcField)||'?'}</span>`;
+        if(src&&typeof src==='object'&&n.srcField){result=src[n.srcField]??null;resolved=result!==null;}
+        else{result='⚠ objeto no disponible';}
+      }
       ok=resolved;
       // Apply decimals rounding in simulator display
       if(typeof result==='number' && resolved){
