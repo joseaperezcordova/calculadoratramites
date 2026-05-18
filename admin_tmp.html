@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor Calculadora — Flow Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ── Tesorería NL ─────────────────────────────────────── */
+  --bg:        #f4f6f9;
+  --bg2:       #eaecf1;
+  --bg3:       #e0e4ec;
+  --surface:   #ffffff;
+  --border:    #d8dde8;
+  --border2:   #c2cad8;
+  --dark:      #1a2535;
+  --dark2:     #22304a;
+  --dark3:     #2e4060;
+  --orange:    #f07800;
+  --orange2:   #f58c20;
+  --orange3:   #f9a84c;
+  --orange4:   #fde2b0;
+  --orange5:   #fff5e6;
+  --blue:      #2563a8;
+  --blue-l:    #dbeafe;
+  --green:     #16704a;
+  --green-l:   #d1fae5;
+  --amber:     #92600a;
+  --amber-l:   #fef3c7;
+  --rose:      #9f1239;
+  --rose-l:    #ffe4e6;
+  --teal:      #0f766e;
+  --teal-l:    #ccfbf1;
+  --txt:       #1a2535;
+  --txt2:      #4a5e78;
+  --txt3:      #8fa3bb;
+  --mono:      'DM Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+  --r:         6px;
+  --shadow:    0 1px 3px rgba(26,37,53,.09), 0 4px 16px rgba(26,37,53,.07);
+  --shadow2:   0 2px 8px rgba(26,37,53,.13), 0 8px 32px rgba(26,37,53,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── TOPBAR — dark navy like Tesorería NL ───────────────── */
+.topbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 18px;
+  background:var(--dark);border-bottom:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-sq{width:30px;height:30px;background:var(--orange);
+  border-radius:6px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(240,120,0,.4)}
+.logo-sq svg{fill:white;width:15px;height:15px}
+.logo-name{font-weight:600;font-size:14px;letter-spacing:-.01em;color:white}
+.logo-ver{font-size:10px;color:rgba(255,255,255,.35);font-family:var(--mono);margin-left:2px}
+.sep{width:1px;height:20px;background:rgba(255,255,255,.15);margin:0 4px}
+.spacer{flex:1}
+
+/* TRAMITE FIELD in topbar */
+.tramite-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);border-radius:var(--r);padding:4px 12px}
+.tramite-lbl{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.5);
+  letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.tramite-inp{background:transparent;border:none;outline:none;font-family:var(--sans);
+  font-size:12.5px;color:white;min-width:0;width:150px}
+.tramite-inp::placeholder{color:rgba(255,255,255,.3)}
+.tramite-id-inp{width:120px;font-family:var(--mono);font-size:12px;color:var(--orange3)}
+.tramite-id-inp::placeholder{color:rgba(255,255,255,.25)}
+.tramite-url-inp{width:200px;font-family:var(--mono);font-size:11px;color:#5eead4}
+.tramite-url-inp::placeholder{color:rgba(255,255,255,.22)}
+.topbar-vdiv{width:1px;height:16px;background:rgba(255,255,255,.2)}
+.btn-save{background:rgba(16,185,129,.18);color:#6ee7b7;border:1px solid rgba(110,231,183,.3)}
+.btn-save:hover{background:rgba(16,185,129,.32);color:#a7f3d0;transform:translateY(-1px)}
+.btn-save.saving{opacity:.6;pointer-events:none}
+
+/* DECIMALS BADGE on node */
+.node-dec{font-size:9.5px;font-family:var(--mono);color:var(--txt3);
+  background:var(--bg3);padding:1px 5px;border-radius:3px;margin-left:4px}
+
+/* MOTOR TOGGLE in test strip */
+.motor-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--r);
+  overflow:hidden;margin-bottom:6px;width:100%}
+.mt-opt{flex:1;padding:5px 8px;text-align:center;font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;color:var(--txt2);background:var(--bg2)}
+.mt-opt.act{background:var(--orange);color:white}
+
+/* SAVE STATUS */
+.save-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+  background:var(--dark);color:white;padding:8px 20px;border-radius:20px;
+  font-size:12px;font-family:var(--mono);z-index:999;pointer-events:none;
+  opacity:0;transition:opacity .2s}
+.save-toast.show{opacity:1}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);
+  font-size:12.5px;font-family:var(--sans);font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-orange{background:var(--orange);color:white;box-shadow:0 2px 6px rgba(240,120,0,.35)}
+.btn-orange:hover{background:#d96c00;box-shadow:0 4px 12px rgba(240,120,0,.45);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2)}
+.btn-ghost:hover{background:rgba(255,255,255,.18);color:white}
+/* ghost inside light areas (test strip, editor) */
+.btn-ghost-light{background:transparent;color:var(--txt2);border:1.5px solid var(--border2)}
+.btn-ghost-light:hover{background:var(--bg3);color:var(--orange);border-color:var(--orange3)}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+.workspace{flex:1;display:flex;overflow:hidden}
+
+/* ── ADD PANEL — dark sidebar ───────────────────────────── */
+.add-panel{width:62px;background:var(--dark2);border-right:none;
+  display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:5px;overflow-y:auto;
+  box-shadow:2px 0 8px rgba(0,0,0,.15)}
+.add-btn{width:44px;border-radius:8px;border:1px solid rgba(255,255,255,.12);padding:7px 4px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:rgba(255,255,255,.4);transition:all .15s;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.03em;line-height:1.2;text-align:center}
+.add-btn .ic{font-size:15px;line-height:1}
+.add-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(240,120,0,.12)}
+.add-btn.ab-in:hover  {border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.12)}
+.add-btn.ab-var:hover {border-color:var(--orange);color:var(--orange);background:rgba(240,120,0,.12)}
+.add-btn.ab-cst:hover {border-color:#f9a8d4;color:#f9a8d4;background:rgba(249,168,212,.1)}
+.add-btn.ab-def:hover {border-color:#5eead4;color:#5eead4;background:rgba(94,234,212,.1)}
+.add-btn.ab-rule:hover{border-color:#fcd34d;color:#fcd34d;background:rgba(252,211,77,.1)}
+.add-btn.ab-out:hover {border-color:#6ee7b7;color:#6ee7b7;background:rgba(110,231,183,.1)}
+.add-divider{width:28px;height:1px;background:rgba(255,255,255,.1);margin:3px 0}
+.panel-lbl{font-size:9px;color:rgba(255,255,255,.25);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin:4px 0 2px}
+
+.canvas-wrap{flex:1;overflow:auto;position:relative;background:var(--bg);
+  background-image:radial-gradient(var(--border) 1.2px,transparent 1.2px);
+  background-size:22px 22px}
+#canvas{position:relative;min-width:1620px;min-height:600px}
+#svg-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+
+.col-header{position:absolute;top:18px;font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);display:flex;align-items:center;gap:6px}
+.col-dot{width:8px;height:8px;border-radius:50%}
+
+/* NODES */
+.node{position:absolute;width:195px;background:var(--surface);border-radius:12px;
+  border:2px solid var(--border);box-shadow:var(--shadow);cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .1s;user-select:none}
+.node:hover{box-shadow:var(--shadow2);transform:translateY(-1px)}
+.node.selected{box-shadow:0 0 0 3px rgba(240,120,0,.22),var(--shadow2)}
+.node-head{padding:9px 12px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:7px}
+.node-tag{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;white-space:nowrap}
+.node-name{font-size:12.5px;font-weight:500;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;
+  padding:0 3px;border-radius:4px;opacity:0;transition:opacity .12s;flex-shrink:0}
+.node:hover .node-del{opacity:1}
+.node-del:hover{color:#dc2626;background:rgba(220,0,0,.08)}
+.node-body{padding:7px 12px 10px;font-size:11.5px;color:var(--txt2);line-height:1.6}
+.node-field{font-family:var(--mono);font-size:10.5px;color:var(--txt3);
+  background:var(--bg);padding:2px 7px;border-radius:4px;margin-top:3px;
+  display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node-bigval{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--rose);display:block;margin-top:2px}
+.node-sys{display:flex;align-items:center;gap:5px;margin-top:3px}
+.node-sys-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0}
+.node-sys-key{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--teal)}
+
+.node-input  {border-color:#bfdbfe}.node-input   .node-head{background:#eff6ff}
+.node-input  .node-tag{background:var(--blue-l);color:var(--blue)}
+.node-input.selected{box-shadow:0 0 0 3px rgba(37,99,168,.18),var(--shadow2)}
+
+.node-var    {border-color:#fed7aa}.node-var     .node-head{background:#fff7ed}
+.node-var    .node-tag{background:var(--orange4);color:var(--orange)}
+.node-var.selected{box-shadow:0 0 0 3px rgba(240,120,0,.18),var(--shadow2)}
+
+.node-const  {border-color:#fecdd3}.node-const   .node-head{background:#fff1f2}
+.node-const  .node-tag{background:var(--rose-l);color:var(--rose)}
+.node-const.selected{box-shadow:0 0 0 3px rgba(159,18,57,.18),var(--shadow2)}
+
+.node-defined{border-color:#99f6e4}.node-defined .node-head{background:#f0fdfa}
+.node-defined .node-tag{background:var(--teal-l);color:var(--teal)}
+.node-defined.selected{box-shadow:0 0 0 3px rgba(15,118,110,.18),var(--shadow2)}
+
+.node-rule   {border-color:#fde68a}.node-rule    .node-head{background:#fffbeb}
+.node-rule   .node-tag{background:var(--amber-l);color:var(--amber)}
+.node-rule.selected{box-shadow:0 0 0 3px rgba(154,92,0,.18),var(--shadow2)}
+
+.node-out    {border-color:#a7f3d0}.node-out     .node-head{background:#ecfdf5}
+.node-out    .node-tag{background:var(--green-l);color:var(--green)}
+.node-out.selected{box-shadow:0 0 0 3px rgba(22,112,74,.18),var(--shadow2)}
+
+.port{position:absolute;width:12px;height:12px;border-radius:50%;
+  border:2px solid var(--surface);top:50%;transform:translateY(-50%);transition:transform .12s}
+.port-out{right:-7px}.port-in{left:-7px}
+.node-input  .port-out{background:var(--blue)}
+.node-var    .port-out{background:var(--orange)}.node-var    .port-in{background:var(--orange)}
+.node-const  .port-out{background:var(--rose)}
+.node-defined .port-out{background:var(--teal)}
+.node-rule   .port-out{background:var(--amber)}.node-rule   .port-in{background:var(--amber)}
+.node-out    .port-in {background:var(--green)}
+.port:hover{transform:translateY(-50%) scale(1.5)}
+
+/* EDITOR */
+.editor-panel{width:0;min-width:0;background:var(--surface);border-left:none;flex-shrink:0;
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:width .22s cubic-bezier(.4,0,.2,1)}
+.editor-panel.expanded{width:390px;border-left:1.5px solid var(--border)}
+
+/* dimmed nodes when something is selected */
+.node.dimmed{opacity:.25;filter:grayscale(.4);pointer-events:none;transform:none!important}
+/* fixed/locked node (idtramite token) */
+.node-fixed .node-head{background:linear-gradient(135deg,#eff6ff,#dbeafe)!important}
+.node-fixed .node-tag{background:#bfdbfe!important;color:#1e40af!important}
+.node-fixed .node-del{display:none!important}
+.node-fixed{border-color:#93c5fd!important;cursor:default}
+.lock-ic{font-size:11px;color:#93c5fd;margin-left:auto;flex-shrink:0}
+.ep-head{padding:14px 16px 12px;border-bottom:1.5px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ep-title{font-weight:600;font-size:14px;letter-spacing:-.01em;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-badge{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 8px;border-radius:20px;flex-shrink:0}
+.ep-body{flex:1;overflow-y:auto;padding:16px}
+.ep-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;color:var(--txt3);text-align:center;gap:10px}
+.ep-empty-icon{font-size:38px;opacity:.25}
+.ep-empty-msg{font-size:12px;line-height:1.7;max-width:190px}
+.ep-section{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.08em;
+  text-transform:uppercase;margin:14px 0 8px;padding-bottom:5px;
+  border-bottom:1px solid var(--orange4);display:flex;align-items:center;gap:6px}
+.ep-section:first-child{margin-top:0}
+.ep-sdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* FIELDS */
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+label{display:block;font-size:10.5px;font-weight:600;color:var(--txt2);
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+input[type=text],input[type=number],select{width:100%;background:var(--bg);
+  border:1.5px solid var(--border2);color:var(--txt);padding:7px 10px;
+  border-radius:var(--r);font-size:12.5px;font-family:var(--sans);
+  outline:none;transition:border-color .12s,box-shadow .12s}
+input:focus,select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(240,120,0,.1)}
+select option{background:white}
+.field-row{display:flex;gap:8px}.field-row .field{flex:1;margin-bottom:0}
+.field-inline{display:flex;gap:8px;align-items:flex-start}
+.field-inline .field{margin-bottom:0}
+.mono-in input,.mono-in select{font-family:var(--mono);font-size:12px}
+.op-sel{flex:0 0 54px}.op-sel select{font-family:var(--mono);text-align:center;padding:7px 2px}
+.bignum input{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--rose);
+  text-align:center;background:var(--rose-l);border-color:#fecdd3;padding:10px}
+.bignum input:focus{border-color:var(--rose);box-shadow:0 0 0 3px rgba(159,18,57,.12)}
+
+/* VAR COMBO */
+.vc{position:relative}
+.vc input{padding-right:26px}
+.vc-arrow{position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--txt3);pointer-events:none}
+.vc-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;
+  background:var(--surface);border:1.5px solid var(--orange3);border-radius:var(--r);
+  box-shadow:var(--shadow2);z-index:300;max-height:200px;overflow-y:auto;display:none}
+.vc-drop.open{display:block}
+.vd-grp{padding:4px 10px 2px;font-size:9.5px;font-weight:700;color:var(--txt3);
+  letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--border);margin-top:2px}
+.vd-grp:first-child{border-top:none;margin-top:0}
+.vd-item{padding:6px 12px;cursor:pointer;font-size:12px;font-family:var(--mono);
+  color:var(--txt);display:flex;align-items:center;gap:8px;transition:background .1s}
+.vd-item:hover{background:var(--orange5)}
+.vd-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* CATALOG GRID */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.cat-item{border:1.5px solid var(--border2);border-radius:var(--r);padding:8px 10px;
+  cursor:pointer;transition:all .15s;text-align:center}
+.cat-item:hover{border-color:var(--teal);background:var(--teal-l)}
+.cat-item.sel{border-color:var(--teal);background:var(--teal-l)}
+.cat-key{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--teal)}
+.cat-desc{font-size:10px;color:var(--txt3);margin-top:2px;line-height:1.3}
+.cat-grp-label{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:5px;margin-top:4px}
+
+/* LOOKUP */
+.lk-table{border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:6px}
+.lk-head{display:grid;grid-template-columns:1fr 1fr 28px;background:var(--bg3);
+  padding:5px 8px;font-size:10px;font-weight:700;color:var(--txt2);letter-spacing:.06em;text-transform:uppercase}
+.lk-row{display:grid;grid-template-columns:1fr 1fr 28px;border-top:1px solid var(--border);align-items:center}
+.lk-row input{border:none;border-radius:0;background:transparent;padding:5px 8px;font-size:12px;font-family:var(--mono)}
+.lk-row input:focus{background:var(--orange5);box-shadow:none;border:none}
+.lk-del{background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;font-size:12px}
+.lk-del:hover{color:#dc2626}
+.add-row-btn{width:100%;background:var(--bg2);border:none;border-top:1px solid var(--border);
+  padding:6px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:var(--sans);transition:all .12s}
+.add-row-btn:hover{background:var(--orange5);color:var(--orange)}
+
+/* INFO BOX */
+.info-box{border-radius:var(--r);padding:10px 12px;font-size:11.5px;margin-top:8px;line-height:1.6}
+.info-rose{background:var(--rose-l);border:1px solid #fecdd3;color:var(--rose)}
+.info-teal{background:var(--teal-l);border:1px solid #99f6e4;color:var(--teal)}
+
+/* TEST STRIP */
+.test-strip{background:var(--surface);border-top:1.5px solid var(--border);
+  display:flex;align-items:stretch;overflow:hidden;
+  transition:height .22s cubic-bezier(.4,0,.2,1);height:46px;flex-shrink:0}
+.test-strip.open{height:260px}
+.ts-toggle{padding:0 18px;cursor:pointer;display:flex;align-items:center;gap:8px;
+  font-size:12.5px;font-weight:600;color:var(--txt2);border-right:1px solid var(--border);
+  min-width:160px;transition:all .15s;user-select:none;flex-shrink:0;letter-spacing:.01em}
+.ts-toggle:hover{background:var(--orange5);color:var(--orange)}
+.ts-arrow{transition:transform .2s;font-size:10px}
+.test-strip.open .ts-arrow{transform:rotate(180deg)}
+.ts-body{flex:1;display:none}
+.test-strip.open .ts-body{display:flex}
+.ts-pane{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.ts-ph{padding:6px 12px;font-size:10.5px;font-weight:600;color:var(--txt2);letter-spacing:.06em;
+  text-transform:uppercase;border-bottom:1px solid var(--border);
+  background:var(--bg);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ts-dot{width:7px;height:7px;border-radius:50%}
+textarea{flex:1;background:var(--bg2);border:none;color:var(--txt);
+  font-family:var(--mono);font-size:11.5px;padding:10px 14px;resize:none;outline:none;line-height:1.7}
+.ts-actions{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:10px 14px;border-left:1px solid var(--border);min-width:150px;flex-shrink:0}
+.ts-status{font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:20px;text-align:center;width:100%}
+.ts-ok{background:var(--green-l);color:var(--green)}
+.ts-err{background:#fee2e2;color:#b91c1c}
+.ts-idle{background:var(--bg3);color:var(--txt3)}
+
+.legend{position:absolute;bottom:14px;left:14px;display:flex;gap:10px;flex-wrap:wrap;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(6px);
+  border:1.5px solid var(--border);border-radius:20px;padding:5px 14px;
+  box-shadow:var(--shadow);z-index:10;pointer-events:none}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)}
+.leg-d{width:8px;height:8px;border-radius:50%}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── MINI DEBUGGER ──────────────────────────────────────── */
+.dbg-wrap{margin-top:16px;border-top:1.5px solid var(--border);padding-top:14px}
+.dbg-header{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;user-select:none}
+.dbg-header-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;flex:1}
+.dbg-pulse{width:8px;height:8px;border-radius:50%;background:var(--txt3);flex-shrink:0;transition:background .2s}
+.dbg-pulse.ok{background:var(--green);box-shadow:0 0 0 3px rgba(22,112,74,.2)}
+.dbg-pulse.err{background:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.2)}
+.dbg-pulse.run{animation:dbgblink .5s infinite}
+@keyframes dbgblink{0%,100%{opacity:1}50%{opacity:.3}}
+.dbg-toggle{font-size:10px;color:var(--txt3);transition:transform .2s}
+.dbg-toggle.open{transform:rotate(180deg)}
+.dbg-body{display:none}
+.dbg-body.open{display:block}
+
+/* dependency inputs */
+.dbg-deps{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r);
+  overflow:hidden;margin-bottom:10px}
+.dbg-deps-head{padding:5px 10px;font-size:9.5px;font-weight:700;color:var(--txt3);
+  letter-spacing:.08em;text-transform:uppercase;background:var(--bg3);border-bottom:1px solid var(--border)}
+.dbg-dep-row{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);align-items:center}
+.dbg-dep-row:first-of-type{border-top:none}
+.dbg-dep-name{padding:5px 10px;font-family:var(--mono);font-size:11px;color:var(--txt2);
+  display:flex;align-items:center;gap:6px}
+.dbg-dep-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dbg-dep-val{padding:3px 6px}
+.dbg-dep-val input{border:1px solid var(--border2);border-radius:5px;padding:3px 7px;
+  font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--txt);
+  width:100%;outline:none;transition:border-color .12s}
+.dbg-dep-val input:focus{border-color:var(--orange)}
+.dbg-dep-resolved{padding:5px 10px;font-family:var(--mono);font-size:11px;
+  color:var(--txt3);text-align:right;font-style:italic}
+
+/* result box */
+.dbg-result{border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border)}
+.dbg-formula{padding:8px 12px;background:var(--bg3);font-family:var(--mono);font-size:11px;
+  color:var(--txt2);line-height:1.6;word-break:break-all}
+.dbg-formula .df-name{color:var(--orange);font-weight:600}
+.dbg-formula .df-op{color:var(--amber);font-weight:600;margin:0 3px}
+.dbg-formula .df-val{color:var(--blue);font-weight:600}
+.dbg-formula .df-fn{color:var(--teal);font-weight:600}
+.dbg-formula .df-key{color:var(--rose);font-weight:600}
+
+.dbg-answer{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);border-top:1px solid var(--border)}
+.dbg-answer-label{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase}
+.dbg-answer-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--orange)}
+.dbg-answer-val.err{color:#dc2626;font-size:12px}
+
+/* rule result */
+.dbg-rule-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:6px;padding:8px 12px;background:var(--bg3);font-family:var(--mono);font-size:11px}
+.dbg-rule-side{text-align:center;padding:3px 8px;border-radius:5px;background:var(--surface);
+  border:1px solid var(--border);color:var(--txt2)}
+.dbg-rule-op{font-weight:700;color:var(--amber);text-align:center}
+.dbg-verdict{padding:10px 14px;display:flex;align-items:center;gap:10px;
+  border-top:1px solid var(--border);background:var(--surface)}
+.dbg-verdict-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.04em}
+.dbg-verdict-true{background:var(--green-l);color:var(--green)}
+.dbg-verdict-false{background:#fee2e2;color:#b91c1c}
+.dbg-verdict-res{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--orange)}
+.dbg-verdict-arrow{color:var(--txt3);font-size:12px}
+
+.dbg-run-btn{width:100%;margin-top:8px;background:var(--bg3);border:1.5px solid var(--border2);
+  color:var(--txt2);font-size:12px;font-family:var(--sans);font-weight:600;padding:7px;
+  border-radius:var(--r);cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.dbg-run-btn:hover{background:var(--orange);color:white;border-color:var(--orange)}
+
+@keyframes nodeIn{from{opacity:0;transform:scale(.88) translateY(8px)}to{opacity:1;transform:none}}
+.node{animation:nodeIn .18s ease-out}
+
+/* ══ LIST VIEW ═══════════════════════════════════════════════ */
+#view-list{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#view-builder{display:none;flex-direction:column;height:100vh;overflow:hidden}
+body.in-builder #view-list{display:none}
+body.in-builder #view-builder{display:flex}
+body:not(.in-builder) #view-list{display:flex}
+
+.list-header{background:var(--dark);padding:0 28px;height:52px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);flex-shrink:0}
+.list-header .logo{display:flex;align-items:center;gap:10px}
+.list-header .logo-sq{width:30px;height:30px;background:var(--orange);border-radius:6px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(240,120,0,.4)}
+.list-header .logo-sq svg{fill:white;width:15px;height:15px}
+.list-header .logo-name{font-weight:600;font-size:14px;color:white;letter-spacing:-.01em}
+.list-header .logo-sub{font-size:11px;color:rgba(255,255,255,.4);font-family:var(--mono)}
+.list-body{flex:1;overflow-y:auto;padding:28px}
+.list-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.list-title{font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--dark);flex:1}
+.list-title span{font-size:13px;color:var(--txt3);font-weight:400;margin-left:8px}
+
+/* stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
+.stat-ic{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.stat-ic-total{background:var(--blue-l)}
+.stat-ic-conf{background:var(--green-l)}
+.stat-ic-pend{background:var(--orange4)}
+.stat-num{font-size:24px;font-weight:700;color:var(--dark);line-height:1}
+.stat-lbl{font-size:11px;color:var(--txt3);font-weight:500;margin-top:3px}
+
+/* table */
+.list-table-wrap{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.list-table{width:100%;border-collapse:collapse}
+.list-table th{padding:10px 16px;font-size:10.5px;font-weight:700;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase;text-align:left;background:var(--bg);border-bottom:1.5px solid var(--border)}
+.list-table td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px}
+.list-table tr:last-child td{border-bottom:none}
+.list-table tr:hover td{background:var(--bg)}
+.list-table tr{transition:background .1s;cursor:pointer}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-l);color:var(--green)}
+.badge-gray{background:var(--bg3);color:var(--txt3)}
+.badge-orange{background:var(--orange4);color:var(--amber)}
+
+.tramite-name-cell{display:flex;align-items:center;gap:10px}
+.tramite-avatar{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
+.tramite-name{font-weight:500;color:var(--dark)}
+.tramite-id{font-size:11px;color:var(--txt3)}
+.token-cell{font-family:var(--mono);font-size:11.5px;color:var(--teal)}
+.token-none{color:var(--txt3);font-style:italic;font-size:12px}
+.date-cell{font-size:12px;color:var(--txt2)}
+
+.action-btns{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.btn-table{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .12s;font-family:var(--sans)}
+.btn-config{background:var(--orange);color:white}
+.btn-config:hover{background:#d96c00}
+.btn-nuevo-config{background:var(--bg3);color:var(--txt2);border:1px solid var(--border2)}
+.btn-nuevo-config:hover{background:var(--orange5);color:var(--orange);border-color:var(--orange3)}
+.btn-delete{background:transparent;color:var(--txt3);border:1px solid var(--border)}
+.btn-delete:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+
+/* modal nuevo tramite */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,37,53,.5);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:var(--surface);border-radius:12px;padding:28px;width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);transform:scale(.95);transition:transform .2s}
+.modal-overlay.show .modal-box{transform:scale(1)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:12.5px;color:var(--txt2);margin-bottom:20px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:10.5px;font-weight:600;color:var(--txt2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.modal-field input{width:100%;background:var(--bg);border:1.5px solid var(--border2);color:var(--txt);padding:8px 12px;border-radius:var(--r);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .12s}
+.modal-field input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(240,120,0,.1)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+.list-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--txt3);gap:10px}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+</style>
+</head>
+<body>
+<!-- ══ VISTA LISTA ══════════════════════════════════════════ -->
+<div id="view-list">
+  <header class="list-header">
+    <div class="logo">
+      <div class="logo-sq"><svg viewBox="0 0 16 16" fill="white"><path d="M1 8l5-6v4h4V2l5 6-5 6v-4H6v4z"/></svg></div>
+      <span class="logo-name">Motor Calculadora</span>
+      <span class="logo-sub">v1.2</span>
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.4);font-family:var(--mono)" id="list-api-url">calculadoratramites.jpcorelab.com</div>
+  </header>
+  <div class="list-body">
+    <div class="list-toolbar">
+      <div>
+        <div class="list-title">Trámites <span id="list-count"></span></div>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn btn-orange" onclick="abrirModal()">+ Nuevo trámite</button>
+    </div>
+
+    <!-- stats -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="stat-ic stat-ic-total">📋</div><div><div class="stat-num" id="stat-total">–</div><div class="stat-lbl">Total trámites</div></div></div>
+      <div class="stat-card"><div class="stat-ic stat-ic-conf">✅</div><div><div class="stat-num" id="stat-conf">–</div><div class="stat-lbl">Con cálculo configurado</div></div></div>
+      <div class="stat-card"><div class="stat-ic stat-ic-pend">⚙️</div><div><div class="stat-num" id="stat-pend">–</div><div class="stat-lbl">Sin configurar</div></div></div>
+    </div>
+
+    <!-- table -->
+    <div class="list-table-wrap">
+      <div id="list-content">
+        <div class="list-loading"><div class="spinner"></div><span>Cargando trámites...</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ VISTA BUILDER ═══════════════════════════════════════ -->
+<div id="view-builder">
+
+
+<header class="topbar">
+  <button class="btn btn-ghost btn-sm" onclick="volverALista()" style="gap:4px;flex-shrink:0"><span id="back-btn-label">← Lista</span></button>
+  <div class="sep"></div>
+  <div class="logo">
+    <div class="logo-sq"><svg viewBox="0 0 16 16"><path d="M1 8l5-6v4h4V2l5 6-5 6v-4H6v4z"/></svg></div>
+    <span class="logo-name">Motor Calculadora</span>
+    <span class="logo-ver">v1.2</span>
+  </div>
+  <div class="sep"></div>
+  <div class="tramite-wrap">
+    <span class="tramite-lbl">Trámite</span>
+    <input class="tramite-inp" id="tramite-name" type="text" placeholder="Nombre del trámite"
+      oninput="STATE.tramite.name=this.value;markDirty()">
+    <div class="topbar-vdiv"></div>
+    <span class="tramite-lbl">Token API</span>
+    <input class="tramite-id-inp" id="tramite-id" type="text" placeholder="sk_prod_xxxxx"
+      oninput="STATE.tramite.token=this.value;markDirty()">
+    <div class="topbar-vdiv"></div>
+    <span class="tramite-lbl">API URL</span>
+    <input class="tramite-url-inp" id="api-url" type="text"
+      placeholder="https://calculadoratramites.jpcorelab.com"
+      oninput="STATE.tramite.apiUrl=this.value">
+  </div>
+  <div class="sep"></div>
+  <span id="dirty" style="font-size:11px;color:var(--orange3);font-family:var(--mono)"></span>
+  <div class="spacer"></div>
+  <button class="btn btn-save btn-sm" id="btn-save-api" onclick="guardarEnAPI()">☁ Guardar en API</button>
+  <button class="btn btn-ghost btn-sm" onclick="importJSON()">↑ Importar</button>
+  <button class="btn btn-orange btn-sm" onclick="exportJSON()">↓ Exportar</button>
+</header>
+<div class="save-toast" id="save-toast"></div>
+
+<div class="workspace">
+
+  <div class="add-panel">
+    <div class="panel-lbl">Nuevo</div>
+    <div class="add-btn ab-in"   onclick="addNode('input')"   title="Input"><span class="ic">→</span><span>Input</span></div>
+    <div class="add-divider"></div>
+    <div class="add-btn ab-var"  onclick="addNode('var')"       title="Variable calculada"><span class="ic">⚙</span><span>Math</span></div>
+    <div class="add-btn ab-var"  onclick="addNode('extractor')" title="Extraer campo de objeto" style="font-size:8px"><span class="ic">⛏</span><span>Extr.</span></div>
+    <div class="add-btn ab-cst"  onclick="addNode('const')"   title="Constante fija"><span class="ic">#</span><span>Const</span></div>
+    <div class="add-btn ab-def"  onclick="addNode('defined')" title="Variable sistema"><span class="ic">◈</span><span>Sist.</span></div>
+    <div class="add-divider"></div>
+    <div class="add-btn ab-rule" onclick="addNode('rule')"    title="Regla condicional"><span class="ic">◇</span><span>Regla</span></div>
+    <div class="add-divider"></div>
+    <div class="add-btn ab-out"  onclick="addNode('output')"  title="Output"><span class="ic">←</span><span>Output</span></div>
+  </div>
+
+  <div class="canvas-wrap">
+    <div id="canvas">
+      <svg id="svg-layer"></svg>
+      <div class="col-header" style="left:80px"><span class="col-dot" style="background:var(--blue)"></span>Inputs</div>
+      <div class="col-header" style="left:300px"><span class="col-dot" style="background:var(--rose)"></span>Constantes</div>
+      <div class="col-header" style="left:520px"><span class="col-dot" style="background:var(--orange)"></span>Variables</div>
+      <div class="col-header" style="left:740px"><span class="col-dot" style="background:var(--teal)"></span>Sistema</div>
+      <div class="col-header" style="left:960px"><span class="col-dot" style="background:var(--amber)"></span>Reglas</div>
+      <div class="col-header" style="left:1180px"><span class="col-dot" style="background:var(--green)"></span>Outputs</div>
+    </div>
+    <div class="legend">
+      <div class="leg-i"><span class="leg-d" style="background:var(--blue)"></span>Input</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--rose)"></span>Constante</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--orange)"></span>Variable</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--teal)"></span>Sistema</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--amber)"></span>Regla</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--green)"></span>Output</div>
+    </div>
+  </div>
+
+  <div class="editor-panel" id="editor-panel">
+    <div class="ep-head">
+      <span class="ep-title" id="ep-title">Propiedades</span>
+      <span class="ep-badge" id="ep-badge" style="display:none"></span>
+    </div>
+    <div class="ep-body" id="ep-body">
+      <div class="ep-empty">
+        <div class="ep-empty-icon">◎</div>
+        <div class="ep-empty-msg">Selecciona un nodo para editar sus propiedades</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="test-strip" id="test-strip">
+  <div class="ts-toggle" onclick="toggleTest()">
+    <span>▶ Probar motor</span>
+    <span class="ts-arrow">▲</span>
+  </div>
+  <div class="ts-body">
+    <div class="ts-pane">
+      <div class="ts-ph"><span class="ts-dot" style="background:var(--blue)"></span>JSON entrada</div>
+      <textarea id="ts-in" placeholder='{ "idtramite": "sk_test_demo", "salario": 12500 }'></textarea>
+    </div>
+    <div class="ts-pane">
+      <div class="ts-ph"><span class="ts-dot" style="background:var(--green)"></span>Resultado</div>
+      <textarea id="ts-out" readonly></textarea>
+    </div>
+    <div class="ts-actions">
+      <div class="motor-toggle">
+        <div class="mt-opt act" id="mt-local" onclick="setMotor('local')">⚡ Local JS</div>
+        <div class="mt-opt" id="mt-api" onclick="setMotor('api')">☁ API Real</div>
+      </div>
+      <button class="btn btn-orange" style="width:100%" onclick="runEngine()">▶ Ejecutar</button>
+      <button class="btn btn-ghost-light btn-sm" style="width:100%" onclick="autoFill()">Auto-llenar</button>
+      <span id="ts-status" class="ts-status ts-idle">sin ejecutar</span>
+      <span id="ts-time" style="font-size:10px;color:var(--txt3);font-family:var(--mono)"></span>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-in" accept=".json" style="display:none" onchange="readImport(event)">
+
+<script>
+// ── CATÁLOGO SISTEMA ─────────────────────────────────────────
+const CATALOG = [
+  {key:'inpc',        desc:'Índice Nal. de Precios',      group:'Económico'},
+  {key:'iva',         desc:'Tasa IVA vigente (0.16)',      group:'Económico'},
+  {key:'uma',         desc:'Unidad de Med. y Actualiz.',  group:'Económico'},
+  {key:'precio_dolar',desc:'Tipo de cambio USD/MXN',      group:'Económico'},
+  {key:'smg',         desc:'Salario Mínimo General',      group:'Económico'},
+  {key:'dia_mes',     desc:'Día actual del mes (1-31)',    group:'Fecha'},
+  {key:'mes_actual',  desc:'Mes actual (1-12)',            group:'Fecha'},
+  {key:'anio_actual', desc:'Año actual',                  group:'Fecha'},
+  {key:'dias_anio',   desc:'Días transcurridos del año',  group:'Fecha'},
+];
+
+const SYS_MOCK = {
+  inpc:132.45, iva:0.16, uma:108.57, precio_dolar:17.23, smg:207.44,
+  dia_mes:new Date().getDate(), mes_actual:new Date().getMonth()+1,
+  anio_actual:new Date().getFullYear(),
+  dias_anio:Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/(864e5))
+};
+
+// ── CATÁLOGO DE FUNCIONES PHP (se carga desde API) ───────────
+let FUNCIONES_CATALOGO = {};
+async function cargarFunciones(){
+  try{
+    const r=await fetch(API_BASE+'/api/funciones');
+    const d=await r.json();
+    if(d.ok) FUNCIONES_CATALOGO=d.funciones||d;
+    else if(d.funciones) FUNCIONES_CATALOGO=d.funciones;
+    console.log('Funciones cargadas:', Object.keys(FUNCIONES_CATALOGO));
+  }catch(e){ console.warn('No se pudo cargar catálogo de funciones:', e.message); }
+}
+
+// ── STATE ────────────────────────────────────────────────────
+let STATE={
+  tramite:{name:'',token:'',apiUrl:'https://calculadoratramites.jpcorelab.com'},
+  inputs:[],variables:[],constants:[],defined:[],rules:[],outputs:[]
+};
+let SEL=null, _uid=0;
+const uid=()=>'n'+(++_uid);
+
+const TOKEN_ID='__token__'; // fixed node id
+const COL={input:80,const:300,var:520,defined:740,rule:960,output:1180};
+const NW=195, NG=14, TO=52;
+
+// ── AVAILABLE VARS FOR COMBO ─────────────────────────────────
+function getAvail(){
+  return [
+    {group:'Inputs',    color:'var(--blue)',  items:STATE.inputs.filter(i=>i.name).map(i=>i.name)},
+    {group:'Variables', color:'var(--orange)',items:STATE.variables.filter(v=>v.name).map(v=>v.name)},
+    {group:'Constantes',color:'var(--rose)',  items:STATE.constants.filter(c=>c.name).map(c=>c.name)},
+    {group:'Sistema',   color:'var(--teal)',  items:STATE.defined.filter(d=>d.name||d.catalogKey).map(d=>d.name||d.catalogKey)},
+    {group:'Reglas',    color:'var(--amber)', items:STATE.rules.filter(r=>r.name).map(r=>r.name)},
+  ].filter(g=>g.items.length);
+}
+
+// ── ENSURE FIXED TOKEN NODE ──────────────────────────────────
+function ensureToken(){
+  if(!STATE.inputs.find(i=>i._id===TOKEN_ID)){
+    STATE.inputs.unshift({
+      _id:TOKEN_ID,type:'input',name:'idtramite',dataType:'string',
+      label:'ID / Token del trámite',required:true,_fixed:true,_x:0,_y:0
+    });
+  } else {
+    // keep it always first
+    const idx=STATE.inputs.findIndex(i=>i._id===TOKEN_ID);
+    if(idx>0){ const t=STATE.inputs.splice(idx,1)[0]; STATE.inputs.unshift(t); }
+  }
+}
+
+// ── LAYOUT ───────────────────────────────────────────────────
+function nh(n){
+  if(n.type==='var'&&n.opType==='lookup') return Math.max(110,86+(n.lookupRows||[]).length*24);
+  if(n.type==='const'||n.type==='defined') return 70;
+  return 80;
+}
+
+function layoutAll(){
+  ensureToken();
+  // each type gets its own column, stacked vertically
+  [
+    [STATE.inputs,   COL.input],
+    [STATE.constants,COL.const],
+    [STATE.variables,COL.var],
+    [STATE.defined,  COL.defined],
+    [STATE.rules,    COL.rule],
+    [STATE.outputs,  COL.output],
+  ].forEach(([list,x])=>{
+    list.forEach((n,i)=>{n._x=x; n._y=TO+i*(nh(n)+NG);});
+  });
+  let maxH=600;
+  getAllNodes().forEach(n=>{maxH=Math.max(maxH,n._y+nh(n)+60);});
+  document.getElementById('canvas').style.minHeight=maxH+'px';
+  renderCanvas();
+}
+
+// ── ADD / REMOVE ─────────────────────────────────────────────
+function addNode(type){
+  const id=uid();
+  if(type==='input')   STATE.inputs.push({_id:id,type:'input',name:'',dataType:'number',label:'',required:true,_x:0,_y:0});
+  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',fn:'diffYears',args:['',''],phpFn:'',phpArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
+  if(type==='extractor') STATE.variables.push({_id:id,type:'var',name:'',opType:'extractor',srcVar:'',srcField:'',decimals:2,_x:0,_y:0});
+  if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,description:'',_x:0,_y:0});
+  if(type==='defined') STATE.defined.push({_id:id,type:'defined',name:'',catalogKey:'inpc',_x:0,_y:0});
+  if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,_x:0,_y:0});
+  if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,_x:0,_y:0});
+  layoutAll(); markDirty();
+  setTimeout(()=>selectNode(id),60);
+}
+
+function removeNode(id,e){
+  e&&e.stopPropagation();
+  const n=getNode(id); if(n&&n._fixed) return; // can't delete token
+  ['inputs','variables','constants','defined','rules','outputs'].forEach(k=>{STATE[k]=STATE[k].filter(x=>x._id!==id);});
+  if(SEL===id){SEL=null;clearEditor();}
+  layoutAll(); markDirty();
+}
+
+function getAllNodes(){return [...STATE.inputs,...STATE.variables,...STATE.constants,...STATE.defined,...STATE.rules,...STATE.outputs];}
+function getNode(id){return getAllNodes().find(n=>n._id===id);}
+
+// ── RENDER CANVAS ────────────────────────────────────────────
+function renderCanvas(){
+  const canvas=document.getElementById('canvas');
+  canvas.querySelectorAll('.node').forEach(el=>el.remove());
+  const clsMap={input:'node-input',var:'node-var',const:'node-const',defined:'node-defined',rule:'node-rule',output:'node-out'};
+  const tagMap={input:'INPUT',output:'OUTPUT',rule:'IF/THEN',const:'CONST',defined:'SISTEMA'};
+  getAllNodes().forEach(node=>{
+    const el=document.createElement('div');
+    el.className=`node ${clsMap[node.type]}`;
+    el.id='node-'+node._id;
+    el.style.cssText=`left:${node._x}px;top:${node._y}px;width:${NW}px`;
+    if(SEL===node._id) el.classList.add('selected');
+    const tag=node.type==='var'?({math:'MATH',custom:'FUNCIÓN',lookup:'LOOKUP'}[node.opType]||'VAR'):tagMap[node.type];
+    el.innerHTML=`
+      <div class="node-head">
+        <span class="node-tag">${tag}</span>
+        <span class="node-name">${esc(node.name)||'<sin nombre>'}</span>
+        ${node._fixed?'<span class="lock-ic">🔒</span>':'<button class="node-del" onclick="removeNode(\''+node._id+'\',event)">✕</button>'}
+      </div>
+      <div class="node-body">${nodeBody(node)}</div>
+      ${node.type!=='input'&&node.type!=='const'&&node.type!=='defined'?'<span class="port port-in"></span>':''}
+      ${node.type!=='output'?'<span class="port port-out"></span>':''}`;
+    if(node._fixed) el.classList.add('node-fixed');
+    el.addEventListener('click',()=>selectNode(node._id));
+    makeDraggable(el,node);
+    canvas.appendChild(el);
+  });
+  drawEdges();
+}
+
+function nodeBody(n){
+  if(n.type==='input') return `<span class="node-field">${n.dataType}${n.required?' · req':''}</span>${n.label?`<br><span style="font-size:10.5px;color:var(--txt3)">${esc(n.label)}</span>`:''}`;
+  if(n.type==='const') return `<span class="node-bigval">${n.value??0}</span><span class="node-dec">.${n.decimals??2}d</span>${n.description?`<span style="font-size:10.5px;color:var(--txt3)">${esc(n.description)}</span>`:''}`;
+  if(n.type==='defined'){const c=CATALOG.find(x=>x.key===n.catalogKey)||{desc:''};return `<div class="node-sys"><span class="node-sys-dot"></span><span class="node-sys-key">${n.catalogKey||'—'}</span></div><span style="font-size:10.5px;color:var(--txt3)">${c.desc}</span>`;}
+  if(n.type==='var'){
+    const dec=`<span class="node-dec">.${n.decimals??2}d</span>`;
+    if(n.opType==='math') return `<span class="node-field">${n.operandA||'?'} ${n.operator} ${n.operandB||'?'}</span>${dec}`;
+    if(n.opType==='custom') return `<span class="node-field">${n.fn}(${(n.args||[]).join(', ')})</span>${dec}`;
+    if(n.opType==='lookup') return `<span class="node-field">lookup[${n.operandA||'key'}]</span>${dec}<br><span style="font-size:10.5px;color:var(--txt3)">${(n.lookupRows||[]).length} entradas</span>`;
+    if(n.opType==='php_function') return `<span class="node-field" style="color:var(--purple,#7c3aed)">${n.phpFn||'fn?'}(${(n.phpArgs||[]).map(a=>a.val||'?').join(', ')})</span>${dec}`;
+    if(n.opType==='extractor') return `<span class="node-field" style="color:#0369a1">${n.srcVar||'?'}<span style="color:var(--txt3)">.</span>${n.srcField||'campo'}</span>${dec}`;
+  }
+  if(n.type==='rule') return `<span class="node-field">${n.ifLeft||'?'} ${n.operator} ${n.ifRight||'?'}</span><br><span style="font-size:10.5px;color:var(--txt3)">→ ${n.then||'?'} / ${n.else||'?'} <span class="node-dec">.${n.decimals??2}d</span></span>`;
+  if(n.type==='output') return `<span class="node-field">← ${n.map||'sin mapear'}</span><span class="node-dec">.${n.decimals??2}d</span>${n.description?`<br><span style="font-size:10.5px;color:var(--txt3)">${esc(n.description)}</span>`:''}`;
+  return '';
+}
+
+// ── EDGES ────────────────────────────────────────────────────
+const COL_OF={input:'#2563a8',var:'#e8621a',const:'#9f1239',defined:'#0f766e',rule:'#9a5c00',output:'#16704a'};
+
+function drawEdges(){
+  const svg=document.getElementById('svg-layer');
+  svg.innerHTML='';
+  const all=getAllNodes();
+  const byName={};
+  all.forEach(n=>{if(n.name)byName[n.name]=n; if(n.catalogKey)byName[n.catalogKey]=n;});
+  function edge(from,to){
+    if(!from||!to||from._id===to._id)return;
+    const fx=from._x+NW,fy=from._y+nh(from)/2,tx=to._x,ty=to._y+nh(to)/2,cx=(fx+tx)/2;
+    const col=COL_OF[from.type];
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M ${fx} ${fy} C ${cx} ${fy}, ${cx} ${ty}, ${tx} ${ty}`);
+    p.setAttribute('fill','none');p.setAttribute('stroke',col);
+    p.setAttribute('stroke-width','1.5');p.setAttribute('stroke-dasharray','5 3');p.setAttribute('opacity','0.45');
+    svg.appendChild(p);
+    const arr=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    arr.setAttribute('points',`${tx-1},${ty-3} ${tx+6},${ty} ${tx-1},${ty+3}`);
+    arr.setAttribute('fill',col);arr.setAttribute('opacity','0.6');
+    svg.appendChild(arr);
+  }
+  STATE.variables.forEach(v=>{[v.operandA,v.operandB,...(v.args||[])].forEach(r=>{if(r)edge(byName[r],v);});});
+  STATE.rules.forEach(r=>{[r.ifLeft,r.ifRight].forEach(ref=>{if(ref)edge(byName[ref],r);});});
+  STATE.outputs.forEach(o=>{if(o.map)edge(byName[o.map],o);});
+}
+
+// ── DRAG ─────────────────────────────────────────────────────
+function makeDraggable(el,node){
+  let ox,oy,drag=false;
+  el.addEventListener('mousedown',e=>{
+    if(['INPUT','SELECT','BUTTON','TEXTAREA'].includes(e.target.tagName))return;
+    drag=true;ox=e.clientX-node._x;oy=e.clientY-node._y;el.style.zIndex=100;e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{if(!drag)return;node._x=Math.max(0,e.clientX-ox);node._y=Math.max(40,e.clientY-oy);el.style.left=node._x+'px';el.style.top=node._y+'px';drawEdges();});
+  document.addEventListener('mouseup',()=>{if(drag){drag=false;el.style.zIndex='';}});
+}
+
+// ── VAR COMBO ────────────────────────────────────────────────
+let _cid=0;
+function makeCombo(placeholder,val,onChangeFn){
+  return makeComboFiltered(placeholder,val,onChangeFn,null);
+}
+
+// Filtered combo — tipoFiltro: 'date'|'number'|'string'|null (null = show all)
+function makeComboFiltered(placeholder,val,onChangeFn,tipoFiltro){
+  const id='vc'+(++_cid);
+  return `<div class="vc">
+    <input type="text" id="${id}" value="${esc(val)}" placeholder="${placeholder}"
+      oninput="vcFilter('${id}',this.value,'${tipoFiltro||''}')"
+      onfocus="vcOpen('${id}',this.value,'${tipoFiltro||''}')"
+      onblur="setTimeout(()=>vcClose('${id}'),200)"
+      onchange="${onChangeFn.replace(/'/g,'&apos;')}">
+    <span class="vc-arrow">▾</span>
+    <div class="vc-drop" id="drop_${id}"></div>
+  </div>`;
+}
+function vcOpen(id,v,tipo){vcFilter(id,v,tipo);document.getElementById('drop_'+id).classList.add('open');}
+function vcClose(id){const el=document.getElementById('drop_'+id);if(el)el.classList.remove('open');}
+function vcFilter(id,v,tipo){
+  const drop=document.getElementById('drop_'+id);if(!drop)return;
+  const q=v.toLowerCase();
+
+  // Filter available vars by type if specified
+  let groups = getAvail();
+  if(tipo==='date'){
+    groups = [
+      {group:'Inputs fecha',   color:'var(--blue)',  items: STATE.inputs.filter(i=>i.name&&i.dataType==='date').map(i=>i.name)},
+      {group:'Variables fecha',color:'var(--orange)',items: STATE.variables.filter(v=>v.name&&(
+        v.opType==='php_function'&&(v.phpFn||'').toLowerCase().includes('fecha')
+        || v.name.toLowerCase().includes('fecha')
+      )).map(v=>v.name)},
+      {group:'Sistema fecha',  color:'var(--teal)',  items: STATE.defined.filter(d=>(d.name||d.catalogKey)&&['dia_mes','mes_actual','anio_actual','dias_anio'].includes(d.catalogKey)).map(d=>d.name||d.catalogKey)},
+    ].filter(g=>g.items.length);
+    // also allow typing a literal date
+    if(!groups.length) groups=[{group:'Sin variables fecha definidas',color:'var(--txt3)',items:[]}];
+  } else if(tipo==='number'){
+    groups = [
+      {group:'Inputs número', color:'var(--blue)',  items: STATE.inputs.filter(i=>i.name&&i.dataType==='number').map(i=>i.name)},
+      {group:'Constantes',    color:'var(--rose)',  items: STATE.constants.filter(c=>c.name).map(c=>c.name)},
+      {group:'Variables',     color:'var(--orange)',items: STATE.variables.filter(v=>v.name&&v.opType!=='php_function').map(v=>v.name)},
+      {group:'Sistema',       color:'var(--teal)',  items: STATE.defined.filter(d=>d.name||d.catalogKey).map(d=>d.name||d.catalogKey)},
+      {group:'Reglas',        color:'var(--amber)', items: STATE.rules.filter(r=>r.name).map(r=>r.name)},
+    ].filter(g=>g.items.length);
+  }
+
+  let html='';
+  groups.forEach(g=>{
+    const items=g.items.filter(i=>!q||i.toLowerCase().includes(q));
+    if(!items.length)return;
+    html+=`<div class="vd-grp">${g.group}</div>`;
+    items.forEach(item=>{
+      html+=`<div class="vd-item" onmousedown="vcPick('${id}','${item}')"><span class="vd-dot" style="background:${g.color}"></span>${item}</div>`;
+    });
+  });
+  if(!html)html='<div style="padding:8px 12px;font-size:11.5px;color:var(--txt3)">Sin coincidencias — puedes escribir un valor literal</div>';
+  drop.innerHTML=html;drop.classList.add('open');
+}
+function vcPick(id,val){
+  const inp=document.getElementById(id);
+  if(inp){inp.value=val;inp.dispatchEvent(new Event('change',{bubbles:true}));}
+  vcClose(id);
+}
+
+// ── SELECT + EDITOR ──────────────────────────────────────────
+function selectNode(id){
+  // collapse test strip if open
+  const strip=document.getElementById('test-strip');
+  if(strip.classList.contains('open')) strip.classList.remove('open');
+
+  SEL=id;
+  // dim all other nodes, highlight selected
+  document.querySelectorAll('.node').forEach(el=>{
+    el.classList.remove('selected','dimmed');
+    if(el.id==='node-'+id) el.classList.add('selected');
+    else el.classList.add('dimmed');
+  });
+
+  // expand editor panel
+  document.getElementById('editor-panel').classList.add('expanded');
+
+  renderEditor(id);
+}
+
+function clearEditor(){
+  SEL=null;
+  // undim all nodes
+  document.querySelectorAll('.node').forEach(el=>el.classList.remove('selected','dimmed'));
+  // shrink editor
+  document.getElementById('editor-panel').classList.remove('expanded');
+  document.getElementById('ep-title').textContent='Propiedades';
+  document.getElementById('ep-badge').style.display='none';
+  document.getElementById('ep-body').innerHTML='<div class="ep-empty"><div class="ep-empty-icon">◎</div><div class="ep-empty-msg">Selecciona un nodo para editar sus propiedades</div></div>';
+}
+
+function renderEditor(id){
+  const n=getNode(id);if(!n)return;
+  const labels={input:'Input',var:'Variable',const:'Constante',defined:'Sistema',rule:'Regla',output:'Output'};
+  const bstyle={input:'background:var(--blue-l);color:var(--blue)',var:'background:var(--orange4);color:var(--orange)',const:'background:var(--rose-l);color:var(--rose)',defined:'background:var(--teal-l);color:var(--teal)',rule:'background:var(--amber-l);color:var(--amber)',output:'background:var(--green-l);color:var(--green)'};
+  document.getElementById('ep-title').textContent=n.name||labels[n.type];
+  const badge=document.getElementById('ep-badge');
+  badge.style.cssText=bstyle[n.type];badge.style.display='inline-flex';
+  badge.textContent=labels[n.type].toUpperCase();
+
+  let html='';
+
+  if(n.type==='input'){
+    html=`
+    <div class="ep-section" style="color:var(--blue)"><span class="ep-sdot" style="background:var(--blue)"></span>Identificación</div>
+    <div class="field mono-in"><label>Nombre (key JSON)</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. salario_mensual" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="field"><label>Etiqueta UI</label>
+      <input type="text" value="${esc(n.label)}" placeholder="ej. Salario mensual" oninput="upd('${id}','label',this.value)">
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tipo dato</label>
+        <select onchange="upd('${id}','dataType',this.value)">
+          ${['number','string','date','boolean'].map(t=>`<option ${n.dataType===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Requerido</label>
+        <select onchange="upd('${id}','required',this.value==='true')">
+          <option value="true" ${n.required?'selected':''}>Sí</option>
+          <option value="false" ${!n.required?'selected':''}>No</option>
+        </select>
+      </div>
+    </div>`;
+  }
+
+  else if(n.type==='const'){
+    html=`
+    <div class="ep-section" style="color:var(--rose)"><span class="ep-sdot" style="background:var(--rose)"></span>Constante fija</div>
+    <div class="field mono-in"><label>Nombre (como se referencia)</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. meses_anio" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="field bignum"><label>Valor</label>
+      <input type="number" step="any" value="${n.value??0}" oninput="upd('${id}','value',parseFloat(this.value)||0)">
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Descripción</label>
+        <input type="text" value="${esc(n.description)}" placeholder="ej. Meses del año" oninput="upd('${id}','description',this.value)">
+      </div>
+      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+        <select onchange="upd('${id}','decimals',parseInt(this.value))">
+          ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="info-box info-rose">
+      💡 Referencia esta constante escribiendo <strong>${n.name||'su_nombre'}</strong> en cualquier operando.
+      Siempre valdrá <strong>${n.value??0}</strong>.
+    </div>`;
+  }
+
+  else if(n.type==='defined'){
+    const groups=[...new Set(CATALOG.map(c=>c.group))];
+    html=`
+    <div class="ep-section" style="color:var(--teal)"><span class="ep-sdot" style="background:var(--teal)"></span>Variable del sistema</div>
+    <div class="field mono-in"><label>Nombre local</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. inpc_actual" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="ep-section" style="color:var(--teal)"><span class="ep-sdot" style="background:var(--teal)"></span>Catálogo</div>
+    ${groups.map(g=>`
+      <div class="cat-grp-label">${g}</div>
+      <div class="cat-grid" style="margin-bottom:10px">
+        ${CATALOG.filter(c=>c.group===g).map(c=>`
+          <div class="cat-item ${n.catalogKey===c.key?'sel':''}"
+            onclick="upd('${id}','catalogKey','${c.key}');renderEditor('${id}');renderCanvas()">
+            <div class="cat-key">${c.key}</div>
+            <div class="cat-desc">${c.desc}</div>
+          </div>`).join('')}
+      </div>`).join('')}
+    <div class="info-box info-teal">
+      🔗 En producción el motor consultará <strong>${n.catalogKey}</strong> desde la BD.
+      Referencia con <strong>${n.name||n.catalogKey}</strong>.<br>
+      <em>Para pruebas: valor mock = ${SYS_MOCK[n.catalogKey]??'N/D'}</em>
+    </div>`;
+  }
+
+  else if(n.type==='var'){
+    let opF='';
+    if(n.opType==='math'){
+      const cA=makeCombo('variable, constante o número',n.operandA||'',`upd('${id}','operandA',this.value)`);
+      const cB=makeCombo('variable, constante o número',n.operandB||'',`upd('${id}','operandB',this.value)`);
+      opF=`<div class="ep-section"><span class="ep-sdot"></span>Operación</div>
+        <div class="field-inline">
+          <div class="field mono-in" style="flex:1"><label>Operando A</label>${cA}</div>
+          <div class="field op-sel"><label>Op.</label>
+            <select onchange="upd('${id}','operator',this.value)">
+              ${['+','-','*','/'].map(op=>`<option ${n.operator===op?'selected':''}>${op}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field mono-in" style="flex:1"><label>Operando B</label>${cB}</div>
+        </div>`;
+    } else if(n.opType==='custom'){
+      const a0=makeCombo('fecha inicio',n.args[0]||'',`updArg('${id}',0,this.value)`);
+      const a1=makeCombo('"hoy" o variable fecha',n.args[1]||'',`updArg('${id}',1,this.value)`);
+      opF=`<div class="ep-section"><span class="ep-sdot"></span>Función</div>
+        <div class="field"><label>Tipo</label>
+          <select onchange="upd('${id}','fn',this.value)">
+            <option value="diffYears" ${n.fn==='diffYears'?'selected':''}>diffYears — diferencia en años</option>
+          </select>
+        </div>
+        <div class="field mono-in"><label>Arg 1 — fecha inicio</label>${a0}</div>
+        <div class="field mono-in"><label>Arg 2 — fecha fin / "hoy"</label>${a1}</div>`;
+    } else if(n.opType==='php_function'){
+      const fnNames = Object.keys(FUNCIONES_CATALOGO);
+      const fnDef   = FUNCIONES_CATALOGO[n.phpFn] || {};
+      const fnDesc  = fnDef.descripcion || '';
+      const paramDefs  = fnDef.params || [];
+      const paramTipos = fnDef.tipos  || [];
+      const phpArgs = n.phpArgs || [];
+      while(phpArgs.length < paramDefs.length) phpArgs.push({param: paramDefs[phpArgs.length], val:''});
+      const TIPO_BADGE = {date:'📅 fecha', number:'🔢 número', string:'🔤 texto'};
+      const paramRows = paramDefs.map((p,i)=>{
+        const tipo = paramTipos[i] || null;
+        const badge = tipo ? `<span style="font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;background:${tipo==='date'?'var(--blue-l)':tipo==='number'?'var(--orange4)':'var(--bg3)'};color:${tipo==='date'?'var(--blue)':tipo==='number'?'var(--amber)':'var(--txt3)'}">${TIPO_BADGE[tipo]||tipo}</span>` : '';
+        const ph = tipo==='date' ? 'variable fecha o YYYY-MM-DD' : tipo==='number' ? 'variable o número' : 'input o variable';
+        const combo = makeComboFiltered(ph, phpArgs[i]?.val||'', `updPhpArg('${id}',${i},this.value)`, tipo);
+        return `<div class="field mono-in"><label>${p}${badge}</label>${combo}</div>`;
+      }).join('');
+      opF=`
+        <div class="ep-section" style="color:#7c3aed"><span class="ep-sdot" style="background:#7c3aed"></span>Función PHP</div>
+        <div class="field"><label>Función</label>
+          <select onchange="updPhpFn('${id}',this.value)">
+            <option value="">— selecciona función —</option>
+            ${fnNames.map(f=>`<option value="${f}" ${n.phpFn===f?'selected':''}>${f}</option>`).join('')}
+          </select>
+        </div>
+        ${fnDesc ? `<div style="font-size:11.5px;color:var(--teal);margin-bottom:10px;padding:6px 10px;background:var(--teal-l);border-radius:var(--r)">${fnDesc}</div>` : ''}
+        ${fnNames.length===0 ? `<div style="font-size:11.5px;color:var(--txt3);font-style:italic">Cargando funciones desde API...</div>` : ''}
+        ${paramDefs.length ? `<div class="ep-section" style="color:#7c3aed;margin-top:8px"><span class="ep-sdot" style="background:#7c3aed"></span>Parámetros</div>${paramRows}` : ''}
+        <div class="info-box" style="background:#ede9fe;border:1px solid #c4b5fd;color:#6d28d9;margin-top:10px;font-size:11.5px">
+          🔄 En <strong>Local JS</strong> devuelve valor mock.<br>
+          🚀 En <strong>API Real</strong> ejecuta la función PHP real en el servidor.
+        </div>`;
+    } else if(n.opType==='extractor'){
+      // Get all php_function variables that could return objects
+      const phpVars = STATE.variables
+        .filter(v=>v.opType==='php_function' && v.name)
+        .map(v=>v.name);
+      const srcCombo = makeCombo('variable objeto (⚡ PHP)', n.srcVar||'', `upd('${id}','srcVar',this.value)`);
+      opF=`
+        <div class="ep-section" style="color:#0369a1"><span class="ep-sdot" style="background:#0369a1"></span>Extractor de campo</div>
+        <div class="field mono-in"><label>Variable objeto fuente</label>
+          ${srcCombo}
+          ${phpVars.length ? `<div style="font-size:10.5px;color:var(--txt3);margin-top:4px">Variables disponibles: ${phpVars.map(v=>`<span onclick="upd('${id}','srcVar','${v}');renderEditor('${id}')" style="cursor:pointer;color:#0369a1;margin-right:6px">${v}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="field mono-in"><label>Campo a extraer</label>
+          <input type="text" value="${esc(n.srcField||'')}" placeholder="ej. impuesto, factor, total"
+            oninput="upd('${id}','srcField',this.value)">
+        </div>
+        <div class="info-box" style="background:#e0f2fe;border:1px solid #bae6fd;color:#0369a1;margin-top:8px;font-size:11.5px">
+          ⛏ Extrae un campo del objeto devuelto por una función PHP.<br>
+          Ej: si <strong>${n.srcVar||'resultado_isn'}</strong> devuelve <code>{impuesto:107, total:133}</code><br>
+          esta variable valdrá <strong>${n.srcField||'campo'}</strong>.
+        </div>`;
+    }
+      const cK=makeCombo('input o variable clave',n.operandA||'',`upd('${id}','operandA',this.value)`);
+      const rows=(n.lookupRows||[]).map((r,i)=>`
+        <div class="lk-row">
+          <input type="text" value="${esc(r.from)}" placeholder="clave" oninput="updLk('${id}',${i},'from',this.value)">
+          <input type="text" value="${esc(r.value)}" placeholder="valor" oninput="updLk('${id}',${i},'value',this.value)">
+          <button class="lk-del" onclick="rmLk('${id}',${i})">✕</button>
+        </div>`).join('');
+      opF=`<div class="ep-section"><span class="ep-sdot"></span>Tabla</div>
+        <div class="field mono-in"><label>Variable / input clave</label>${cK}</div>
+        <div class="lk-table">
+          <div class="lk-head"><span>Clave</span><span>Valor</span><span></span></div>
+          ${rows}
+          <button class="add-row-btn" onclick="addLk('${id}')">+ agregar fila</button>
+        </div>`;
+    }
+    html=`
+    <div class="ep-section"><span class="ep-sdot"></span>Identificación</div>
+    <div class="field mono-in"><label>Nombre variable</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. monto_base" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tipo operación</label>
+        <select onchange="upd('${id}','opType',this.value);renderEditor('${id}');renderCanvas()">
+          <option value="math"         ${n.opType==='math'?'selected':''}>Math — A operador B</option>
+          <option value="custom"       ${n.opType==='custom'?'selected':''}>Custom — función</option>
+          <option value="lookup"       ${n.opType==='lookup'?'selected':''}>Lookup — tabla</option>
+          <option value="php_function" ${n.opType==='php_function'?'selected':''}>⚡ Función PHP</option>
+          <option value="extractor"    ${n.opType==='extractor'?'selected':''}>⛏ Extractor de campo</option>
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+        <select onchange="upd('${id}','decimals',parseInt(this.value))">
+          ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+    </div>${opF}`;
+  }
+
+  else if(n.type==='rule'){
+    const cL =makeCombo('variable o input',n.ifLeft||'', `upd('${id}','ifLeft',this.value)`);
+    const cR =makeCombo('valor o variable', n.ifRight||'',`upd('${id}','ifRight',this.value)`);
+    const cTh=makeCombo('valor o variable', n.then||'',  `upd('${id}','then',this.value)`);
+    const cEl=makeCombo('valor o variable', n.else||'',  `upd('${id}','else',this.value)`);
+    html=`
+    <div class="ep-section" style="color:var(--amber)"><span class="ep-sdot" style="background:var(--amber)"></span>Identificación</div>
+    <div class="field mono-in"><label>Nombre resultado</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. aplica_recargo" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="ep-section" style="color:var(--amber)"><span class="ep-sdot" style="background:var(--amber)"></span>Condición IF</div>
+    <div class="field-inline">
+      <div class="field mono-in" style="flex:1"><label>Izquierda</label>${cL}</div>
+      <div class="field op-sel"><label>Op.</label>
+        <select onchange="upd('${id}','operator',this.value)">
+          ${['==','!=','>','<','>=','<='].map(op=>`<option ${n.operator===op?'selected':''}>${op}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field mono-in" style="flex:1"><label>Derecha</label>${cR}</div>
+    </div>
+    <div class="ep-section" style="color:var(--amber)"><span class="ep-sdot" style="background:var(--amber)"></span>Resultado</div>
+    <div class="field-row">
+      <div class="field mono-in"><label style="color:var(--green)">THEN ✓</label>${cTh}</div>
+      <div class="field mono-in"><label style="color:#b91c1c">ELSE ✗</label>${cEl}</div>
+      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+        <select onchange="upd('${id}','decimals',parseInt(this.value))">
+          ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }
+
+  else if(n.type==='output'){
+    const cM=makeCombo('variable origen',n.map||'',`upd('${id}','map',this.value)`);
+    html=`
+    <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Identificación</div>
+    <div class="field mono-in"><label>Nombre en respuesta JSON</label>
+      <input type="text" value="${esc(n.name)}" placeholder="ej. total_a_pagar" oninput="upd('${id}','name',this.value)">
+    </div>
+    <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Mapeo</div>
+    <div class="field mono-in"><label>Variable origen</label>${cM}</div>
+    <div class="field-row">
+      <div class="field"><label>Descripción</label>
+        <input type="text" value="${esc(n.description)}" placeholder="ej. Monto total a cobrar" oninput="upd('${id}','description',this.value)">
+      </div>
+      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+        <select onchange="upd('${id}','decimals',parseInt(this.value))">
+          ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('ep-body').innerHTML=html;
+  // append mini debugger for var/rule/output nodes
+  if(['var','rule','output','const','defined'].includes(n.type)){
+    const dbgWrap=document.createElement('div');
+    dbgWrap.id='dbg-'+id;
+    document.getElementById('ep-body').appendChild(dbgWrap);
+    renderDebug(id);
+  }
+}
+
+// ── MINI DEBUGGER ────────────────────────────────────────────
+// Collect the "dependency" variable names a node needs
+function nodeDeps(n){
+  if(n.type==='var'){
+    if(n.opType==='math') return [n.operandA,n.operandB].filter(x=>x&&isNaN(Number(x)));
+    if(n.opType==='custom') return (n.args||[]).filter(x=>x&&x!=='hoy'&&x!=='today'&&isNaN(Number(x)));
+    if(n.opType==='lookup') return [n.operandA].filter(Boolean);
+    if(n.opType==='php_function') return (n.phpArgs||[]).map(a=>a.val).filter(x=>x&&isNaN(Number(x)));
+    if(n.opType==='extractor') return [n.srcVar].filter(Boolean);
+  }
+  if(n.type==='rule') return [n.ifLeft,n.ifRight].filter(x=>x&&isNaN(Number(x)));
+  if(n.type==='output') return [n.map].filter(Boolean);
+  return [];
+}
+
+// Resolve a single name from the full state (constants, defined, other vars already resolved)
+function resolveVar(name, localVals){
+  if(!name) return undefined;
+  if(!isNaN(Number(name))&&name!=='') return Number(name);
+  if(localVals&&localVals[name]!==undefined) return localVals[name];
+  // constants
+  const c=STATE.constants.find(x=>x.name===name);
+  if(c) return c.value;
+  // defined/system
+  const d=STATE.defined.find(x=>(x.name||x.catalogKey)===name);
+  if(d) return SYS_MOCK[d.catalogKey]??0;
+  return undefined;
+}
+
+// Color per node type for dep dots
+const DEP_DOT={input:'var(--blue)',var:'var(--orange)',const:'var(--rose)',defined:'var(--teal)',rule:'var(--amber)'};
+function depDotColor(name){
+  if(STATE.inputs.find(x=>x.name===name))    return DEP_DOT.input;
+  if(STATE.constants.find(x=>x.name===name)) return DEP_DOT.const;
+  if(STATE.defined.find(x=>(x.name||x.catalogKey)===name)) return DEP_DOT.defined;
+  if(STATE.variables.find(x=>x.name===name)) return DEP_DOT.var;
+  if(STATE.rules.find(x=>x.name===name))     return DEP_DOT.rule;
+  return 'var(--txt3)';
+}
+
+// renderDebug — builds the shell (header + dep inputs) once; result lives in its own div
+function renderDebug(id){
+  const wrap=document.getElementById('dbg-'+id);
+  if(!wrap) return;
+  const n=getNode(id); if(!n) return;
+  const dbgOpen=n._dbgOpen!==undefined?n._dbgOpen:false;
+  const dbgVals=n._dbgVals||{};
+  const deps=nodeDeps(n);
+
+  const needInput=[];
+  deps.forEach(dep=>{ if(resolveVar(dep,{})=== undefined) needInput.push(dep); });
+
+  let depsHtml='';
+  if(deps.length){
+    const rows=deps.map(dep=>{
+      const col=depDotColor(dep);
+      const autoVal=resolveVar(dep,{});
+      if(autoVal!==undefined){
+        return `<div class="dbg-dep-row">
+          <div class="dbg-dep-name"><span class="dbg-dep-dot" style="background:${col}"></span>${dep}</div>
+          <div class="dbg-dep-resolved">${autoVal}</div>
+        </div>`;
+      } else {
+        const cur=dbgVals[dep]!==undefined?String(dbgVals[dep]):'';
+        return `<div class="dbg-dep-row">
+          <div class="dbg-dep-name"><span class="dbg-dep-dot" style="background:${col}"></span>${dep}</div>
+          <div class="dbg-dep-val">
+            <input type="text" id="dbg-inp-${id}-${dep}" value="${esc(cur)}"
+              placeholder="valor prueba"
+              oninput="setDbgVal('${id}','${dep}',this.value)">
+          </div>
+        </div>`;
+      }
+    }).join('');
+    depsHtml=`<div class="dbg-deps">
+      <div class="dbg-deps-head">Valores de entrada</div>${rows}
+    </div>`;
+  }
+
+  wrap.innerHTML=`
+    <div class="dbg-wrap">
+      <div class="dbg-header" onclick="toggleDbg('${id}')">
+        <span class="dbg-pulse" id="dbg-pulse-${id}"></span>
+        <span class="dbg-header-label" style="color:var(--orange)">▶ Simular nodo</span>
+        <span class="dbg-toggle ${dbgOpen?'open':''}" id="dbg-toggle-${id}">▲</span>
+      </div>
+      <div class="dbg-body ${dbgOpen?'open':''}" id="dbg-body-${id}">
+        ${depsHtml}
+        <div id="dbg-result-${id}"></div>
+      </div>
+    </div>`;
+
+  runDebugCalc(id); // compute result immediately
+}
+
+// runDebugCalc — only touches dbg-result-{id}, never the input fields
+function runDebugCalc(id){
+  const resEl=document.getElementById('dbg-result-'+id);
+  const pulseEl=document.getElementById('dbg-pulse-'+id);
+  if(!resEl) return;
+  const n=getNode(id); if(!n) return;
+  const dbgVals=n._dbgVals||{};
+  const deps=nodeDeps(n);
+
+  // build allVals: auto-resolved + user-supplied
+  const allVals={};
+  deps.forEach(dep=>{
+    const auto=resolveVar(dep,{});
+    if(auto!==undefined){ allVals[dep]=auto; }
+    else if(dbgVals[dep]!==undefined&&String(dbgVals[dep])!==''){
+      allVals[dep]=!isNaN(Number(dbgVals[dep]))?Number(dbgVals[dep]):dbgVals[dep];
+    }
+  });
+
+  const vv=x=>{
+    if(x===null||x===undefined)return'?';
+    if(!isNaN(Number(x))&&x!=='')return Number(x);
+    return allVals[x]!==undefined?allVals[x]:x;
+  };
+
+  let html='', ok=false;
+
+  if(n.type==='const'){
+    html=`<div class="dbg-result">
+      <div class="dbg-formula"><span class="df-name">${esc(n.name)||'?'}</span><span class="df-op">=</span><span class="df-val">${n.value}</span></div>
+      <div class="dbg-answer"><span class="dbg-answer-label">Valor</span><span class="dbg-answer-val">${n.value}</span></div>
+    </div>`;
+    ok=true;
+  }
+  else if(n.type==='defined'){
+    const mock=SYS_MOCK[n.catalogKey]??'N/D';
+    html=`<div class="dbg-result">
+      <div class="dbg-formula"><span class="df-fn">BD</span><span class="df-op">→</span><span class="df-name">${n.catalogKey}</span></div>
+      <div class="dbg-answer"><span class="dbg-answer-label">Mock</span><span class="dbg-answer-val">${mock}</span></div>
+    </div>`;
+    ok=true;
+  }
+  else if(n.type==='var'){
+    try{
+      let formula='',result,resolved=false;
+      if(n.opType==='math'){
+        const a=vv(n.operandA),b=vv(n.operandB);
+        formula=`<span class="df-name">${esc(n.name)||'?'}</span><span class="df-op">=</span><span class="df-val">${a}</span><span class="df-op">${n.operator}</span><span class="df-val">${b}</span>`;
+        if(typeof a==='number'&&typeof b==='number'){result={'+':a+b,'-':a-b,'*':a*b,'/':b?a/b:0}[n.operator]??0;resolved=true;}
+      }
+      else if(n.opType==='custom'&&n.fn==='diffYears'){
+        const a0=n.args[0]||'',a1=n.args[1]||'hoy';
+        const d1s=allVals[a0]||a0;
+        const d2s=(a1==='hoy'||a1==='today')?new Date().toISOString().slice(0,10):(allVals[a1]||a1);
+        formula=`<span class="df-fn">diffYears</span>(<span class="df-val">${d1s||'?'}</span>, <span class="df-val">${d2s}</span>)`;
+        if(d1s&&d1s!=='?'){
+          const d1=new Date(d1s),d2=new Date(d2s);
+          let diff=d2.getFullYear()-d1.getFullYear();
+          if(d2.getMonth()<d1.getMonth()||(d2.getMonth()===d1.getMonth()&&d2.getDate()<d1.getDate()))diff--;
+          result=diff;resolved=true;
+        }
+      }
+      else if(n.opType==='lookup'){
+        const kv=allVals[n.operandA]!==undefined?allVals[n.operandA]:n.operandA;
+        const found=(n.lookupRows||[]).find(r=>String(r.from)===String(kv));
+        formula=`<span class="df-fn">lookup</span>[<span class="df-key">${esc(n.operandA)||'?'}</span>=<span class="df-val">${kv}</span>]`;
+        if(found){result=!isNaN(Number(found.value))?Number(found.value):found.value;resolved=true;}
+        else if(kv!==n.operandA){result='⚠ sin coincidencia';}
+      }
+      ok=resolved;
+      // Apply decimals rounding in simulator display
+      if(typeof result==='number' && resolved){
+        result = parseFloat(result.toFixed(n.decimals??2));
+      }
+      const resStr=result!==undefined?result:'?';
+      html=`<div class="dbg-result">
+        <div class="dbg-formula">${formula||'configurando...'}</div>
+        <div class="dbg-answer">
+          <span class="dbg-answer-label">${esc(n.name)||'resultado'}</span>
+          <span class="dbg-answer-val ${!ok?'err':''}">${resStr}</span>
+        </div>
+      </div>`;
+    }catch(e){
+      html=`<div class="dbg-result"><div class="dbg-answer"><span class="dbg-answer-val err">Error: ${e.message}</span></div></div>`;
+    }
+  }
+  else if(n.type==='rule'){
+    const L=vv(n.ifLeft),R=vv(n.ifRight);
+    const canEval=L!=='?'&&R!=='?';
+    let match=false;
+    if(canEval){
+      const lv=isNaN(Number(L))?L:Number(L),rv=isNaN(Number(R))?R:Number(R);
+      match={'==':lv==rv,'!=':lv!=rv,'>':lv>rv,'<':lv<rv,'>=':lv>=rv,'<=':lv<=rv}[n.operator]??false;
+      ok=true;
+    }
+    const branch=match?vv(n.then):vv(n.else);
+    html=`<div class="dbg-result">
+      <div class="dbg-rule-row">
+        <div class="dbg-rule-side">${L}</div>
+        <div class="dbg-rule-op">${n.operator}</div>
+        <div class="dbg-rule-side">${R}</div>
+      </div>
+      <div class="dbg-verdict">
+        ${canEval
+          ?`<span class="dbg-verdict-badge ${match?'dbg-verdict-true':'dbg-verdict-false'}">${match?'TRUE ✓':'FALSE ✗'}</span>
+            <span class="dbg-verdict-arrow">→</span>
+            <span class="dbg-verdict-res">${branch}</span>`
+          :`<span style="font-size:11px;color:var(--txt3)">Ingresa valores para evaluar</span>`}
+      </div>
+    </div>`;
+  }
+  else if(n.type==='output'){
+    const mv=allVals[n.map];
+    ok=mv!==undefined;
+    html=`<div class="dbg-result">
+      <div class="dbg-formula"><span class="df-name">${esc(n.name)||'?'}</span><span class="df-op">←</span><span class="df-key">${esc(n.map)||'?'}</span></div>
+      <div class="dbg-answer">
+        <span class="dbg-answer-label">valor</span>
+        <span class="dbg-answer-val ${!ok?'err':''}">${ok?mv:'no resuelto'}</span>
+      </div>
+    </div>`;
+  }
+
+  resEl.innerHTML=html;
+  if(pulseEl) pulseEl.className='dbg-pulse '+(ok?'ok':'');
+}
+
+function toggleDbg(id){
+  const n=getNode(id);if(!n)return;
+  n._dbgOpen=!n._dbgOpen;
+  const body=document.getElementById('dbg-body-'+id);
+  const tog=document.getElementById('dbg-toggle-'+id);
+  if(body)body.classList.toggle('open',n._dbgOpen);
+  if(tog) tog.classList.toggle('open',n._dbgOpen);
+}
+
+// setDbgVal — stores value, auto-opens panel, only re-runs calc (does NOT re-render inputs)
+function setDbgVal(id,dep,raw){
+  const n=getNode(id);if(!n)return;
+  if(!n._dbgVals)n._dbgVals={};
+  // store raw — keep as string if empty so user can clear freely
+  n._dbgVals[dep]=raw===''?'':((!isNaN(Number(raw))&&raw!=='')?Number(raw):raw);
+  // auto-open on first keystroke
+  if(!n._dbgOpen){
+    n._dbgOpen=true;
+    const body=document.getElementById('dbg-body-'+id);
+    const tog=document.getElementById('dbg-toggle-'+id);
+    if(body)body.classList.add('open');
+    if(tog) tog.classList.add('open');
+  }
+  // only update result — input field keeps focus and value
+  runDebugCalc(id);
+}
+
+// ── UPDATE HELPERS ───────────────────────────────────────────
+function upd(id,key,val){
+  const n=getNode(id);if(!n)return;
+  n[key]=val;
+  const el=document.getElementById('node-'+id);
+  if(el){el.querySelector('.node-name').textContent=n.name||'<sin nombre>';el.querySelector('.node-body').innerHTML=nodeBody(n);}
+  drawEdges();markDirty();
+  const wasOpen=n._dbgOpen;
+  renderDebug(id);
+  if(wasOpen){const b=document.getElementById('dbg-body-'+id);if(b)b.classList.add('open');}
+}
+function updArg(id,i,val){
+  const n=getNode(id);if(!n)return;if(!n.args)n.args=['',''];n.args[i]=val;
+  const el=document.getElementById('node-'+id);if(el)el.querySelector('.node-body').innerHTML=nodeBody(n);
+  drawEdges();markDirty();
+  const wasOpen=n._dbgOpen;
+  renderDebug(id);
+  if(wasOpen){const b=document.getElementById('dbg-body-'+id);if(b)b.classList.add('open');}
+}
+function addLk(id){const n=getNode(id);if(!n)return;n.lookupRows.push({from:'',value:''});renderEditor(id);renderCanvas();markDirty();}
+function rmLk(id,i){const n=getNode(id);if(!n)return;n.lookupRows.splice(i,1);renderEditor(id);renderCanvas();markDirty();}
+function updLk(id,i,k,v){const n=getNode(id);if(!n)return;n.lookupRows[i][k]=v;markDirty();}
+
+function updPhpFn(id, fnName){
+  const n=getNode(id); if(!n) return;
+  n.phpFn = fnName;
+  const fnDef = FUNCIONES_CATALOGO[fnName] || {};
+  const params = fnDef.params || [];
+  const tipos  = fnDef.tipos  || [];
+  n.phpArgs = params.map((p,i)=>({param:p, tipo:tipos[i]||null, val:''}));
+  renderEditor(id); renderCanvas(); markDirty();
+}
+function updPhpArg(id, idx, val){
+  const n=getNode(id); if(!n) return;
+  if(!n.phpArgs) n.phpArgs=[];
+  if(!n.phpArgs[idx]) n.phpArgs[idx]={param:'',val:''};
+  n.phpArgs[idx].val = val;
+  const el=document.getElementById('node-'+id);
+  if(el) el.querySelector('.node-body').innerHTML=nodeBody(n);
+  drawEdges(); markDirty();
+}
+
+function esc(s){return(s||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+// ── BUILD CONFIG ─────────────────────────────────────────────
+function buildConfig(){
+  return {
+    tramite_name:  STATE.tramite.name||'Sin nombre',
+    tramite_token: STATE.tramite.token||'',
+    version:'1.1',
+    inputs:   STATE.inputs.map(i=>({name:i.name,type:i.dataType,label:i.label||i.name,required:i.required,...(i._fixed?{token:true}:{})})),
+    constants:STATE.constants.map(c=>({name:c.name,value:c.value,decimals:c.decimals??2,description:c.description})),
+    defined:  STATE.defined.map(d=>({name:d.name||d.catalogKey,catalog_key:d.catalogKey})),
+    variables:STATE.variables.map(v=>{
+      let op={type:v.opType};
+      if(v.opType==='math'){op.operator=v.operator;op.operands=[v.operandA||0,v.operandB||0];}
+      if(v.opType==='custom'){op.fn=v.fn;op.args=v.args;}
+      if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});}
+      if(v.opType==='php_function'){op.fn=v.phpFn;op.args=(v.phpArgs||[]).map(a=>a.val);}
+      if(v.opType==='extractor'){op.src=v.srcVar;op.field=v.srcField;}
+      return{name:v.name,decimals:v.decimals??2,operation:op};
+    }),
+    rules:  STATE.rules.map(r=>({name:r.name,if_left:r.ifLeft,operator:r.operator,if_right:r.ifRight,then:r.then,else:r.else,decimals:r.decimals??2})),
+    outputs:STATE.outputs.map(o=>({name:o.name,map:o.map,description:o.description,decimals:o.decimals??2}))
+  };
+}
+
+// ── ENGINE JS ────────────────────────────────────────────────
+function runEngineJS(config,inputs){
+  const vars={...inputs};
+  (config.constants||[]).forEach(c=>{vars[c.name]=c.value;});
+  (config.defined||[]).forEach(d=>{vars[d.name||d.catalog_key]=SYS_MOCK[d.catalog_key]??0;});
+
+  const val=item=>{
+    if(item===null||item===undefined)return 0;
+    if(!isNaN(Number(item))&&item!=='')return Number(item);
+    return vars[item]!==undefined?vars[item]:item;
+  };
+
+  // Collect all rule names so we know which vars depend on them
+  const ruleNames = new Set((config.rules||[]).map(r=>r.name));
+
+  function processVar(v){
+    const op=v.operation, n=v.name;
+    let result;
+    if(op.type==='math'){const a=val(op.operands?.[0]??0),b=val(op.operands?.[1]??0);result={'+':a+b,'-':a-b,'*':a*b,'/':b?a/b:0}[op.operator]??0;}
+    else if(op.type==='custom'&&op.fn==='diffYears'){const d1=new Date(vars[op.args[0]]||'2000-01-01');const d2=(op.args[1]==='hoy'||op.args[1]==='today')?new Date():new Date(vars[op.args[1]]||new Date());let diff=d2.getFullYear()-d1.getFullYear();if(d2.getMonth()<d1.getMonth()||(d2.getMonth()===d1.getMonth()&&d2.getDate()<d1.getDate()))diff--;result=diff;}
+    else if(op.type==='lookup'){const k=vars[op.key]??op.key;const raw=(op.table&&op.table[String(k)])??0;result=isNaN(Number(raw))?raw:Number(raw);}
+    else if(op.type==='php_function'){
+      // Local JS stubs — API Real uses actual PHP
+      const fn = op.fn||'';
+      const args = (op.args||[]).map(a => vars[a]!==undefined ? vars[a] : a);
+      if(fn==='getINPC') result=132.45;
+      else if(fn==='restarAnios'){
+        try{const d=new Date(args[0]);d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);}catch(e2){result='2020-01-01';}
+      }
+      else if(fn==='calcularFechaVencimiento'){
+        try{const d=new Date(args[0].split('-').reverse().join('-'));d.setDate(d.getDate()+21);result=d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');}catch(e2){result=args[0]||'01-01-2026';}
+      }
+      else if(fn==='calcularFechaLimiteISN'){
+        const mes=parseInt(args[0])||1, anio=parseInt(args[1])||2025;
+        const mesLim = mes===12?1:mes+1, anioLim = mes===12?anio+1:anio;
+        result = `17-${String(mesLim).padStart(2,'0')}-${anioLim}`;
+      }
+      else if(fn==='esExtemporaneo'){
+        try{
+          const fa=new Date(String(args[0]).split('-').reverse().join('-'));
+          const fl=new Date(String(args[1]).split('-').reverse().join('-'));
+          result = fa > fl ? 1 : 0;
+        }catch(e2){result=0;}
+      }
+      else if(fn==='getFactorActualizacionISN') result=1.0416;
+      else if(fn==='getPorcentajeRecargosISN')  result=20.04;
+      else if(fn==='calcularMesesRecargos')      result=17;
+      else if(fn==='calcularPorcentajeRecargos') result=27.99;
+      else if(fn&&fn.toLowerCase().includes('fecha')) result=new Date().toISOString().slice(0,7)+'-01';
+      else result=`[stub:${fn}]`;
+
+      // If result is object, store as-is (no rounding)
+      if(typeof result==='object' && result!==null){ vars[v.name]=result; return; }
+    }
+    else if(op.type==='extractor'){
+      // Extract a field from an object variable
+      const src = vars[op.src];
+      if(src && typeof src==='object' && op.field){
+        result = src[op.field];
+        if(result===undefined) result=null;
+      } else {
+        result = null;
+      }
+    }
+    if(typeof result==='number'){const dec=v.decimals??2;result=parseFloat(result.toFixed(dec));}
+    vars[n]=result;
+  }
+
+  function processRule(r){
+    const L=val(r.if_left),R=val(r.if_right);
+    const match={'==':L==R,'!=':L!=R,'>':L>R,'<':L<R,'>=':L>=R,'<=':L<=R}[r.operator]??false;
+    let res=match?r.then:r.else;
+    if(!isNaN(Number(res)))res=Number(res);
+    if(typeof res==='number'){const dec=r.decimals??2;res=parseFloat(res.toFixed(dec));}
+    vars[r.name]=res;
+  }
+
+  // Separate vars by dependency type
+  // Order: 1) independent vars, 2) rules, 3) vars depending on rules, 4) extractors (depend on php objects)
+  const phpFnNames = new Set(allVars.filter(v=>v.operation?.type==='php_function').map(v=>v.name));
+
+  const extractorVars   = allVars.filter(v=>v.operation?.type==='extractor');
+  const nonExtractors   = allVars.filter(v=>v.operation?.type!=='extractor');
+
+  const independentVars = nonExtractors.filter(v=>{
+    const ops=[v.operation?.operands?.[0],v.operation?.operands?.[1],...(v.operation?.args||[])].map(String);
+    return !ops.some(o=>ruleNames.has(o));
+  });
+  const dependentVars = nonExtractors.filter(v=>{
+    const ops=[v.operation?.operands?.[0],v.operation?.operands?.[1],...(v.operation?.args||[])].map(String);
+    return ops.some(o=>ruleNames.has(o));
+  });
+
+  // Pass 1: independent vars (including php_function)
+  independentVars.forEach(processVar);
+  // Pass 2: rules
+  (config.rules||[]).forEach(processRule);
+  // Pass 3: vars depending on rule results
+  dependentVars.forEach(processVar);
+  // Pass 4: extractors (need php_function objects already in vars)
+  extractorVars.forEach(processVar);
+
+  const out={};
+  (config.outputs||[]).forEach(o=>{
+    let v=vars[o.map]??null;
+    if(typeof v==='number'&&v!==null){const dec=o.decimals??2;v=parseFloat(v.toFixed(dec));}
+    out[o.name]=v;
+  });
+  return{outputs:out,_debug_vars:vars};
+}
+
+let MOTOR_MODE='local';
+function setMotor(mode){
+  MOTOR_MODE=mode;
+  document.getElementById('mt-local').classList.toggle('act', mode==='local');
+  document.getElementById('mt-api').classList.toggle('act', mode==='api');
+}
+
+async function runEngine(){
+  const t0=performance.now();
+  let inp;
+  try{inp=JSON.parse(document.getElementById('ts-in').value||'{}');}
+  catch(e){setTS('err','JSON inválido');return;}
+
+  if(MOTOR_MODE==='local'){
+    try{
+      const r=runEngineJS(buildConfig(),inp);
+      document.getElementById('ts-out').value=JSON.stringify(r,null,2);
+      setTS('ok','✓ Local OK');
+      document.getElementById('ts-time').textContent=(performance.now()-t0).toFixed(1)+'ms';
+    }catch(e){document.getElementById('ts-out').value='Error: '+e.message;setTS('err','✕ error');}
+  } else {
+    const url=(STATE.tramite.apiUrl||'').replace(/\/$/,'')+'/api/calcular';
+    setTS('idle','⏳ llamando API...');
+    try{
+      const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(inp)});
+      const data=await res.json();
+      document.getElementById('ts-out').value=JSON.stringify(data,null,2);
+      setTS(data.ok?'ok':'err', data.ok?'✓ API OK':'✕ API error');
+      document.getElementById('ts-time').textContent=(performance.now()-t0).toFixed(0)+'ms';
+    }catch(e){document.getElementById('ts-out').value='Error de red: '+e.message;setTS('err','✕ sin conexión');}
+  }
+}
+function setTS(st,msg){const el=document.getElementById('ts-status');el.className='ts-status '+(st==='ok'?'ts-ok':st==='err'?'ts-err':'ts-idle');el.textContent=msg;}
+function autoFill(){
+  const s={idtramite: STATE.tramite.token||'sk_test_demo'};
+  STATE.inputs.forEach(i=>{
+    if(!i.name||i._fixed)return;
+    if(i.dataType==='number')s[i.name]=0;
+    else if(i.dataType==='date')s[i.name]='2020-01-01';
+    else if(i.dataType==='boolean')s[i.name]=false;
+    else s[i.name]='';
+  });
+  document.getElementById('ts-in').value=JSON.stringify(s,null,2);
+}
+
+async function guardarEnAPI(){
+  const url=(STATE.tramite.apiUrl||'').replace(/\/$/,'')+'/api/config/guardar';
+  if(!STATE.tramite.token){showToast('⚠ Define el Token API primero');return;}
+  const btn=document.getElementById('btn-save-api');
+  btn.classList.add('saving'); btn.textContent='⏳ Guardando...';
+  try{
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        tramite_id:    STATE.tramite.tramiteId||null,
+        tramite_name:  STATE.tramite.name||'Sin nombre',
+        tramite_token: STATE.tramite.token,
+        config:        buildConfig()
+      })
+    });
+    const data=await res.json();
+    if(data.ok){
+      showToast('✓ Guardado en API — Trámite #'+data.tramite_id);
+      document.getElementById('dirty').textContent='';
+    } else {
+      showToast('✕ Error: '+(data.mensaje||'respuesta inesperada'));
+    }
+  }catch(e){
+    showToast('✕ Sin conexión con la API');
+  }finally{
+    btn.classList.remove('saving'); btn.textContent='☁ Guardar en API';
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('save-toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function toggleTest(){
+  const strip=document.getElementById('test-strip');
+  // if opening test strip, deselect current node
+  if(!strip.classList.contains('open')) clearEditor();
+  strip.classList.toggle('open');
+}
+function markDirty(){document.getElementById('dirty').textContent='● sin guardar';}
+
+function exportJSON(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(buildConfig(),null,2)],{type:'application/json'}));a.download='calculadora_config.json';a.click();}
+function importJSON(){document.getElementById('file-in').click();}
+function readImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{loadConfig(JSON.parse(ev.target.result));}catch(err){alert('JSON inválido: '+err.message);}};r.readAsText(f);}
+
+function loadConfig(cfg){
+  // restore tramite
+  STATE.tramite={name:cfg.tramite_name||'',token:cfg.tramite_token||'',apiUrl:cfg.apiUrl||'https://calculadoratramites.jpcorelab.com',tramiteId:cfg.tramiteId||null};
+  const tn=document.getElementById('tramite-name');
+  const ti=document.getElementById('tramite-id');
+  const tu=document.getElementById('api-url');
+  if(tn)tn.value=STATE.tramite.name;
+  if(ti)ti.value=STATE.tramite.token;
+  if(tu)tu.value=STATE.tramite.apiUrl;
+  STATE.inputs   =(cfg.inputs||[]).filter(i=>!i.token).map(i=>({_id:uid(),type:'input',name:i.name,dataType:i.type||'number',label:i.label||'',required:i.required!==false,_x:0,_y:0}));
+  STATE.constants=(cfg.constants||[]).map(c=>({_id:uid(),type:'const',name:c.name,value:c.value??0,decimals:c.decimals??2,description:c.description||'',_x:0,_y:0}));
+  STATE.defined  =(cfg.defined||[]).map(d=>({_id:uid(),type:'defined',name:d.name||d.catalog_key,catalogKey:d.catalog_key||'inpc',_x:0,_y:0}));
+  STATE.variables=(cfg.variables||[]).map(v=>{
+    const op=v.operation||{};
+    const isPhp = op.type==='php_function';
+    const isExt = op.type==='extractor';
+    return{
+      _id:uid(),type:'var',name:v.name,
+      opType:op.type||'math',
+      operandA:op.operands?.[0]??op.key??'',
+      operator:op.operator??'+',
+      operandB:op.operands?.[1]??'',
+      fn:op.fn??'diffYears',
+      args:op.args||['',''],
+      phpFn: isPhp?(op.fn||''):'',
+      phpArgs: isPhp?(op.args||[]).map((val,i)=>({param:(FUNCIONES_CATALOGO[op.fn]?.params||[])[i]||'arg'+i,val})):[],
+      srcVar:   isExt?(op.src||''):'',
+      srcField: isExt?(op.field||''):'',
+      lookupRows:op.table?Object.entries(op.table).map(([from,value])=>({from,value})):[],
+      decimals:v.decimals??2,_x:0,_y:0
+    };
+  });
+  STATE.rules  =(cfg.rules||[]).map(r=>({_id:uid(),type:'rule',name:r.name,ifLeft:r.if_left,operator:r.operator,ifRight:r.if_right,then:r.then,else:r.else,decimals:r.decimals??2,_x:0,_y:0}));
+  STATE.outputs=(cfg.outputs||[]).map(o=>({_id:uid(),type:'output',name:o.name,map:o.map,description:o.description||'',decimals:o.decimals??2,_x:0,_y:0}));
+  layoutAll();
+}
+
+// click canvas background → deselect
+document.querySelector('.canvas-wrap').addEventListener('click', e=>{
+  if(e.target===e.currentTarget||e.target.id==='canvas'||e.target.id==='svg-layer'){
+    clearEditor();
+  }
+});
+
+// ── DEMO ─────────────────────────────────────────────────────
+loadConfig({
+  tramite_name:'Cálculo de Antigüedad',
+  tramite_token:'sk_test_demo',
+  apiUrl:'https://calculadoratramites.jpcorelab.com',
+  inputs:[
+    {name:'salario',type:'number',label:'Salario mensual',required:true},
+    {name:'fecha_ingreso',type:'date',label:'Fecha de ingreso',required:true}
+  ],
+  constants:[
+    {name:'meses_anio',value:12,description:'Meses del año'},
+    {name:'factor_recargo',value:1.15,description:'Recargo 15%'},
+    {name:'tope_uma',value:25,description:'Tope en UMAs'}
+  ],
+  defined:[
+    {name:'uma',catalog_key:'uma'},
+    {name:'inpc',catalog_key:'inpc'}
+  ],
+  variables:[
+    {name:'antiguedad',operation:{type:'custom',fn:'diffYears',args:['fecha_ingreso','hoy']}},
+    {name:'salario_anual',operation:{type:'math',operator:'*',operands:['salario','meses_anio']}},
+    {name:'base_uma',operation:{type:'math',operator:'*',operands:['uma','tope_uma']}}
+  ],
+  rules:[
+    {name:'aplica_recargo',if_left:'antiguedad',operator:'>=',if_right:'5',then:'factor_recargo',else:'1'}
+  ],
+  outputs:[
+    {name:'salario_anual',  map:'salario_anual',  description:'Salario anual',       decimals:0},
+    {name:'base_uma_tope',  map:'base_uma',        description:'Tope en UMAs',        decimals:2},
+    {name:'factor_recargo', map:'aplica_recargo',  description:'Factor aplicado',     decimals:2},
+    {name:'antiguedad_anios',map:'antiguedad',     description:'Años de antigüedad',  decimals:0}
+  ]
+});
+
+// ══════════════════════════════════════════════════════════════
+// LISTA DE TRÁMITES
+// ══════════════════════════════════════════════════════════════
+const API_BASE = 'https://calculadoratramites.jpcorelab.com';
+const AVATARS = ['🏛','📄','💼','🏠','🚗','📊','🏗','💰','📑','🗂'];
+let _tramitesList = [];
+let _tramiteActual = null;
+
+async function cargarLista(){
+  try{
+    const res = await fetch(API_BASE+'/api/tramites');
+    const data = await res.json();
+    if(!data.ok) throw new Error('API error');
+    _tramitesList = data.tramites;
+    renderLista(data.tramites);
+  } catch(e){
+    document.getElementById('list-content').innerHTML =
+      '<div class="list-loading"><span style="color:#dc2626">✕ Error al cargar</span></div>';
+  }
+}
+
+function renderLista(tramites){
+  const conf = tramites.filter(t=>t.tiene_config).length;
+  document.getElementById('stat-total').textContent = tramites.length;
+  document.getElementById('stat-conf').textContent  = conf;
+  document.getElementById('stat-pend').textContent  = tramites.length - conf;
+  document.getElementById('list-count').textContent = '('+tramites.length+')';
+
+  if(!tramites.length){
+    document.getElementById('list-content').innerHTML =
+      '<div class="list-loading">Sin trámites registrados aún</div>';
+    return;
+  }
+  const AVATARS2 = ['🏛','📄','💼','🏠','🚗','📊','🏗','💰','📑','🗂'];
+  const rows = tramites.map((t,i) => {
+    const av = AVATARS2[i % AVATARS2.length];
+    const col = t.tiene_config ? 'var(--green-l)' : 'var(--bg3)';
+    const fecha = t.updated_at
+      ? new Date(t.updated_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})
+      : '—';
+    const tokenHtml = t.token
+      ? `<span class="token-cell">${t.token}</span>`
+      : `<span class="token-none">sin token</span>`;
+    const badge = t.tiene_config
+      ? `<span class="badge badge-green">✓ Configurado <span style="font-weight:400;opacity:.7">v${t.version}</span></span>`
+      : `<span class="badge badge-gray">Sin configurar</span>`;
+    const btnAccion = t.tiene_config
+      ? `<button class="btn-table btn-config" onclick="abrirBuilder(${t.id},event)">✏ Editar</button>`
+      : `<button class="btn-table btn-nuevo-config" onclick="abrirBuilder(${t.id},event)">⚙ Configurar</button>`;
+    return `<tr onclick="abrirBuilder(${t.id},event)">
+      <td><div class="tramite-name-cell">
+        <div class="tramite-avatar" style="background:${col}">${av}</div>
+        <div><div class="tramite-name">${t.nombre}</div><div class="tramite-id">#${t.id}</div></div>
+      </div></td>
+      <td>${tokenHtml}</td>
+      <td>${badge}</td>
+      <td class="date-cell">${fecha}</td>
+      <td><div class="action-btns" onclick="event.stopPropagation()">
+        ${btnAccion}
+        <button class="btn-table btn-delete" onclick="eliminarTramite(${t.id},'${t.nombre}',event)">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('list-content').innerHTML = `
+    <table class="list-table">
+      <thead><tr>
+        <th>Trámite</th><th>Token API</th><th>Estado</th>
+        <th>Última actualización</th><th style="text-align:right">Acciones</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function abrirBuilder(tramiteId, e){
+  if(e) e.stopPropagation();
+  const t = _tramitesList.find(x=>x.id===tramiteId);
+  _tramiteActual = t;
+  STATE = {tramite:{name:'',token:'',apiUrl:API_BASE,tramiteId:null},inputs:[],variables:[],constants:[],defined:[],rules:[],outputs:[]};
+
+  if(t && t.tiene_config){
+    try{
+      const res = await fetch(API_BASE+'/api/tramites/'+tramiteId+'/config');
+      const data = await res.json();
+      if(data.ok && data.config){ data.config.apiUrl=API_BASE; data.config.tramiteId=tramiteId; loadConfig(data.config); }
+    } catch(err){ alert('Error al cargar config: '+err.message); return; }
+  } else if(t) {
+    STATE.tramite = {name:t.nombre, token:t.token||'', apiUrl:API_BASE, tramiteId:t.id};
+    const tn=document.getElementById('tramite-name');
+    const ti=document.getElementById('tramite-id');
+    const tu=document.getElementById('api-url');
+    if(tn)tn.value=STATE.tramite.name;
+    if(ti)ti.value=STATE.tramite.token;
+    if(tu)tu.value=API_BASE;
+    layoutAll();
+  }
+  document.body.classList.add('in-builder');
+  const bb=document.getElementById('back-btn-label');
+  if(bb && t) bb.textContent='← '+t.nombre;
+  // reload functions catalog if empty
+  if(Object.keys(FUNCIONES_CATALOGO).length===0) cargarFunciones();
+}
+
+function volverALista(){
+  document.body.classList.remove('in-builder');
+  clearEditor();
+  setTimeout(cargarLista, 400);
+}
+
+function abrirModal(){
+  document.getElementById('modal-nuevo').classList.add('show');
+  setTimeout(()=>document.getElementById('new-nombre').focus(),100);
+}
+function cerrarModal(){
+  document.getElementById('modal-nuevo').classList.remove('show');
+  document.getElementById('new-nombre').value='';
+  document.getElementById('new-token').value='';
+}
+async function crearYAbrir(){
+  const nombre=document.getElementById('new-nombre').value.trim();
+  const token=document.getElementById('new-token').value.trim()||'sk_'+Date.now();
+  if(!nombre){document.getElementById('new-nombre').focus();return;}
+  try{
+    const res=await fetch(API_BASE+'/api/config/guardar',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        tramite_name:nombre, tramite_token:token,
+        config:{tramite_name:nombre,tramite_token:token,version:'1.1',inputs:[],constants:[],defined:[],variables:[],rules:[],outputs:[]}
+      })
+    });
+    const data=await res.json();
+    cerrarModal();
+    await cargarLista();
+    if(data.tramite_id) abrirBuilder(data.tramite_id,null);
+  } catch(err){ alert('Error: '+err.message); }
+}
+
+async function eliminarTramite(id, nombre, e){
+  if(e) e.stopPropagation();
+  if(!confirm('¿Eliminar "'+nombre+'"?')) return;
+  try{
+    const res=await fetch(API_BASE+'/api/tramites/'+id,{method:'DELETE'});
+    const data=await res.json();
+    if(data.ok) cargarLista();
+    else alert('Error: '+data.mensaje);
+  } catch(err){ alert('Error: '+err.message); }
+}
+
+// Auto-close modal on overlay click
+document.addEventListener('DOMContentLoaded', function(){
+  const m = document.getElementById('modal-nuevo');
+  if(m) m.addEventListener('click', function(e){ if(e.target===this) cerrarModal(); });
+  cargarFunciones().then(cargarLista);
+});
+
+</script>
+
+</div>
+
+<!-- ══ MODAL NUEVO TRÁMITE ══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-nuevo">
+  <div class="modal-box">
+    <div class="modal-title">Nuevo trámite</div>
+    <div class="modal-sub">Ingresa los datos básicos del trámite para comenzar a configurar su calculadora.</div>
+    <div class="modal-field">
+      <label>Nombre del trámite</label>
+      <input type="text" id="new-nombre" placeholder="ej. Impuesto sobre nómina" autofocus>
+    </div>
+    <div class="modal-field">
+      <label>Token API <span style="font-weight:400;color:var(--txt3)">(se puede cambiar después)</span></label>
+      <input type="text" id="new-token" placeholder="ej. sk_nomina_2024" style="font-family:var(--mono)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost-light btn-sm" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-orange btn-sm" onclick="crearYAbrir()">Crear y configurar →</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
