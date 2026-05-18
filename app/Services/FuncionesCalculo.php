@@ -116,8 +116,7 @@ class FuncionesCalculo
         $anioMesF = date("Ym", strtotime($fecha_actual));
 
         try {
-            $result = DB::connection('egobierno')
-                ->select("SELECT SUM(federal_vencido) porcentaje
+            $result = DB::select("SELECT SUM(federal_vencido) porcentaje
                          FROM (SELECT CONCAT(anio,LPAD(mes,2,0)) aniomes, federal_vencido
                                FROM porcentajes
                                WHERE CONCAT(anio,LPAD(mes,2,0)) >= ?
@@ -133,8 +132,7 @@ class FuncionesCalculo
     // Helper privado — días inhábiles del año
     private static function getInhabiles(int $anio): array
     {
-        $dias = DB::connection('egobierno')
-            ->table('diasferiados')
+        $dias = DB::table('diasferiados')
             ->where('Ano', $anio)->orWhere('Ano', $anio+1)
             ->select('Ano','Mes','Dia')->get();
         return $dias->map(fn($d) =>
