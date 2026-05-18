@@ -134,15 +134,23 @@ class MotorCalculadora
 
         switch ($type) {
             case 'math':
-                $a = (float) ($val($op['operands'][0] ?? 0) ?? 0);
-                $b = (float) ($val($op['operands'][1] ?? 0) ?? 0);
-                $vars[$name] = match ($op['operator'] ?? '+') {
-                    '+'     => $a + $b,
-                    '-'     => $a - $b,
-                    '*'     => $a * $b,
-                    '/'     => $b != 0 ? $a / $b : 0,
-                    default => 0,
-                };
+                $steps = $op['steps'] ?? [
+                    ['val' => $op['operands'][0] ?? 0, 'op' => $op['operator'] ?? '+'],
+                    ['val' => $op['operands'][1] ?? 0],
+                ];
+                $result = (float) ($val($steps[0]['val']) ?? 0);
+                for ($i = 0; $i < count($steps) - 1; $i++) {
+                    $b      = (float) ($val($steps[$i + 1]['val']) ?? 0);
+                    $op_str = $steps[$i]['op'] ?? '+';
+                    $result = match ($op_str) {
+                        '+'     => $result + $b,
+                        '-'     => $result - $b,
+                        '*'     => $result * $b,
+                        '/'     => $b != 0 ? $result / $b : 0,
+                        default => 0,
+                    };
+                }
+                $vars[$name] = round($result, $v['decimals'] ?? 2);
                 break;
 
             case 'custom':
