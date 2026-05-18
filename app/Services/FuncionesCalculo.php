@@ -83,13 +83,11 @@ class FuncionesCalculo
         $fechaLimCarbon = Carbon::createFromFormat('d-m-Y', $fecha_limite);
         $mesAntiguo  = $fechaLimCarbon->copy()->subMonth();
 
-        $inpcReciente = DB::connection('operacion')
-            ->table('oper_inpc')
+        $inpcReciente = DB::table('oper_inpc')
             ->orderBy('ano','desc')->orderBy('mes','desc')
             ->value('indice') ?? 145.831;
 
-        $inpcAntiguo = DB::connection('operacion')
-            ->table('oper_inpc')
+        $inpcAntiguo = DB::table('oper_inpc')
             ->where('ano', $mesAntiguo->year)
             ->where('mes', $mesAntiguo->month)
             ->value('indice') ?? 140.012;
