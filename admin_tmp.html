@@ -1069,7 +1069,6 @@ function renderEditor(id){
           🚀 En <strong>API Real</strong> ejecuta la función PHP real en el servidor.
         </div>`;
     } else if(n.opType==='extractor'){
-      // Get all php_function variables that could return objects
       const phpVars = STATE.variables
         .filter(v=>v.opType==='php_function' && v.name)
         .map(v=>v.name);
@@ -1089,7 +1088,7 @@ function renderEditor(id){
           Ej: si <strong>${n.srcVar||'resultado_isn'}</strong> devuelve <code>{impuesto:107, total:133}</code><br>
           esta variable valdrá <strong>${n.srcField||'campo'}</strong>.
         </div>`;
-    }
+    } else if(n.opType==='lookup'){
       const cK=makeCombo('input o variable clave',n.operandA||'',`upd('${id}','operandA',this.value)`);
       const rows=(n.lookupRows||[]).map((r,i)=>`
         <div class="lk-row">
