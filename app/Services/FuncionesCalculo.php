@@ -7,34 +7,24 @@ use Illuminate\Support\Facades\DB;
 
 class FuncionesCalculo
 {
-    // Retrocede meses hasta encontrar INPC en BD
-    // Lógica real:
-    // 1. Restar 1 mes a fecha_actual
-    // 2. Si no hay INPC ese mes en BD, restar otro mes
-    // 3. Si fecha_actual < hoy Y hoy <= día 10, simular sin INPC del mes anterior
+    // Fecha INPC para fecha_actual: retrocede 1 mes (o 2 si no existe en BD o día < 10)
     public static function calcularFechaINPC1(string $fecha_actual): string
     {
-        $hoy = Carbon::now();
-        return Carbon::parse($fecha_actual)->subMonth()->format('Y-m-01');
+        return self::resolverFechaInpc($fecha_actual)['fecha_ym'];
     }
 
-    // Retrocede meses para fecha_vencimiento respetando fecha_limite
-    // Lógica real:
-    // 1. Restar 1 mes a fecha_vencimiento
-    // 2. Si no hay INPC ese mes en BD, restar otro mes
-    // 3. Si fecha_vencimiento < hoy Y hoy <= día 10, simular sin INPC del mes anterior
+    // Fecha INPC para fecha_vencimiento respetando fecha_limite como mínimo
     public static function calcularFechaINPC2(string $fecha_vencimiento, string $fecha_limite): string
     {
-        $hoy = Carbon::now();
-        return Carbon::parse($fecha_vencimiento)->subMonth()->format('Y-m-01');
+        return self::resolverFechaInpc($fecha_vencimiento, $fecha_limite)['fecha_ym'];
     }
 
-    // Busca el valor INPC en BD para una fecha dada (YYYY-MM-01)
-    // Stub: retorna 132.45
+    // Devuelve el índice INPC de la BD para una fecha dada (cualquier formato parseable)
     public static function getINPC($fecha): float
     {
-        // STUB — reemplazar con: SELECT valor FROM variables_sistema WHERE clave='inpc_YYYY_MM'
-        return 132.45;
+        $ts  = strtotime($fecha);
+        $row = self::buscarInpc($ts);
+        return (float) max(0, $row['indice']);
     }
 
     // Resta N años a una fecha y retorna YYYY-MM-01
@@ -139,6 +129,50 @@ class FuncionesCalculo
             str_pad($d->Dia,2,'0',STR_PAD_LEFT).'-'.
             str_pad($d->Mes,2,'0',STR_PAD_LEFT).'-'.$d->Ano
         )->toArray();
+    }
+
+    // Resuelve el mes INPC correcto retrocediendo desde $fechaIN.
+    // $fechaMinima (string Y-m-d o similar) limita el retroceso mínimo.
+    private static function resolverFechaInpc(string $fechaIN, $fechaMinima = 0): array
+    {
+        $ts       = strtotime($fechaIN);
+        $diaActual = (int) date('d', $ts);
+        $base      = strtotime(date('Y-m-01', $ts));   // primer día del mes
+
+        $inpcTs   = strtotime('-1 month', $base);
+        $inpcTmp  = self::buscarInpc($inpcTs);
+
+        if ($inpcTmp['indice'] == -1 || ($fechaMinima == 0 && $diaActual < 10)) {
+            $inpcTs  = strtotime('-2 months', $base);
+            $inpcTmp = self::buscarInpc($inpcTs);
+        }
+
+        if ($fechaMinima != 0 && $inpcTs < strtotime($fechaMinima . ' 00:00:00')) {
+            $inpcTs  = strtotime(date('Y-m-01', strtotime($fechaMinima)));
+            $inpcTmp = self::buscarInpc($inpcTs);
+        }
+
+        return [
+            'fecha_ym' => date('Y-m-01', $inpcTs),
+            'indice'   => $inpcTmp['indice'],
+        ];
+    }
+
+    // Consulta oper_inpc en la conexión por defecto para un timestamp dado.
+    private static function buscarInpc(int $fecha): array
+    {
+        try {
+            $indice = DB::table('oper_inpc')
+                ->where('ano', date('Y', $fecha))
+                ->where('mes', (int) date('n', $fecha))
+                ->value('indice');
+            return [
+                'fecha'  => date('d-m-Y', $fecha),
+                'indice' => $indice ?? -1,
+            ];
+        } catch (\Exception $e) {
+            return ['fecha' => date('d-m-Y', $fecha), 'indice' => -2];
+        }
     }
 
     // Catálogo de todas las funciones disponibles para el motor
