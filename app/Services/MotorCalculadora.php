@@ -11,77 +11,34 @@ class MotorCalculadora
     {
         $vars = $inputs;
 
-        // 1. Constantes → $vars
         foreach ($config['constants'] ?? [] as $c) {
             $vars[$c['name']] = $c['value'];
         }
 
-        // 2. Variables del sistema (BD + fecha/hora en tiempo real)
         foreach ($config['defined'] ?? [] as $d) {
             $name = $d['name'] ?? $d['catalog_key'];
             $key  = $d['catalog_key'] ?? $d['name'];
             $vars[$name] = self::resolveSystemVar($key);
         }
 
-        // Resuelve un operando: literal numérico, nombre de variable o string
         $val = function (mixed $item) use (&$vars): mixed {
             if ($item === null || $item === '') return 0;
             if (is_numeric($item))              return (float) $item;
             return $vars[$item] ?? $item;
         };
 
-        // 3. Variables calculadas
+        // Paso 1: variables independientes (no extractores)
         foreach ($config['variables'] ?? [] as $v) {
-            $op   = $v['operation'] ?? [];
-            $name = $v['name'];
-            $type = $op['type'] ?? '';
-
-            if ($type === 'math') {
-                $a = (float) ($val($op['operands'][0] ?? 0) ?? 0);
-                $b = (float) ($val($op['operands'][1] ?? 0) ?? 0);
-                $vars[$name] = match ($op['operator'] ?? '+') {
-                    '+'     => $a + $b,
-                    '-'     => $a - $b,
-                    '*'     => $a * $b,
-                    '/'     => $b != 0 ? $a / $b : 0,
-                    default => 0,
-                };
-            } elseif ($type === 'custom' && ($op['fn'] ?? '') === 'diffYears') {
-                $arg0 = $op['args'][0] ?? '';
-                $arg1 = $op['args'][1] ?? 'hoy';
-
-                // Arg0 puede ser un nombre de variable o literal de fecha
-                $d1str = $vars[$arg0] ?? $arg0 ?: '2000-01-01';
-                $d2 = in_array($arg1, ['hoy', 'today'])
-                    ? Carbon::now()
-                    : Carbon::parse($vars[$arg1] ?? $arg1);
-
-                $d1 = Carbon::parse($d1str);
-
-                // Replica exacta de la lógica JS: años cumplidos
-                $diff = $d2->year - $d1->year;
-                if ($d2->month < $d1->month || ($d2->month === $d1->month && $d2->day < $d1->day)) {
-                    $diff--;
-                }
-                $vars[$name] = max(0, $diff);
-            } elseif ($type === 'lookup') {
-                $k     = $vars[$op['key'] ?? ''] ?? ($op['key'] ?? '');
-                $table = $op['table'] ?? [];
-                $raw   = $table[(string) $k] ?? 0;
-                $vars[$name] = is_numeric($raw) ? (float) $raw : $raw;
-            } elseif ($type === 'php_function') {
-                $fn   = $op['fn'] ?? '';
-                $args = array_map(fn($a) => $vars[$a] ?? $a, $op['args'] ?? []);
-                $vars[$name] = FuncionesCalculo::$fn(...$args);
+            if (($v['operation']['type'] ?? '') !== 'extractor') {
+                self::processVariable($v, $vars, $val);
             }
         }
 
-        // 4. Reglas condicionales
+        // Paso 2: reglas condicionales
         foreach ($config['rules'] ?? [] as $r) {
             $L = $val($r['if_left']  ?? '');
             $R = $val($r['if_right'] ?? '');
 
-            // Comparación numérica cuando ambos son números
             if (is_numeric($L) && is_numeric($R)) {
                 $L = (float) $L;
                 $R = (float) $R;
@@ -97,15 +54,30 @@ class MotorCalculadora
                 default => false,
             };
 
-            $res = $match ? ($r['then'] ?? null) : ($r['else'] ?? null);
-            // Si el resultado es un nombre de variable, lo resolvemos
-            $res = $val($res);
+            $res = $val($match ? ($r['then'] ?? null) : ($r['else'] ?? null));
             if (is_numeric($res)) $res = (float) $res;
-
             $vars[$r['name']] = $res;
         }
 
-        // 5. Outputs: solo lo que el config declara
+        // Paso 3: variables que dependen de outputs de reglas
+        $ruleNames = array_column($config['rules'] ?? [], 'name');
+        foreach ($config['variables'] ?? [] as $v) {
+            $type = $v['operation']['type'] ?? '';
+            if ($type === 'extractor') continue;
+            $op   = $v['operation'] ?? [];
+            $deps = array_merge($op['operands'] ?? [], $op['args'] ?? []);
+            if (array_intersect($deps, $ruleNames)) {
+                self::processVariable($v, $vars, $val);
+            }
+        }
+
+        // Paso 4: extractores (dependen de php_function que ya están en $vars)
+        foreach ($config['variables'] ?? [] as $v) {
+            if (($v['operation']['type'] ?? '') === 'extractor') {
+                self::processVariable($v, $vars, $val);
+            }
+        }
+
         $outputs = [];
         foreach ($config['outputs'] ?? [] as $o) {
             $outputs[$o['name']] = $vars[$o['map']] ?? null;
@@ -113,8 +85,65 @@ class MotorCalculadora
 
         return [
             'outputs' => $outputs,
-            '_vars'   => $vars,   // para logging/debug
+            '_vars'   => $vars,
         ];
+    }
+
+    private static function processVariable(array $v, array &$vars, callable $val): void
+    {
+        $op   = $v['operation'] ?? [];
+        $name = $v['name'];
+        $type = $op['type'] ?? '';
+
+        switch ($type) {
+            case 'math':
+                $a = (float) ($val($op['operands'][0] ?? 0) ?? 0);
+                $b = (float) ($val($op['operands'][1] ?? 0) ?? 0);
+                $vars[$name] = match ($op['operator'] ?? '+') {
+                    '+'     => $a + $b,
+                    '-'     => $a - $b,
+                    '*'     => $a * $b,
+                    '/'     => $b != 0 ? $a / $b : 0,
+                    default => 0,
+                };
+                break;
+
+            case 'custom':
+                if (($op['fn'] ?? '') === 'diffYears') {
+                    $arg0  = $op['args'][0] ?? '';
+                    $arg1  = $op['args'][1] ?? 'hoy';
+                    $d1str = $vars[$arg0] ?? $arg0 ?: '2000-01-01';
+                    $d2    = in_array($arg1, ['hoy', 'today'])
+                        ? Carbon::now()
+                        : Carbon::parse($vars[$arg1] ?? $arg1);
+                    $d1    = Carbon::parse($d1str);
+                    $diff  = $d2->year - $d1->year;
+                    if ($d2->month < $d1->month || ($d2->month === $d1->month && $d2->day < $d1->day)) {
+                        $diff--;
+                    }
+                    $vars[$name] = max(0, $diff);
+                }
+                break;
+
+            case 'lookup':
+                $k           = $vars[$op['key'] ?? ''] ?? ($op['key'] ?? '');
+                $table       = $op['table'] ?? [];
+                $raw         = $table[(string) $k] ?? 0;
+                $vars[$name] = is_numeric($raw) ? (float) $raw : $raw;
+                break;
+
+            case 'php_function':
+                $fn          = $op['fn'] ?? '';
+                $args        = array_map(fn($a) => $vars[$a] ?? $a, $op['args'] ?? []);
+                $vars[$name] = FuncionesCalculo::$fn(...$args);
+                break;
+
+            case 'extractor':
+                $src         = $vars[$op['src'] ?? ''] ?? null;
+                $field       = $op['field'] ?? '';
+                $vars[$name] = is_array($src) ? ($src[$field] ?? null) : null;
+                break;
+        }
     }
 
     private static function resolveSystemVar(string $key): mixed
