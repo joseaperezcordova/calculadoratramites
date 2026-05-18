@@ -78,8 +78,9 @@ class FuncionesCalculo
     }
 
     // Factor de actualización ISN: INPC reciente / INPC del mes anterior a fecha_limite
-    public static function getFactorActualizacionISN(string $fecha_limite): float
+    public static function getFactorActualizacionISN(?string $fecha_limite): float
     {
+        if (!$fecha_limite) return 1.0;
         $fechaLimCarbon = Carbon::createFromFormat('d-m-Y', $fecha_limite);
         $mesAntiguo  = $fechaLimCarbon->copy()->subMonth();
 
@@ -97,8 +98,9 @@ class FuncionesCalculo
     }
 
     // Porcentaje de recargos entre fecha_limite+1día y fecha_actual
-    public static function getPorcentajeRecargosISN(string $fecha_limite, string $fecha_actual): float
+    public static function getPorcentajeRecargosISN(?string $fecha_limite, string $fecha_actual): float
     {
+        if (!$fecha_limite) return 0.0;
         $unDiaMas = date("d-m-Y", strtotime($fecha_limite." +1 day"));
         $anioMesI = date("Ym", strtotime($unDiaMas));
         $anioMesF = date("Ym", strtotime($fecha_actual));

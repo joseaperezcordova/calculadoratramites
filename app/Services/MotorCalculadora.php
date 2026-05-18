@@ -133,8 +133,13 @@ class MotorCalculadora
                 break;
 
             case 'php_function':
-                $fn          = $op['fn'] ?? '';
-                $args        = array_map(fn($a) => $vars[$a] ?? $a, $op['args'] ?? []);
+                $fn   = $op['fn'] ?? '';
+                // Si un arg del config es null (campo vacío) se sustituye por ''.
+                // Si es un nombre de variable aún no resuelta, $vars[$a] ?? $a devuelve el nombre.
+                $args = array_map(
+                    fn($a) => is_string($a) ? ($vars[$a] ?? $a) : ($a ?? ''),
+                    $op['args'] ?? []
+                );
                 $vars[$name] = FuncionesCalculo::$fn(...$args);
                 break;
 
