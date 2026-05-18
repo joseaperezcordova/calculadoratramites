@@ -966,7 +966,6 @@ function renderEditor(id){
       </div>
     </div>`;
   }
-
   else if(n.type==='const'){
     html=`
     <div class="ep-section" style="color:var(--rose)"><span class="ep-sdot" style="background:var(--rose)"></span>Constante fija</div>
@@ -991,7 +990,6 @@ function renderEditor(id){
       Siempre valdrá <strong>${n.value??0}</strong>.
     </div>`;
   }
-
   else if(n.type==='defined'){
     const groups=[...new Set(CATALOG.map(c=>c.group))];
     html=`
@@ -1016,7 +1014,6 @@ function renderEditor(id){
       <em>Para pruebas: valor mock = ${SYS_MOCK[n.catalogKey]??'N/D'}</em>
     </div>`;
   }
-
   else if(n.type==='var'){
     let opF='';
     if(n.opType==='math'){
@@ -1132,9 +1129,7 @@ function renderEditor(id){
         </select>
       </div>
     </div>${opF}`;
-  }
-
-  else if(n.type==='rule'){
+  } else if(n.type==='rule'){
     const cL =makeCombo('variable o input',n.ifLeft||'', `upd('${id}','ifLeft',this.value)`);
     const cR =makeCombo('valor o variable', n.ifRight||'',`upd('${id}','ifRight',this.value)`);
     const cTh=makeCombo('valor o variable', n.then||'',  `upd('${id}','then',this.value)`);
@@ -1165,7 +1160,6 @@ function renderEditor(id){
       </div>
     </div>`;
   }
-
   else if(n.type==='output'){
     const cM=makeCombo('variable origen',n.map||'',`upd('${id}','map',this.value)`);
     html=`
