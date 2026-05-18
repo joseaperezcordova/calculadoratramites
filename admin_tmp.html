@@ -965,8 +965,7 @@ function renderEditor(id){
         </select>
       </div>
     </div>`;
-  }
-  else if(n.type==='const'){
+  } else if(n.type==='const'){
     html=`
     <div class="ep-section" style="color:var(--rose)"><span class="ep-sdot" style="background:var(--rose)"></span>Constante fija</div>
     <div class="field mono-in"><label>Nombre (como se referencia)</label>
@@ -989,8 +988,7 @@ function renderEditor(id){
       💡 Referencia esta constante escribiendo <strong>${n.name||'su_nombre'}</strong> en cualquier operando.
       Siempre valdrá <strong>${n.value??0}</strong>.
     </div>`;
-  }
-  else if(n.type==='defined'){
+  } else if(n.type==='defined'){
     const groups=[...new Set(CATALOG.map(c=>c.group))];
     html=`
     <div class="ep-section" style="color:var(--teal)"><span class="ep-sdot" style="background:var(--teal)"></span>Variable del sistema</div>
@@ -1013,8 +1011,7 @@ function renderEditor(id){
       Referencia con <strong>${n.name||n.catalogKey}</strong>.<br>
       <em>Para pruebas: valor mock = ${SYS_MOCK[n.catalogKey]??'N/D'}</em>
     </div>`;
-  }
-  else if(n.type==='var'){
+  } else if(n.type==='var'){
     let opF='';
     if(n.opType==='math'){
       const cA=makeCombo('variable, constante o número',n.operandA||'',`upd('${id}','operandA',this.value)`);
@@ -1159,8 +1156,7 @@ function renderEditor(id){
         </select>
       </div>
     </div>`;
-  }
-  else if(n.type==='output'){
+  } else if(n.type==='output'){
     const cM=makeCombo('variable origen',n.map||'',`upd('${id}','map',this.value)`);
     html=`
     <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Identificación</div>
@@ -1319,16 +1315,14 @@ function runDebugCalc(id){
       <div class="dbg-answer"><span class="dbg-answer-label">Valor</span><span class="dbg-answer-val">${n.value}</span></div>
     </div>`;
     ok=true;
-  }
-  else if(n.type==='defined'){
+  } else if(n.type==='defined'){
     const mock=SYS_MOCK[n.catalogKey]??'N/D';
     html=`<div class="dbg-result">
       <div class="dbg-formula"><span class="df-fn">BD</span><span class="df-op">→</span><span class="df-name">${n.catalogKey}</span></div>
       <div class="dbg-answer"><span class="dbg-answer-label">Mock</span><span class="dbg-answer-val">${mock}</span></div>
     </div>`;
     ok=true;
-  }
-  else if(n.type==='var'){
+  } else if(n.type==='var'){
     try{
       let formula='',result,resolved=false;
       if(n.opType==='math'){
@@ -1396,8 +1390,7 @@ function runDebugCalc(id){
           :`<span style="font-size:11px;color:var(--txt3)">Ingresa valores para evaluar</span>`}
       </div>
     </div>`;
-  }
-  else if(n.type==='output'){
+  } else if(n.type==='output'){
     const mv=allVals[n.map];
     ok=mv!==undefined;
     html=`<div class="dbg-result">
