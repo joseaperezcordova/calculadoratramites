@@ -27,55 +27,11 @@ class MotorCalculadora
             return $vars[$item] ?? $item;
         };
 
-        // Paso 1: variables independientes (no extractores)
-        foreach ($config['variables'] ?? [] as $v) {
-            if (($v['operation']['type'] ?? '') !== 'extractor') {
-                self::processVariable($v, $vars, $val);
-            }
-        }
+        $sorted = self::topoSort($config['variables'] ?? [], $config['rules'] ?? []);
 
-        // Paso 2: reglas condicionales
-        foreach ($config['rules'] ?? [] as $r) {
-            $L = $val($r['if_left']  ?? '');
-            $R = $val($r['if_right'] ?? '');
-
-            if (is_numeric($L) && is_numeric($R)) {
-                $L = (float) $L;
-                $R = (float) $R;
-            }
-
-            $match = match ($r['operator'] ?? '==') {
-                '=='    => $L == $R,
-                '!='    => $L != $R,
-                '>'     => $L >  $R,
-                '<'     => $L <  $R,
-                '>='    => $L >= $R,
-                '<='    => $L <= $R,
-                default => false,
-            };
-
-            $res = $val($match ? ($r['then'] ?? null) : ($r['else'] ?? null));
-            if (is_numeric($res)) $res = (float) $res;
-            $vars[$r['name']] = $res;
-        }
-
-        // Paso 3: variables que dependen de outputs de reglas
-        $ruleNames = array_column($config['rules'] ?? [], 'name');
-        foreach ($config['variables'] ?? [] as $v) {
-            $type = $v['operation']['type'] ?? '';
-            if ($type === 'extractor') continue;
-            $op   = $v['operation'] ?? [];
-            $deps = array_merge($op['operands'] ?? [], $op['args'] ?? []);
-            if (array_intersect($deps, $ruleNames)) {
-                self::processVariable($v, $vars, $val);
-            }
-        }
-
-        // Paso 4: extractores (dependen de php_function que ya están en $vars)
-        foreach ($config['variables'] ?? [] as $v) {
-            if (($v['operation']['type'] ?? '') === 'extractor') {
-                self::processVariable($v, $vars, $val);
-            }
+        foreach ($sorted as $node) {
+            if ($node['type'] === 'var')  self::processVariable($node['data'], $vars, $val);
+            if ($node['type'] === 'rule') self::procesarRegla($node['data'], $vars, $val);
         }
 
         $outputs = [];
@@ -87,6 +43,87 @@ class MotorCalculadora
             'outputs' => $outputs,
             '_vars'   => $vars,
         ];
+    }
+
+    private static function topoSort(array $variables, array $rules): array
+    {
+        $allNodes = array_merge(
+            array_map(fn($v) => ['name' => $v['name'], 'type' => 'var',  'data' => $v], $variables),
+            array_map(fn($r) => ['name' => $r['name'], 'type' => 'rule', 'data' => $r], $rules)
+        );
+
+        $nameToNode = collect($allNodes)->keyBy('name');
+        $inDegree   = collect($allNodes)->mapWithKeys(fn($n) => [$n['name'] => 0])->toArray();
+        $adj        = collect($allNodes)->mapWithKeys(fn($n) => [$n['name'] => []])->toArray();
+
+        foreach ($variables as $v) {
+            $op   = $v['operation'] ?? [];
+            $deps = array_merge(
+                $op['operands'] ?? [],
+                $op['args']     ?? [],
+                [$op['key']     ?? ''],
+                [$op['src']     ?? '']
+            );
+            foreach ($deps as $dep) {
+                if ($dep && $nameToNode->has($dep) && !is_numeric($dep)) {
+                    $adj[$dep][]          = $v['name'];
+                    $inDegree[$v['name']]++;
+                }
+            }
+        }
+
+        foreach ($rules as $r) {
+            foreach ([$r['if_left'] ?? '', $r['if_right'] ?? ''] as $dep) {
+                if ($dep && $nameToNode->has($dep) && !is_numeric($dep)) {
+                    $adj[$dep][]         = $r['name'];
+                    $inDegree[$r['name']]++;
+                }
+            }
+        }
+
+        $queue  = array_keys(array_filter($inDegree, fn($d) => $d === 0));
+        $sorted = [];
+
+        while (!empty($queue)) {
+            $n        = array_shift($queue);
+            $sorted[] = $n;
+            foreach ($adj[$n] ?? [] as $neighbor) {
+                $inDegree[$neighbor]--;
+                if ($inDegree[$neighbor] === 0) $queue[] = $neighbor;
+            }
+        }
+
+        // Nodos restantes (ciclos o sin dependencias registradas)
+        foreach ($allNodes as $node) {
+            if (!in_array($node['name'], $sorted)) $sorted[] = $node['name'];
+        }
+
+        return array_map(fn($name) => $nameToNode[$name], $sorted);
+    }
+
+    private static function procesarRegla(array $r, array &$vars, callable $val): void
+    {
+        $L = $val($r['if_left']  ?? '');
+        $R = $val($r['if_right'] ?? '');
+
+        if (is_numeric($L) && is_numeric($R)) {
+            $L = (float) $L;
+            $R = (float) $R;
+        }
+
+        $match = match ($r['operator'] ?? '==') {
+            '=='    => $L == $R,
+            '!='    => $L != $R,
+            '>'     => $L >  $R,
+            '<'     => $L <  $R,
+            '>='    => $L >= $R,
+            '<='    => $L <= $R,
+            default => false,
+        };
+
+        $res = $val($match ? ($r['then'] ?? null) : ($r['else'] ?? null));
+        if (is_numeric($res)) $res = (float) $res;
+        $vars[$r['name']] = $res;
     }
 
     private static function processVariable(array $v, array &$vars, callable $val): void
@@ -134,8 +171,6 @@ class MotorCalculadora
 
             case 'php_function':
                 $fn   = $op['fn'] ?? '';
-                // Si un arg del config es null (campo vacío) se sustituye por ''.
-                // Si es un nombre de variable aún no resuelta, $vars[$a] ?? $a devuelve el nombre.
                 $args = array_map(
                     fn($a) => is_string($a) ? ($vars[$a] ?? $a) : ($a ?? ''),
                     $op['args'] ?? []
