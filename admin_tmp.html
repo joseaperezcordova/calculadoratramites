@@ -728,7 +728,7 @@ function layoutAll(){
 function addNode(type){
   const id=uid();
   if(type==='input')   STATE.inputs.push({_id:id,type:'input',name:'',dataType:'number',label:'',required:true,_x:0,_y:0});
-  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',fn:'diffYears',args:['',''],phpFn:'',phpArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
+  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',steps:[{val:'',op:'+'},{val:''}],fn:'diffYears',args:['',''],phpFn:'',phpArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
   if(type==='extractor') STATE.variables.push({_id:id,type:'var',name:'',opType:'extractor',srcVar:'',srcField:'',decimals:2,_x:0,_y:0});
   if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,description:'',_x:0,_y:0});
   if(type==='defined') STATE.defined.push({_id:id,type:'defined',name:'',catalogKey:'inpc',_x:0,_y:0});
@@ -785,7 +785,11 @@ function nodeBody(n){
   if(n.type==='defined'){const c=CATALOG.find(x=>x.key===n.catalogKey)||{desc:''};return `<div class="node-sys"><span class="node-sys-dot"></span><span class="node-sys-key">${n.catalogKey||'—'}</span></div><span style="font-size:10.5px;color:var(--txt3)">${c.desc}</span>`;}
   if(n.type==='var'){
     const dec=`<span class="node-dec">.${n.decimals??2}d</span>`;
-    if(n.opType==='math') return `<span class="node-field">${n.operandA||'?'} ${n.operator} ${n.operandB||'?'}</span>${dec}`;
+    if(n.opType==='math'){
+      const steps = n.steps && n.steps.length>1 ? n.steps : [{val:n.operandA,op:n.operator},{val:n.operandB}];
+      const expr = steps.map((s,i)=> i===steps.length-1 ? (s.val||'?') : `${s.val||'?'} ${s.op||'+'}`).join(' ');
+      return `<span class="node-field">${expr}</span>${dec}`;
+    }
     if(n.opType==='custom') return `<span class="node-field">${n.fn}(${(n.args||[]).join(', ')})</span>${dec}`;
     if(n.opType==='lookup') return `<span class="node-field">lookup[${n.operandA||'key'}]</span>${dec}<br><span style="font-size:10.5px;color:var(--txt3)">${(n.lookupRows||[]).length} entradas</span>`;
     if(n.opType==='php_function') return `<span class="node-field" style="color:var(--purple,#7c3aed)">${n.phpFn||'fn?'}(${(n.phpArgs||[]).map(a=>a.val||'?').join(', ')})</span>${dec}`;
@@ -819,7 +823,16 @@ function drawEdges(){
     arr.setAttribute('fill',col);arr.setAttribute('opacity','0.6');
     svg.appendChild(arr);
   }
-  STATE.variables.forEach(v=>{[v.operandA,v.operandB,...(v.args||[])].forEach(r=>{if(r)edge(byName[r],v);});});
+  STATE.variables.forEach(v=>{
+    let refs=[];
+    if(v.opType==='math'){
+      const steps=v.steps&&v.steps.length>1?v.steps:[{val:v.operandA,op:v.operator},{val:v.operandB}];
+      refs=steps.map(s=>s.val);
+    } else {
+      refs=[v.operandA,v.operandB,...(v.args||[])];
+    }
+    refs.forEach(r=>{if(r)edge(byName[r],v);});
+  });
   STATE.rules.forEach(r=>{[r.ifLeft,r.ifRight].forEach(ref=>{if(ref)edge(byName[ref],r);});});
   STATE.outputs.forEach(o=>{if(o.map)edge(byName[o.map],o);});
 }
@@ -1014,18 +1027,30 @@ function renderEditor(id){
   } else if(n.type==='var'){
     let opF='';
     if(n.opType==='math'){
-      const cA=makeCombo('variable, constante o número',n.operandA||'',`upd('${id}','operandA',this.value)`);
-      const cB=makeCombo('variable, constante o número',n.operandB||'',`upd('${id}','operandB',this.value)`);
-      opF=`<div class="ep-section"><span class="ep-sdot"></span>Operación</div>
-        <div class="field-inline">
-          <div class="field mono-in" style="flex:1"><label>Operando A</label>${cA}</div>
-          <div class="field op-sel"><label>Op.</label>
-            <select onchange="upd('${id}','operator',this.value)">
-              ${['+','-','*','/'].map(op=>`<option ${n.operator===op?'selected':''}>${op}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field mono-in" style="flex:1"><label>Operando B</label>${cB}</div>
+      // Normalize to steps array (backward compat)
+      if(!n.steps || n.steps.length<2){
+        n.steps=[{val:n.operandA||'',op:n.operator||'+'},{val:n.operandB||''}];
+      }
+      const OPS=['+','-','*','/'];
+      const stepRows = n.steps.map((s,i)=>{
+        const combo = makeCombo('variable o número', s.val||'', `updStep('${id}',${i},'val',this.value)`);
+        const isLast = i===n.steps.length-1;
+        const opSel = !isLast ? `<div class="field op-sel"><label>${i===0?'Op.':''}</label>
+          <select onchange="updStep('${id}',${i},'op',this.value)">
+            ${OPS.map(op=>`<option value="${op}" ${(s.op||'+')===op?'selected':''}>${op}</option>`).join('')}
+          </select></div>` : '';
+        const delBtn = n.steps.length>2
+          ? `<button class="card-del" style="margin-top:${i===0?18:0}px;flex-shrink:0" onclick="rmStep('${id}',${i})">✕</button>`
+          : '';
+        return `<div class="field-inline" style="margin-bottom:6px">
+          <div class="field mono-in" style="flex:1"><label>${i===0?'Operando '+(i+1):''}</label>${combo}</div>
+          ${opSel}${delBtn}
         </div>`;
+      }).join('');
+      opF=`<div class="ep-section"><span class="ep-sdot"></span>Operación encadenada</div>
+        ${stepRows}
+        <button class="add-row-btn" style="border-radius:var(--r);border:1.5px dashed var(--border2);margin-top:4px;width:100%"
+          onclick="addStep('${id}')">+ agregar operando</button>`;
     } else if(n.opType==='custom'){
       const a0=makeCombo('fecha inicio',n.args[0]||'',`updArg('${id}',0,this.value)`);
       const a1=makeCombo('"hoy" o variable fecha',n.args[1]||'',`updArg('${id}',1,this.value)`);
@@ -1190,7 +1215,10 @@ function renderEditor(id){
 // Collect the "dependency" variable names a node needs
 function nodeDeps(n){
   if(n.type==='var'){
-    if(n.opType==='math') return [n.operandA,n.operandB].filter(x=>x&&isNaN(Number(x)));
+    if(n.opType==='math'){
+      const steps = n.steps&&n.steps.length>1 ? n.steps : [{val:n.operandA,op:n.operator},{val:n.operandB}];
+      return steps.map(s=>s.val).filter(x=>x&&isNaN(Number(x)));
+    }
     if(n.opType==='custom') return (n.args||[]).filter(x=>x&&x!=='hoy'&&x!=='today'&&isNaN(Number(x)));
     if(n.opType==='lookup') return [n.operandA].filter(Boolean);
     if(n.opType==='php_function') return (n.phpArgs||[]).map(a=>a.val).filter(x=>x&&isNaN(Number(x)));
@@ -1325,9 +1353,25 @@ function runDebugCalc(id){
     try{
       let formula='',result,resolved=false;
       if(n.opType==='math'){
-        const a=vv(n.operandA),b=vv(n.operandB);
-        formula=`<span class="df-name">${esc(n.name)||'?'}</span><span class="df-op">=</span><span class="df-val">${a}</span><span class="df-op">${n.operator}</span><span class="df-val">${b}</span>`;
-        if(typeof a==='number'&&typeof b==='number'){result={'+':a+b,'-':a-b,'*':a*b,'/':b?a/b:0}[n.operator]??0;resolved=true;}
+        const steps = n.steps&&n.steps.length>1
+          ? n.steps
+          : [{val:n.operandA,op:n.operator||'+'},{val:n.operandB}];
+        const parts = steps.map(s=>vv(s.val));
+        const ops   = steps.slice(0,-1).map(s=>s.op||'+');
+        const exprParts = steps.map((s,i)=>
+          i<steps.length-1
+            ? `<span class="df-val">${parts[i]}</span><span class="df-op">${ops[i]}</span>`
+            : `<span class="df-val">${parts[i]}</span>`
+        ).join('');
+        formula=`<span class="df-name">${esc(n.name)||'?'}</span><span class="df-op">=</span>${exprParts}`;
+        let r=parts[0];
+        resolved=typeof r==='number';
+        for(let i=0;i<ops.length;i++){
+          const b=parts[i+1];
+          if(typeof r==='number'&&typeof b==='number'){r={'+':r+b,'-':r-b,'*':r*b,'/':b?r/b:0}[ops[i]]??0;}
+          else{resolved=false;break;}
+        }
+        if(resolved) result=r;
       }
       else if(n.opType==='custom'&&n.fn==='diffYears'){
         const a0=n.args[0]||'',a1=n.args[1]||'hoy';
@@ -1492,6 +1536,42 @@ function addLk(id){const n=getNode(id);if(!n)return;n.lookupRows.push({from:'',v
 function rmLk(id,i){const n=getNode(id);if(!n)return;n.lookupRows.splice(i,1);renderEditor(id);renderCanvas();markDirty();}
 function updLk(id,i,k,v){const n=getNode(id);if(!n)return;n.lookupRows[i][k]=v;markDirty();}
 
+// ── MATH STEPS ───────────────────────────────────────────────
+function normSteps(n){
+  if(!n.steps||n.steps.length<2)
+    n.steps=[{val:n.operandA||'',op:n.operator||'+'},{val:n.operandB||''}];
+  return n.steps;
+}
+function addStep(id){
+  const n=getNode(id); if(!n) return;
+  normSteps(n);
+  // Last step gets an operator, then new empty last
+  const last = n.steps[n.steps.length-1];
+  last.op = '+';
+  n.steps.push({val:''});
+  renderEditor(id); renderCanvas(); markDirty();
+}
+function rmStep(id,i){
+  const n=getNode(id); if(!n||n.steps.length<=2) return;
+  n.steps.splice(i,1);
+  // ensure last step has no op
+  delete n.steps[n.steps.length-1].op;
+  renderEditor(id); renderCanvas(); markDirty();
+}
+function updStep(id,i,key,val){
+  const n=getNode(id); if(!n) return;
+  normSteps(n);
+  if(!n.steps[i]) n.steps[i]={val:''};
+  n.steps[i][key]=val;
+  // sync legacy fields from first two steps
+  n.operandA = n.steps[0]?.val||'';
+  n.operator  = n.steps[0]?.op||'+';
+  n.operandB  = n.steps[1]?.val||'';
+  const el=document.getElementById('node-'+id);
+  if(el) el.querySelector('.node-body').innerHTML=nodeBody(n);
+  drawEdges(); markDirty();
+}
+
 function updPhpFn(id, fnName){
   const n=getNode(id); if(!n) return;
   n.phpFn = fnName;
@@ -1524,7 +1604,13 @@ function buildConfig(){
     defined:  STATE.defined.map(d=>({name:d.name||d.catalogKey,catalog_key:d.catalogKey})),
     variables:STATE.variables.map(v=>{
       let op={type:v.opType};
-      if(v.opType==='math'){op.operator=v.operator;op.operands=[v.operandA||0,v.operandB||0];}
+      if(v.opType==='math'){
+        const steps = v.steps&&v.steps.length>1 ? v.steps : [{val:v.operandA||0,op:v.operator||'+'},{val:v.operandB||0}];
+        op.steps = steps;
+        // keep legacy operands for backward compat with old API
+        op.operator=steps[0]?.op||'+';
+        op.operands=[steps[0]?.val||0, steps[1]?.val||0];
+      }
       if(v.opType==='custom'){op.fn=v.fn;op.args=v.args;}
       if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});}
       if(v.opType==='php_function'){op.fn=v.phpFn;op.args=(v.phpArgs||[]).map(a=>a.val);}
@@ -1554,7 +1640,23 @@ function runEngineJS(config,inputs){
   function processVar(v){
     const op=v.operation, n=v.name;
     let result;
-    if(op.type==='math'){const a=val(op.operands?.[0]??0),b=val(op.operands?.[1]??0);result={'+':a+b,'-':a-b,'*':a*b,'/':b?a/b:0}[op.operator]??0;}
+    if(op.type==='math'){
+      // Support multi-step chain: steps=[{val,op},{val,op},{val}]
+      const steps = op.steps && op.steps.length>1
+        ? op.steps
+        : [{val:op.operands?.[0]??0, op:op.operator||'+'},{val:op.operands?.[1]??0}];
+      let result = val(steps[0].val);
+      for(let i=0; i<steps.length-1; i++){
+        const a = result;
+        const b = val(steps[i+1].val);
+        const operator = steps[i].op || '+';
+        if(typeof a==='number' && typeof b==='number'){
+          result = {'+':a+b,'-':a-b,'*':a*b,'/':b?a/b:0}[operator]??0;
+        } else { result = NaN; break; }
+      }
+      if(typeof result==='number') { const dec=v.decimals??2; result=parseFloat(result.toFixed(dec)); }
+      vars[v.name]=result; return;
+    }
     else if(op.type==='custom'&&op.fn==='diffYears'){const d1=new Date(vars[op.args[0]]||'2000-01-01');const d2=(op.args[1]==='hoy'||op.args[1]==='today')?new Date():new Date(vars[op.args[1]]||new Date());let diff=d2.getFullYear()-d1.getFullYear();if(d2.getMonth()<d1.getMonth()||(d2.getMonth()===d1.getMonth()&&d2.getDate()<d1.getDate()))diff--;result=diff;}
     else if(op.type==='lookup'){const k=vars[op.key]??op.key;const raw=(op.table&&op.table[String(k)])??0;result=isNaN(Number(raw))?raw:Number(raw);}
     else if(op.type==='php_function'){
@@ -1814,12 +1916,20 @@ function loadConfig(cfg){
     const op=v.operation||{};
     const isPhp = op.type==='php_function';
     const isExt = op.type==='extractor';
+    const isMath = op.type==='math';
+    // Restore steps array
+    let steps = [];
+    if(isMath){
+      if(op.steps && op.steps.length>1){ steps=op.steps; }
+      else { steps=[{val:String(op.operands?.[0]??''),op:op.operator||'+'},{val:String(op.operands?.[1]??'')}]; }
+    }
     return{
       _id:uid(),type:'var',name:v.name,
       opType:op.type||'math',
-      operandA:op.operands?.[0]??op.key??'',
+      operandA:String(op.operands?.[0]??op.key??''),
       operator:op.operator??'+',
-      operandB:op.operands?.[1]??'',
+      operandB:String(op.operands?.[1]??''),
+      steps: isMath ? steps : [],
       fn:op.fn??'diffYears',
       args:op.args||['',''],
       phpFn: isPhp?(op.fn||''):'',
