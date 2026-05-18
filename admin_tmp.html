@@ -1577,7 +1577,8 @@ function runEngineJS(config,inputs){
   }
 
   // Separate vars by dependency type
-  // Order: 1) independent vars, 2) rules, 3) vars depending on rules, 4) extractors (depend on php objects)
+  // Order: 1) independent vars, 2) rules, 3) vars depending on rules, 4) extractors
+  const allVars = config.variables||[];
   const phpFnNames = new Set(allVars.filter(v=>v.operation?.type==='php_function').map(v=>v.name));
 
   const extractorVars   = allVars.filter(v=>v.operation?.type==='extractor');
