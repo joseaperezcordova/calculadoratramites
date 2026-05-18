@@ -66,6 +66,83 @@ class FuncionesCalculo
         return 27.99;
     }
 
+    // Calcula la fecha límite de pago ISN (día 17 del mes siguiente, ajustando días hábiles)
+    public static function calcularFechaLimiteISN(int $mes_isn, int $anio_isn): string
+    {
+        if($mes_isn == 12){ $mesLim = 1; $anioLim = $anio_isn + 1; }
+        else { $mesLim = $mes_isn + 1; $anioLim = $anio_isn; }
+
+        $fechaLim = sprintf('%02d-%02d-%04d', 17, $mesLim, $anioLim);
+        $inhabiles = self::getInhabiles($anioLim);
+
+        while(in_array(date("w", strtotime($fechaLim)), [0,6]) || in_array($fechaLim, $inhabiles)){
+            $fechaLim = date("d-m-Y", strtotime($fechaLim.' +1 days'));
+        }
+        return $fechaLim; // formato dd-mm-YYYY
+    }
+
+    // Devuelve 1 si fecha_actual > fecha_limite (extemporáneo), 0 si es oportuno
+    public static function esExtemporaneo(string $fecha_actual, string $fecha_limite): int
+    {
+        return strtotime($fecha_actual." 00:00:00") > strtotime($fecha_limite." 23:59:59") ? 1 : 0;
+    }
+
+    // Factor de actualización ISN: INPC reciente / INPC del mes anterior a fecha_limite
+    public static function getFactorActualizacionISN(string $fecha_limite): float
+    {
+        $fechaLimCarbon = Carbon::createFromFormat('d-m-Y', $fecha_limite);
+        $mesAntiguo  = $fechaLimCarbon->copy()->subMonth();
+
+        $inpcReciente = DB::connection('operacion')
+            ->table('oper_inpc')
+            ->orderBy('ano','desc')->orderBy('mes','desc')
+            ->value('indice') ?? 145.831;
+
+        $inpcAntiguo = DB::connection('operacion')
+            ->table('oper_inpc')
+            ->where('ano', $mesAntiguo->year)
+            ->where('mes', $mesAntiguo->month)
+            ->value('indice') ?? 140.012;
+
+        $factor = round($inpcReciente / $inpcAntiguo, 4);
+        return $factor < 1 ? 1 : $factor;
+    }
+
+    // Porcentaje de recargos entre fecha_limite+1día y fecha_actual
+    public static function getPorcentajeRecargosISN(string $fecha_limite, string $fecha_actual): float
+    {
+        $unDiaMas = date("d-m-Y", strtotime($fecha_limite." +1 day"));
+        $anioMesI = date("Ym", strtotime($unDiaMas));
+        $anioMesF = date("Ym", strtotime($fecha_actual));
+
+        try {
+            $result = DB::connection('egobierno')
+                ->select("SELECT SUM(federal_vencido) porcentaje
+                         FROM (SELECT CONCAT(anio,LPAD(mes,2,0)) aniomes, federal_vencido
+                               FROM porcentajes
+                               WHERE CONCAT(anio,LPAD(mes,2,0)) >= ?
+                                 AND CONCAT(anio,LPAD(mes,2,0)) <= ?
+                               ORDER BY 1 DESC LIMIT 60) t",
+                         [$anioMesI, $anioMesF]);
+            return (float)($result[0]->porcentaje ?? 20.04);
+        } catch(\Exception $e){
+            return 20.04;
+        }
+    }
+
+    // Helper privado — días inhábiles del año
+    private static function getInhabiles(int $anio): array
+    {
+        $dias = DB::connection('egobierno')
+            ->table('diasferiados')
+            ->where('Ano', $anio)->orWhere('Ano', $anio+1)
+            ->select('Ano','Mes','Dia')->get();
+        return $dias->map(fn($d) =>
+            str_pad($d->Dia,2,'0',STR_PAD_LEFT).'-'.
+            str_pad($d->Mes,2,'0',STR_PAD_LEFT).'-'.$d->Ano
+        )->toArray();
+    }
+
     // Catálogo de todas las funciones disponibles para el motor
     public static function catalogo(): array
     {
@@ -104,6 +181,26 @@ class FuncionesCalculo
                 'params'      => ['fecha_inicio', 'fecha_fin'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Porcentaje total de recargos del período',
+            ],
+            'calcularFechaLimiteISN' => [
+                'params'      => ['mes_isn', 'anio_isn'],
+                'tipos'       => ['number', 'number'],
+                'descripcion' => 'Fecha límite de pago ISN (día 17 hábil del mes siguiente)',
+            ],
+            'esExtemporaneo' => [
+                'params'      => ['fecha_actual', 'fecha_limite'],
+                'tipos'       => ['date', 'date'],
+                'descripcion' => 'Devuelve 1 si es extemporáneo, 0 si es oportuno',
+            ],
+            'getFactorActualizacionISN' => [
+                'params'      => ['fecha_limite'],
+                'tipos'       => ['date'],
+                'descripcion' => 'Factor de actualización INPC (mínimo 1.0)',
+            ],
+            'getPorcentajeRecargosISN' => [
+                'params'      => ['fecha_limite', 'fecha_actual'],
+                'tipos'       => ['date', 'date'],
+                'descripcion' => 'Porcentaje total de recargos del período ISN',
             ],
         ];
     }
