@@ -821,7 +821,10 @@ function nodeBody(n){
       const expr = steps.map((s,i)=> i===steps.length-1 ? (s.val||'?') : `${s.val||'?'} ${s.op||'+'}`).join(' ');
       return `<span class="node-field">${expr}</span>${dec}`;
     }
-    if(n.opType==='lookup') return `<span class="node-field">lookup[${n.operandA||'key'}]</span>${dec}<br><span style="font-size:10.5px;color:var(--txt3)">${(n.lookupRows||[]).length} entradas</span>`;
+    if(n.opType==='lookup'){
+      const defTxt = n.lookupDefault!==undefined&&n.lookupDefault!=='' ? ` · def:${n.lookupDefault}` : '';
+      return `<span class="node-field">lookup[${n.operandA||'key'}]</span>${dec}<br><span style="font-size:10.5px;color:var(--txt3)">${(n.lookupRows||[]).length} entradas${defTxt}</span>`;
+    }
     if(n.opType==='fn'||n.opType==='custom'||n.opType==='php_function'||n.opType==='extractor'){
       const fnDef=FUNCIONES_CATALOGO[n.fnName]||{};
       const sig=fnDef.params?.length ? `(${(n.fnArgs||[]).map(a=>a.val||'?').join(', ')})` : '()';
@@ -1203,6 +1206,12 @@ function renderEditor(id){
           <div class="lk-head"><span>Clave</span><span>Valor</span><span></span></div>
           ${rows}
           <button class="add-row-btn" onclick="addLk('${id}')">+ agregar fila</button>
+        </div>
+        <div class="field mono-in" style="margin-top:8px">
+          <label>Valor default <span style="font-weight:400;color:var(--txt3);text-transform:none">(si no hay coincidencia)</span></label>
+          <input type="text" value="${esc(n.lookupDefault??'')}" placeholder="ej. 0 o null o sin_categoria"
+            oninput="upd('${id}','lookupDefault',this.value)"
+            style="font-family:var(--mono)">
         </div>`;
     }
     html=`
@@ -1333,7 +1342,11 @@ function nodeDeps(n){
       const steps = n.steps&&n.steps.length>1 ? n.steps : [{val:n.operandA,op:n.operator},{val:n.operandB}];
       return steps.map(s=>s.val).filter(x=>x&&isNaN(Number(x)));
     }
-    if(n.opType==='lookup') return [n.operandA].filter(Boolean);
+    if(n.opType==='lookup'){
+      const deps=[n.operandA].filter(Boolean);
+      if(n.lookupDefault&&isNaN(Number(n.lookupDefault))&&n.lookupDefault!=='') deps.push(n.lookupDefault);
+      return deps;
+    }
     if(n.opType==='fn'||n.opType==='custom'||n.opType==='php_function') return (n.fnArgs||n.phpArgs||[]).map(a=>a.val||a).filter(x=>x&&isNaN(Number(x)));
     if(n.opType==='extractor') return [n.srcVar].filter(Boolean);
   }
@@ -1503,7 +1516,12 @@ function runDebugCalc(id){
         const found=(n.lookupRows||[]).find(r=>String(r.from)===String(kv));
         formula=`<span class="df-fn">lookup</span>[<span class="df-key">${esc(n.operandA)||'?'}</span>=<span class="df-val">${kv}</span>]`;
         if(found){result=!isNaN(Number(found.value))?Number(found.value):found.value;resolved=true;}
-        else if(kv!==n.operandA){result='⚠ sin coincidencia';}
+        else if(kv!==n.operandA){
+          // use default if set
+          const def=n.lookupDefault;
+          if(def!==undefined&&def!==''){result=isNaN(Number(def))?def:Number(def);resolved=true;}
+          else{result='⚠ sin coincidencia';}
+        }
       }
       else if(n.opType==='fn'||n.opType==='php_function'||n.opType==='custom'){
         const fn=n.fnName||n.phpFn||'';
@@ -1749,7 +1767,7 @@ function getDetalleRef(id, itemIdx, isDesc, descIdx){
 function addDetalleItem(id){
   const n=getNode(id); if(!n) return;
   if(!n.detalleItems) n.detalleItems=[];
-  n.detalleItems.push({concepto:{type:'fixed',value:''},importe_concepto:{type:'variable',map:''},partida:{type:'fixed',value:''},descuentos:[]});
+  n.detalleItems.push({concepto:{type:'fixed',value:''},importe:{type:'variable',map:''},partida:{type:'fixed',value:''},descuentos:[]});
   renderEditor(id); markDirty();
 }
 function rmDetalleItem(id, i){
@@ -1873,7 +1891,7 @@ function buildConfig(){
         op.operands=[steps[0]?.val||0, steps[1]?.val||0];
       }
       if(v.opType==='custom'){op.fn=v.fn;op.args=v.args;}
-      if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});}
+      if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});if(v.lookupDefault!==undefined&&v.lookupDefault!=='')op.default=v.lookupDefault;}
       if(v.opType==='fn'||v.opType==='php_function'||v.opType==='custom'){op.fn=v.fnName||v.phpFn||'';op.args=(v.fnArgs||v.phpArgs||[]).map(a=>a.val||a);}
       if(v.opType==='extractor'){op.src=v.srcVar;op.field=v.srcField;}
       return{name:v.name,decimals:v.decimals??2,round_mode:v.round_mode??'half_up',operation:op};
@@ -1938,7 +1956,11 @@ function runEngineJS(config,inputs){
       vars[v.name]=result; return;
     }
     else if(op.type==='custom'&&op.fn==='diffYears'){const d1=new Date(vars[op.args[0]]||'2000-01-01');const d2=(op.args[1]==='hoy'||op.args[1]==='today')?new Date():new Date(vars[op.args[1]]||new Date());let diff=d2.getFullYear()-d1.getFullYear();if(d2.getMonth()<d1.getMonth()||(d2.getMonth()===d1.getMonth()&&d2.getDate()<d1.getDate()))diff--;result=diff;}
-    else if(op.type==='lookup'){const k=vars[op.key]??op.key;const raw=(op.table&&op.table[String(k)])??0;result=isNaN(Number(raw))?raw:Number(raw);}
+    else if(op.type==='lookup'){
+      const k=vars[op.key]??op.key;
+      const raw=(op.table&&op.table[String(k)])??op.default??null;
+      result=raw===null?null:(isNaN(Number(raw))?raw:Number(raw));
+    }
     else if(op.type==='fn'||op.type==='php_function'||op.type==='custom'){
       // Local JS stubs — API Real uses actual PHP
       const fn = op.fn||'';
@@ -2283,6 +2305,7 @@ function loadConfig(cfg){
       phpFn: isFn?(op.fn||''):'',
       phpArgs: isFn?(op.args||[]).map((val,i)=>({param:(FUNCIONES_CATALOGO[op.fn]?.params||[])[i]||'arg'+i,val:String(val||'')})):[],
       lookupRows:op.table?Object.entries(op.table).map(([from,value])=>({from,value})):[],
+      lookupDefault: op.default??'',
       decimals:v.decimals??2,round_mode:v.round_mode??'half_up',_x:0,_y:0
     };
   });
