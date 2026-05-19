@@ -123,8 +123,18 @@ class MotorCalculadora
             default => false,
         };
 
-        $res = $val($match ? ($r['then'] ?? null) : ($r['else'] ?? null));
-        if (is_numeric($res)) $res = (float) $res;
+        $res = $match ? ($r['then'] ?? null) : ($r['else'] ?? null);
+
+        // Si el resultado es el nombre de una variable existente, usar su valor
+        if (is_string($res) && isset($vars[$res])) {
+            $res = $vars[$res];
+        }
+
+        // Si es un string numérico, convertir a float
+        if (is_string($res) && is_numeric($res)) {
+            $res = (float) $res;
+        }
+
         $vars[$r['name']] = $res;
     }
 
