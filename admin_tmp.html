@@ -746,7 +746,7 @@ function addNode(type){
   if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,_x:0,_y:0});
   if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,_x:0,_y:0});
   layoutAll(); markDirty();
-  setTimeout(()=>{ selectNode(id); scrollToNode(id); }, 80);
+  setTimeout(()=>selectNode(id), 60);
 }
 
 function removeNode(id,e){
@@ -930,41 +930,38 @@ function scrollToNode(id){
   const n=getNode(id); if(!n) return;
   const wrap=document.querySelector('.canvas-wrap'); if(!wrap) return;
 
-  const EDITOR_W = 390;   // editor panel width when expanded
-  const PADDING  = 24;    // extra breathing room
+  const EDITOR_W = 390;
+  const PADDING  = 32;
   const NODE_W_  = 195;
-  const NODE_H_  = 90;    // approx
+  const NODE_H_  = 90;
 
-  const wrapW = wrap.clientWidth - EDITOR_W - PADDING;
-  const wrapH = wrap.clientHeight;
+  // Wait for editor panel transition (220ms) + small buffer
+  setTimeout(()=>{
+    const wrapW = wrap.clientWidth - EDITOR_W - PADDING;
+    const wrapH = wrap.clientHeight;
+    const scrollL = wrap.scrollLeft;
+    const scrollT = wrap.scrollTop;
 
-  // Current scroll
-  const scrollL = wrap.scrollLeft;
-  const scrollT = wrap.scrollTop;
+    let targetL = scrollL;
+    // Node right edge hidden by editor panel
+    if(n._x + NODE_W_ > scrollL + wrapW){
+      targetL = n._x + NODE_W_ - wrapW + PADDING;
+    }
+    // Node left edge out of view
+    if(n._x < scrollL + PADDING){
+      targetL = Math.max(0, n._x - PADDING);
+    }
 
-  // Node bounds in canvas coords
-  const nx = n._x;
-  const ny = n._y;
+    let targetT = scrollT;
+    if(n._y + NODE_H_ > scrollT + wrapH - PADDING){
+      targetT = n._y + NODE_H_ - wrapH + PADDING * 3;
+    }
+    if(n._y < scrollT + PADDING){
+      targetT = Math.max(0, n._y - PADDING);
+    }
 
-  // Horizontal: node right edge must be within visible area minus editor
-  let targetL = scrollL;
-  if(nx + NODE_W_ > scrollL + wrapW){
-    targetL = nx + NODE_W_ - wrapW + PADDING;
-  }
-  if(nx < scrollL + PADDING){
-    targetL = Math.max(0, nx - PADDING);
-  }
-
-  // Vertical
-  let targetT = scrollT;
-  if(ny + NODE_H_ > scrollT + wrapH - PADDING){
-    targetT = ny + NODE_H_ - wrapH + PADDING * 3;
-  }
-  if(ny < scrollT + PADDING){
-    targetT = Math.max(0, ny - PADDING);
-  }
-
-  wrap.scrollTo({ left: targetL, top: targetT, behavior: 'smooth' });
+    wrap.scrollTo({ left: targetL, top: targetT, behavior: 'smooth' });
+  }, 240); // after editor panel CSS transition (220ms)
 }
 
 function selectNode(id){
@@ -1611,7 +1608,7 @@ function addVarType(opType){
     phpFn:'', phpArgs:[], lookupRows:[], decimals:2, _x:0, _y:0
   });
   layoutAll(); markDirty();
-  setTimeout(()=>{ selectNode(id); scrollToNode(id); }, 80);
+  setTimeout(()=>selectNode(id), 60);
 }
 
 // ── MATH STEPS ───────────────────────────────────────────────
