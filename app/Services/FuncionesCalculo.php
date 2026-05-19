@@ -183,56 +183,67 @@ class FuncionesCalculo
                 'params'      => ['fecha_actual'],
                 'tipos'       => ['date'],
                 'descripcion' => 'Fecha INPC 1 (mes anterior con validación de día 10)',
+                'returns'     => null,
             ],
             'calcularFechaINPC2' => [
                 'params'      => ['fecha_vencimiento', 'fecha_limite'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Fecha INPC 2 (mes anterior con validación de día 10)',
+                'returns'     => null,
             ],
             'getINPC' => [
                 'params'      => ['fecha'],
                 'tipos'       => ['date'],
                 'descripcion' => 'Índice INPC para una fecha YYYY-MM-01',
+                'returns'     => null,
             ],
             'restarAnios' => [
                 'params'      => ['fecha', 'anios'],
                 'tipos'       => ['date', 'number'],
                 'descripcion' => 'Restar N años a una fecha',
+                'returns'     => null,
             ],
             'calcularFechaVencimiento' => [
                 'params'      => ['fecha_escritura'],
                 'tipos'       => ['date'],
                 'descripcion' => 'Fecha vencimiento (+15 días hábiles)',
+                'returns'     => null,
             ],
             'calcularMesesRecargos' => [
                 'params'      => ['fecha_inicio', 'fecha_fin', 'fecha_limite'],
                 'tipos'       => ['date', 'date', 'date'],
                 'descripcion' => 'Cantidad de meses del período de recargos',
+                'returns'     => null,
             ],
             'calcularPorcentajeRecargos' => [
                 'params'      => ['fecha_inicio', 'fecha_fin'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Porcentaje total de recargos del período',
+                'returns'     => null,
             ],
             'calcularFechaLimiteISN' => [
                 'params'      => ['mes_isn', 'anio_isn'],
                 'tipos'       => ['number', 'number'],
                 'descripcion' => 'Fecha límite de pago ISN (día 17 hábil del mes siguiente)',
+                'returns'     => null,
             ],
             'esExtemporaneo' => [
                 'params'      => ['fecha_actual', 'fecha_limite'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Devuelve 1 si es extemporáneo, 0 si es oportuno',
+                'returns'     => null,
             ],
             'getFactorActualizacionISN' => [
                 'params'      => ['fecha_limite'],
                 'tipos'       => ['date'],
                 'descripcion' => 'Factor de actualización INPC (mínimo 1.0)',
+                'returns'     => null,
             ],
             'getPorcentajeRecargosISN' => [
                 'params'      => ['fecha_limite', 'fecha_actual'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Porcentaje total de recargos del período ISN',
+                'returns'     => null,
             ],
         ];
     }
