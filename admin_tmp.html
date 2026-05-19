@@ -575,12 +575,9 @@ body:not(.in-builder) #view-list{display:flex}
         <span class="col-dot" style="background:var(--orange)"></span>Variables
         <span class="col-add-btn" onclick="toggleColDD('dd-var');event.stopPropagation()" title="Agregar Variable">+</span>
         <div class="col-dropdown" id="dd-var">
-          <div class="col-dd-item" onclick="addNode('var');closeColDDs()"><span class="dd-ic">⚙</span>Math — operación</div>
-          <div class="col-dd-item" onclick="addNode('extractor');closeColDDs()"><span class="dd-ic">⛏</span>Extractor de campo</div>
-          <div class="col-dd-sep"></div>
-          <div class="col-dd-item" onclick="addVarType('custom');closeColDDs()"><span class="dd-ic">fn</span>Custom — diffYears</div>
-          <div class="col-dd-item" onclick="addVarType('lookup');closeColDDs()"><span class="dd-ic">≡</span>Lookup — tabla</div>
-          <div class="col-dd-item" onclick="addVarType('php_function');closeColDDs()"><span class="dd-ic">⚡</span>Función PHP</div>
+          <div class="col-dd-item" onclick="addNode('var');closeColDDs()"><span class="dd-ic">⚙</span>Math — operación aritmética</div>
+          <div class="col-dd-item" onclick="addVarType('lookup');closeColDDs()"><span class="dd-ic">≡</span>Lookup — tabla de valores</div>
+          <div class="col-dd-item" onclick="addVarType('fn');closeColDDs()"><span class="dd-ic">⚡</span>Función — catálogo PHP</div>
         </div>
       </div>
       <!-- Reglas -->
@@ -739,8 +736,8 @@ function layoutAll(){
 function addNode(type){
   const id=uid();
   if(type==='input')   STATE.inputs.push({_id:id,type:'input',name:'',dataType:'number',label:'',required:true,_x:0,_y:0});
-  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',steps:[{val:'',op:'+'},{val:''}],fn:'diffYears',args:['',''],phpFn:'',phpArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
-  if(type==='extractor') STATE.variables.push({_id:id,type:'var',name:'',opType:'extractor',srcVar:'',srcField:'',decimals:2,_x:0,_y:0});
+  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',steps:[{val:'',op:'+'},{val:''}],fnName:'',fnArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
+  if(type==='extractor') STATE.variables.push({_id:id,type:'var',name:'',opType:'fn',fnName:'',fnArgs:[],decimals:2,_x:0,_y:0});
   if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,description:'',_x:0,_y:0});
   if(type==='defined') STATE.defined.push({_id:id,type:'defined',name:'',catalogKey:'inpc',_x:0,_y:0});
   if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,_x:0,_y:0});
@@ -801,10 +798,13 @@ function nodeBody(n){
       const expr = steps.map((s,i)=> i===steps.length-1 ? (s.val||'?') : `${s.val||'?'} ${s.op||'+'}`).join(' ');
       return `<span class="node-field">${expr}</span>${dec}`;
     }
-    if(n.opType==='custom') return `<span class="node-field">${n.fn}(${(n.args||[]).join(', ')})</span>${dec}`;
     if(n.opType==='lookup') return `<span class="node-field">lookup[${n.operandA||'key'}]</span>${dec}<br><span style="font-size:10.5px;color:var(--txt3)">${(n.lookupRows||[]).length} entradas</span>`;
-    if(n.opType==='php_function') return `<span class="node-field" style="color:var(--purple,#7c3aed)">${n.phpFn||'fn?'}(${(n.phpArgs||[]).map(a=>a.val||'?').join(', ')})</span>${dec}`;
-    if(n.opType==='extractor') return `<span class="node-field" style="color:#0369a1">${n.srcVar||'?'}<span style="color:var(--txt3)">.</span>${n.srcField||'campo'}</span>${dec}`;
+    if(n.opType==='fn'||n.opType==='custom'||n.opType==='php_function'||n.opType==='extractor'){
+      const fnDef=FUNCIONES_CATALOGO[n.fnName]||{};
+      const sig=fnDef.params?.length ? `(${(n.fnArgs||[]).map(a=>a.val||'?').join(', ')})` : '()';
+      const ret=fnDef.returns&&typeof fnDef.returns==='object'?`→{${Object.keys(fnDef.returns).join(',')}}`:'→ valor';
+      return `<span class="node-field" style="color:#7c3aed">${n.fnName||'⚡ sin función'}${sig}</span><br><span style="font-size:10px;color:var(--txt3)">${ret}</span>${dec}`;
+    }
   }
   if(n.type==='rule') return `<span class="node-field">${n.ifLeft||'?'} ${n.operator} ${n.ifRight||'?'}</span><br><span style="font-size:10.5px;color:var(--txt3)">→ ${n.then||'?'} / ${n.else||'?'} <span class="node-dec">.${n.decimals??2}d</span></span>`;
   if(n.type==='output') return `<span class="node-field">← ${n.map||'sin mapear'}</span><span class="node-dec">.${n.decimals??2}d</span>${n.description?`<br><span style="font-size:10.5px;color:var(--txt3)">${esc(n.description)}</span>`:''}`;
@@ -890,7 +890,7 @@ function vcFilter(id,v,tipo){
     groups = [
       {group:'Inputs fecha',   color:'var(--blue)',  items: STATE.inputs.filter(i=>i.name&&i.dataType==='date').map(i=>i.name)},
       {group:'Variables fecha',color:'var(--orange)',items: STATE.variables.filter(v=>v.name&&(
-        v.opType==='php_function'&&(v.phpFn||'').toLowerCase().includes('fecha')
+        v.opType==='fn'&&(v.fnName||'').toLowerCase().includes('fecha')
         || v.name.toLowerCase().includes('fecha')
       )).map(v=>v.name)},
       {group:'Sistema fecha',  color:'var(--teal)',  items: STATE.defined.filter(d=>(d.name||d.catalogKey)&&['dia_mes','mes_actual','anio_actual','dias_anio'].includes(d.catalogKey)).map(d=>d.name||d.catalogKey)},
@@ -901,7 +901,7 @@ function vcFilter(id,v,tipo){
     groups = [
       {group:'Inputs número', color:'var(--blue)',  items: STATE.inputs.filter(i=>i.name&&i.dataType==='number').map(i=>i.name)},
       {group:'Constantes',    color:'var(--rose)',  items: STATE.constants.filter(c=>c.name).map(c=>c.name)},
-      {group:'Variables',     color:'var(--orange)',items: STATE.variables.filter(v=>v.name&&v.opType!=='php_function').map(v=>v.name)},
+      {group:'Variables',     color:'var(--orange)',items: STATE.variables.filter(v=>v.name).map(v=>v.name)},
       {group:'Sistema',       color:'var(--teal)',  items: STATE.defined.filter(d=>d.name||d.catalogKey).map(d=>d.name||d.catalogKey)},
       {group:'Reglas',        color:'var(--amber)', items: STATE.rules.filter(r=>r.name).map(r=>r.name)},
     ].filter(g=>g.items.length);
@@ -1098,67 +1098,58 @@ function renderEditor(id){
         ${stepRows}
         <button class="add-row-btn" style="border-radius:var(--r);border:1.5px dashed var(--border2);margin-top:4px;width:100%"
           onclick="addStep('${id}')">+ agregar operando</button>`;
-    } else if(n.opType==='custom'){
-      const a0=makeCombo('fecha inicio',n.args[0]||'',`updArg('${id}',0,this.value)`);
-      const a1=makeCombo('"hoy" o variable fecha',n.args[1]||'',`updArg('${id}',1,this.value)`);
-      opF=`<div class="ep-section"><span class="ep-sdot"></span>Función</div>
-        <div class="field"><label>Tipo</label>
-          <select onchange="upd('${id}','fn',this.value)">
-            <option value="diffYears" ${n.fn==='diffYears'?'selected':''}>diffYears — diferencia en años</option>
-          </select>
-        </div>
-        <div class="field mono-in"><label>Arg 1 — fecha inicio</label>${a0}</div>
-        <div class="field mono-in"><label>Arg 2 — fecha fin / "hoy"</label>${a1}</div>`;
-    } else if(n.opType==='php_function'){
+    } else if(['fn','custom','php_function','extractor'].includes(n.opType)){
+      // ── Unified Function editor ───────────────────────────
       const fnNames = Object.keys(FUNCIONES_CATALOGO);
-      const fnDef   = FUNCIONES_CATALOGO[n.phpFn] || {};
+      const curFn   = n.fnName || n.phpFn || '';
+      const fnDef   = FUNCIONES_CATALOGO[curFn] || {};
       const fnDesc  = fnDef.descripcion || '';
       const paramDefs  = fnDef.params || [];
       const paramTipos = fnDef.tipos  || [];
-      const phpArgs = n.phpArgs || [];
-      while(phpArgs.length < paramDefs.length) phpArgs.push({param: paramDefs[phpArgs.length], val:''});
-      const TIPO_BADGE = {date:'📅 fecha', number:'🔢 número', string:'🔤 texto'};
+      const retDef     = fnDef.returns|| null; // object or null
+
+      // Ensure fnArgs is synced
+      if(!n.fnArgs || n.fnArgs.length !== paramDefs.length){
+        n.fnArgs = paramDefs.map((p,i)=>({param:p, tipo:paramTipos[i]||null, val: (n.fnArgs?.[i]?.val||n.phpArgs?.[i]?.val||'')}));
+      }
+
+      const TIPO_BADGE={date:'📅 fecha',number:'🔢 número',string:'🔤 texto'};
       const paramRows = paramDefs.map((p,i)=>{
-        const tipo = paramTipos[i] || null;
-        const badge = tipo ? `<span style="font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;background:${tipo==='date'?'var(--blue-l)':tipo==='number'?'var(--orange4)':'var(--bg3)'};color:${tipo==='date'?'var(--blue)':tipo==='number'?'var(--amber)':'var(--txt3)'}">${TIPO_BADGE[tipo]||tipo}</span>` : '';
-        const ph = tipo==='date' ? 'variable fecha o YYYY-MM-DD' : tipo==='number' ? 'variable o número' : 'input o variable';
-        const combo = makeComboFiltered(ph, phpArgs[i]?.val||'', `updPhpArg('${id}',${i},this.value)`, tipo);
+        const tipo=paramTipos[i]||null;
+        const badge=tipo?`<span style="font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:600;background:${tipo==='date'?'var(--blue-l)':tipo==='number'?'var(--orange4)':'var(--bg3)'};color:${tipo==='date'?'var(--blue)':tipo==='number'?'var(--amber)':'var(--txt3)'}">${TIPO_BADGE[tipo]||tipo}</span>`:'';
+        const ph=tipo==='date'?'variable fecha o YYYY-MM-DD':tipo==='number'?'variable o número':'input o variable';
+        const combo=makeComboFiltered(ph, n.fnArgs[i]?.val||'', `updFnArg('${id}',${i},this.value)`, tipo);
         return `<div class="field mono-in"><label>${p}${badge}</label>${combo}</div>`;
       }).join('');
+
+      // Return type display
+      const retInfo = retDef && typeof retDef==='object'
+        ? `<div style="font-size:11px;color:#7c3aed;margin-top:6px;padding:6px 10px;background:#ede9fe;border-radius:var(--r)">
+            📦 Retorna objeto con campos: <strong>${Object.keys(retDef).join(', ')}</strong><br>
+            <span style="font-size:10.5px;opacity:.8">Úsalos en el selector de variables como <code>${curFn}.campo</code></span>
+           </div>`
+        : '';
+
       opF=`
-        <div class="ep-section" style="color:#7c3aed"><span class="ep-sdot" style="background:#7c3aed"></span>Función PHP</div>
-        <div class="field"><label>Función</label>
-          <select onchange="updPhpFn('${id}',this.value)">
+        <div class="ep-section" style="color:#7c3aed"><span class="ep-sdot" style="background:#7c3aed"></span>Función</div>
+        <div class="field"><label>Seleccionar función</label>
+          <select onchange="updFn('${id}',this.value)">
             <option value="">— selecciona función —</option>
-            ${fnNames.map(f=>`<option value="${f}" ${n.phpFn===f?'selected':''}>${f}</option>`).join('')}
+            ${fnNames.map(f=>{
+              const fd=FUNCIONES_CATALOGO[f]||{};
+              const sig=fd.params?.length?`(${fd.params.join(', ')})`:'()';
+              const ret=fd.returns&&typeof fd.returns==='object'?` → {${Object.keys(fd.returns).join(',')}}`:'';
+              return `<option value="${f}" ${curFn===f?'selected':''}>${f}${sig}${ret}</option>`;
+            }).join('')}
           </select>
         </div>
-        ${fnDesc ? `<div style="font-size:11.5px;color:var(--teal);margin-bottom:10px;padding:6px 10px;background:var(--teal-l);border-radius:var(--r)">${fnDesc}</div>` : ''}
-        ${fnNames.length===0 ? `<div style="font-size:11.5px;color:var(--txt3);font-style:italic">Cargando funciones desde API...</div>` : ''}
-        ${paramDefs.length ? `<div class="ep-section" style="color:#7c3aed;margin-top:8px"><span class="ep-sdot" style="background:#7c3aed"></span>Parámetros</div>${paramRows}` : ''}
+        ${fnDesc?`<div style="font-size:11.5px;color:var(--teal);margin-bottom:8px;padding:6px 10px;background:var(--teal-l);border-radius:var(--r)">${fnDesc}</div>`:''}
+        ${fnNames.length===0?`<div style="font-size:11.5px;color:var(--txt3);font-style:italic">⏳ Cargando funciones desde API...</div>`:''}
+        ${paramDefs.length?`<div class="ep-section" style="color:#7c3aed;margin-top:8px"><span class="ep-sdot" style="background:#7c3aed"></span>Parámetros de entrada</div>${paramRows}`:''}
+        ${retInfo}
         <div class="info-box" style="background:#ede9fe;border:1px solid #c4b5fd;color:#6d28d9;margin-top:10px;font-size:11.5px">
-          🔄 En <strong>Local JS</strong> devuelve valor mock.<br>
-          🚀 En <strong>API Real</strong> ejecuta la función PHP real en el servidor.
-        </div>`;
-    } else if(n.opType==='extractor'){
-      const phpVars = STATE.variables
-        .filter(v=>v.opType==='php_function' && v.name)
-        .map(v=>v.name);
-      const srcCombo = makeCombo('variable objeto (⚡ PHP)', n.srcVar||'', `upd('${id}','srcVar',this.value)`);
-      opF=`
-        <div class="ep-section" style="color:#0369a1"><span class="ep-sdot" style="background:#0369a1"></span>Extractor de campo</div>
-        <div class="field mono-in"><label>Variable objeto fuente</label>
-          ${srcCombo}
-          ${phpVars.length ? `<div style="font-size:10.5px;color:var(--txt3);margin-top:4px">Variables disponibles: ${phpVars.map(v=>`<span onclick="upd('${id}','srcVar','${v}');renderEditor('${id}')" style="cursor:pointer;color:#0369a1;margin-right:6px">${v}</span>`).join('')}</div>` : ''}
-        </div>
-        <div class="field mono-in"><label>Campo a extraer</label>
-          <input type="text" value="${esc(n.srcField||'')}" placeholder="ej. impuesto, factor, total"
-            oninput="upd('${id}','srcField',this.value)">
-        </div>
-        <div class="info-box" style="background:#e0f2fe;border:1px solid #bae6fd;color:#0369a1;margin-top:8px;font-size:11.5px">
-          ⛏ Extrae un campo del objeto devuelto por una función PHP.<br>
-          Ej: si <strong>${n.srcVar||'resultado_isn'}</strong> devuelve <code>{impuesto:107, total:133}</code><br>
-          esta variable valdrá <strong>${n.srcField||'campo'}</strong>.
+          🔄 <strong>Local JS</strong>: usa valor mock para previsualizar.<br>
+          🚀 <strong>API Real</strong>: ejecuta la función PHP real en el servidor.
         </div>`;
     } else if(n.opType==='lookup'){
       const cK=makeCombo('input o variable clave',n.operandA||'',`upd('${id}','operandA',this.value)`);
@@ -1184,11 +1175,9 @@ function renderEditor(id){
     <div class="field-row">
       <div class="field"><label>Tipo operación</label>
         <select onchange="upd('${id}','opType',this.value);renderEditor('${id}');renderCanvas()">
-          <option value="math"         ${n.opType==='math'?'selected':''}>Math — A operador B</option>
-          <option value="custom"       ${n.opType==='custom'?'selected':''}>Custom — función</option>
-          <option value="lookup"       ${n.opType==='lookup'?'selected':''}>Lookup — tabla</option>
-          <option value="php_function" ${n.opType==='php_function'?'selected':''}>⚡ Función PHP</option>
-          <option value="extractor"    ${n.opType==='extractor'?'selected':''}>⛏ Extractor de campo</option>
+          <option value="math"   ${n.opType==='math'?'selected':''}>⚙ Math — operación aritmética</option>
+          <option value="lookup" ${n.opType==='lookup'?'selected':''}>≡ Lookup — tabla de valores</option>
+          <option value="fn"     ${(['fn','custom','php_function','extractor'].includes(n.opType))?'selected':''}>⚡ Función — catálogo PHP</option>
         </select>
       </div>
       <div class="field" style="flex:0 0 90px"><label>Decimales</label>
@@ -1266,9 +1255,8 @@ function nodeDeps(n){
       const steps = n.steps&&n.steps.length>1 ? n.steps : [{val:n.operandA,op:n.operator},{val:n.operandB}];
       return steps.map(s=>s.val).filter(x=>x&&isNaN(Number(x)));
     }
-    if(n.opType==='custom') return (n.args||[]).filter(x=>x&&x!=='hoy'&&x!=='today'&&isNaN(Number(x)));
     if(n.opType==='lookup') return [n.operandA].filter(Boolean);
-    if(n.opType==='php_function') return (n.phpArgs||[]).map(a=>a.val).filter(x=>x&&isNaN(Number(x)));
+    if(n.opType==='fn'||n.opType==='custom'||n.opType==='php_function') return (n.fnArgs||n.phpArgs||[]).map(a=>a.val||a).filter(x=>x&&isNaN(Number(x)));
     if(n.opType==='extractor') return [n.srcVar].filter(Boolean);
   }
   if(n.type==='rule') return [n.ifLeft,n.ifRight].filter(x=>x&&isNaN(Number(x)));
@@ -1439,9 +1427,9 @@ function runDebugCalc(id){
         if(found){result=!isNaN(Number(found.value))?Number(found.value):found.value;resolved=true;}
         else if(kv!==n.operandA){result='⚠ sin coincidencia';}
       }
-      else if(n.opType==='php_function'){
-        const fn=n.phpFn||'';
-        const args=(n.phpArgs||[]).map(a=>allVals[a.val]!==undefined?allVals[a.val]:(a.val||'?'));
+      else if(n.opType==='fn'||n.opType==='php_function'||n.opType==='custom'){
+        const fn=n.fnName||n.phpFn||'';
+        const args=(n.fnArgs||n.phpArgs||[]).map(a=>allVals[a.val]!==undefined?allVals[a.val]:(a.val||'?'));
         formula=`<span class="df-fn">${fn}</span>(${args.map(a=>`<span class="df-val">${a}</span>`).join(', ')})`;
         // stubs por función
         if(fn==='getINPC'){result=132.45;resolved=true;}
@@ -1571,14 +1559,6 @@ function upd(id,key,val){
   renderDebug(id);
   if(wasOpen){const b=document.getElementById('dbg-body-'+id);if(b)b.classList.add('open');}
 }
-function updArg(id,i,val){
-  const n=getNode(id);if(!n)return;if(!n.args)n.args=['',''];n.args[i]=val;
-  const el=document.getElementById('node-'+id);if(el)el.querySelector('.node-body').innerHTML=nodeBody(n);
-  drawEdges();markDirty();
-  const wasOpen=n._dbgOpen;
-  renderDebug(id);
-  if(wasOpen){const b=document.getElementById('dbg-body-'+id);if(b)b.classList.add('open');}
-}
 function addLk(id){const n=getNode(id);if(!n)return;n.lookupRows.push({from:'',value:''});renderEditor(id);renderCanvas();markDirty();}
 function rmLk(id,i){const n=getNode(id);if(!n)return;n.lookupRows.splice(i,1);renderEditor(id);renderCanvas();markDirty();}
 function updLk(id,i,k,v){const n=getNode(id);if(!n)return;n.lookupRows[i][k]=v;markDirty();}
@@ -1600,12 +1580,14 @@ document.addEventListener('click', closeColDDs);
 // Add var with specific opType pre-set
 function addVarType(opType){
   const id=uid();
+  // Normalize legacy opTypes
+  const normalizedOp = {'custom':'fn','php_function':'fn','extractor':'fn'}[opType]||opType;
   STATE.variables.push({
-    _id:id, type:'var', name:'', opType:opType,
+    _id:id, type:'var', name:'', opType:normalizedOp,
     operandA:'', operator:'+', operandB:'',
     steps:[{val:'',op:'+'},{val:''}],
-    fn:'diffYears', args:['',''],
-    phpFn:'', phpArgs:[], lookupRows:[], decimals:2, _x:0, _y:0
+    fnName:'', fnArgs:[],
+    lookupRows:[], decimals:2, _x:0, _y:0
   });
   layoutAll(); markDirty();
   setTimeout(()=>selectNode(id), 60);
@@ -1647,24 +1629,30 @@ function updStep(id,i,key,val){
   drawEdges(); markDirty();
 }
 
-function updPhpFn(id, fnName){
+function updFn(id, fnName){
   const n=getNode(id); if(!n) return;
-  n.phpFn = fnName;
-  const fnDef = FUNCIONES_CATALOGO[fnName] || {};
-  const params = fnDef.params || [];
-  const tipos  = fnDef.tipos  || [];
-  n.phpArgs = params.map((p,i)=>({param:p, tipo:tipos[i]||null, val:''}));
+  n.fnName = fnName; n.phpFn = fnName; // keep legacy
+  n.opType = 'fn';
+  const fnDef = FUNCIONES_CATALOGO[fnName]||{};
+  const params = fnDef.params||[], tipos=fnDef.tipos||[];
+  n.fnArgs = params.map((p,i)=>({param:p, tipo:tipos[i]||null, val:''}));
+  n.phpArgs = n.fnArgs; // legacy compat
   renderEditor(id); renderCanvas(); markDirty();
 }
-function updPhpArg(id, idx, val){
+function updFnArg(id, idx, val){
   const n=getNode(id); if(!n) return;
-  if(!n.phpArgs) n.phpArgs=[];
-  if(!n.phpArgs[idx]) n.phpArgs[idx]={param:'',val:''};
-  n.phpArgs[idx].val = val;
+  if(!n.fnArgs) n.fnArgs=[];
+  if(!n.fnArgs[idx]) n.fnArgs[idx]={param:'',tipo:null,val:''};
+  n.fnArgs[idx].val=val;
+  if(!n.phpArgs) n.phpArgs=n.fnArgs;
   const el=document.getElementById('node-'+id);
   if(el) el.querySelector('.node-body').innerHTML=nodeBody(n);
   drawEdges(); markDirty();
 }
+// Legacy aliases
+function updPhpFn(id,fn){ updFn(id,fn); }
+function updPhpArg(id,i,val){ updFnArg(id,i,val); }
+function updArg(id,i,val){ updFnArg(id,i,val); }
 
 function esc(s){return(s||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
@@ -1688,7 +1676,7 @@ function buildConfig(){
       }
       if(v.opType==='custom'){op.fn=v.fn;op.args=v.args;}
       if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});}
-      if(v.opType==='php_function'){op.fn=v.phpFn;op.args=(v.phpArgs||[]).map(a=>a.val);}
+      if(v.opType==='fn'||v.opType==='php_function'||v.opType==='custom'){op.fn=v.fnName||v.phpFn||'';op.args=(v.fnArgs||v.phpArgs||[]).map(a=>a.val||a);}
       if(v.opType==='extractor'){op.src=v.srcVar;op.field=v.srcField;}
       return{name:v.name,decimals:v.decimals??2,operation:op};
     }),
@@ -1734,10 +1722,10 @@ function runEngineJS(config,inputs){
     }
     else if(op.type==='custom'&&op.fn==='diffYears'){const d1=new Date(vars[op.args[0]]||'2000-01-01');const d2=(op.args[1]==='hoy'||op.args[1]==='today')?new Date():new Date(vars[op.args[1]]||new Date());let diff=d2.getFullYear()-d1.getFullYear();if(d2.getMonth()<d1.getMonth()||(d2.getMonth()===d1.getMonth()&&d2.getDate()<d1.getDate()))diff--;result=diff;}
     else if(op.type==='lookup'){const k=vars[op.key]??op.key;const raw=(op.table&&op.table[String(k)])??0;result=isNaN(Number(raw))?raw:Number(raw);}
-    else if(op.type==='php_function'){
+    else if(op.type==='fn'||op.type==='php_function'||op.type==='custom'){
       // Local JS stubs — API Real uses actual PHP
       const fn = op.fn||'';
-      const args = (op.args||[]).map(a => vars[a]!==undefined ? vars[a] : a);
+      const args = (op.args||[]).map(a => vars[a]!==undefined ? vars[a] : (typeof a==='string'&&vars[a]!==undefined?vars[a]:a));
       if(fn==='getINPC') result=132.45;
       else if(fn==='restarAnios'){
         try{const d=new Date(args[0]);d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);}catch(e2){result='2020-01-01';}
@@ -1767,7 +1755,8 @@ function runEngineJS(config,inputs){
       // If result is object, store as-is (no rounding)
       if(typeof result==='object' && result!==null){ vars[v.name]=result; return; }
     }
-    else if(op.type==='extractor'){
+    // extractor no longer needed as standalone - fn returning object is handled inline
+    else if(op.type==='extractor_legacy'){
       // Extract a field from an object variable
       const src = vars[op.src];
       if(src && typeof src==='object' && op.field){
@@ -1989,9 +1978,9 @@ function loadConfig(cfg){
   STATE.defined  =(cfg.defined||[]).map(d=>({_id:uid(),type:'defined',name:d.name||d.catalog_key,catalogKey:d.catalog_key||'inpc',_x:0,_y:0}));
   STATE.variables=(cfg.variables||[]).map(v=>{
     const op=v.operation||{};
-    const isPhp = op.type==='php_function';
+    const isFn = ['fn','php_function','custom','extractor'].includes(op.type);
     const isExt = op.type==='extractor';
-    const isMath = op.type==='math';
+    const isMath = op.type==='math'; const isPhp=isFn;
     // Restore steps array
     let steps = [];
     if(isMath){
@@ -2000,17 +1989,17 @@ function loadConfig(cfg){
     }
     return{
       _id:uid(),type:'var',name:v.name,
-      opType:op.type||'math',
+      opType:['fn','php_function','custom','extractor'].includes(op.type)?'fn':(op.type||'math'),
       operandA:String(op.operands?.[0]??op.key??''),
       operator:op.operator??'+',
       operandB:String(op.operands?.[1]??''),
       steps: isMath ? steps : [],
       fn:op.fn??'diffYears',
       args:op.args||['',''],
-      phpFn: isPhp?(op.fn||''):'',
-      phpArgs: isPhp?(op.args||[]).map((val,i)=>({param:(FUNCIONES_CATALOGO[op.fn]?.params||[])[i]||'arg'+i,val})):[],
-      srcVar:   isExt?(op.src||''):'',
-      srcField: isExt?(op.field||''):'',
+      fnName: isFn?(op.fn||''):'',
+      fnArgs: isFn?(op.args||[]).map((val,i)=>{const fd=FUNCIONES_CATALOGO[op.fn]||{};return{param:(fd.params||[])[i]||'arg'+i,tipo:(fd.tipos||[])[i]||null,val:String(val||'')};}):[],
+      phpFn: isFn?(op.fn||''):'',
+      phpArgs: isFn?(op.args||[]).map((val,i)=>({param:(FUNCIONES_CATALOGO[op.fn]?.params||[])[i]||'arg'+i,val:String(val||'')})):[],
       lookupRows:op.table?Object.entries(op.table).map(([from,value])=>({from,value})):[],
       decimals:v.decimals??2,_x:0,_y:0
     };
