@@ -1529,6 +1529,9 @@ function runDebugCalc(id){
         formula=`<span class="df-fn">${fn}</span>(${args.map(a=>`<span class="df-val">${a}</span>`).join(', ')})`;
         // stubs por función
         if(fn==='getINPC'){result=132.45;resolved=true;}
+        else if(fn==='getUMA'){result=108.57;resolved=true;}
+        else if(fn==='getIVA'){result=0.16;resolved=true;}
+        else if(fn==='porcentajeADecimal'){result=parseFloat(args[0]||0)/100;resolved=true;}
         else if(fn==='getFactorActualizacionISN'){result=1.0416;resolved=true;}
         else if(fn==='getPorcentajeRecargosISN'){result=20.04;resolved=true;}
         else if(fn==='calcularMesesRecargos'){result=17;resolved=true;}
@@ -1966,6 +1969,9 @@ function runEngineJS(config,inputs){
       const fn = op.fn||'';
       const args = (op.args||[]).map(a => vars[a]!==undefined ? vars[a] : (typeof a==='string'&&vars[a]!==undefined?vars[a]:a));
       if(fn==='getINPC') result=132.45;
+      else if(fn==='getUMA') result=108.57;
+      else if(fn==='getIVA') result=0.16;
+      else if(fn==='porcentajeADecimal') result=parseFloat(args[0]||0)/100;
       else if(fn==='restarAnios'){
         try{const d=new Date(args[0]);d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);}catch(e2){result='2020-01-01';}
       }
