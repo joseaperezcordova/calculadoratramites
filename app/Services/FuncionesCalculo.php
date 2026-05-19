@@ -125,6 +125,28 @@ class FuncionesCalculo
         return round($valor / 100, 6);
     }
 
+    public static function getUMA(): float
+    {
+        try {
+            $handle = curl_init();
+            curl_setopt($handle, CURLOPT_URL, "http://admin-tesoreria.nl.gob.mx/api/uma");
+            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($handle, CURLOPT_HEADER, 0);
+            curl_setopt($handle, CURLOPT_TIMEOUT, 5);
+            $output = curl_exec($handle);
+            curl_close($handle);
+            $data = json_decode($output);
+            return ($data->status == 'ok') ? (float) $data->datos->daily : 0;
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public static function getIVA(): float
+    {
+        return 0.16;
+    }
+
     // Helper privado — días inhábiles del año
     private static function getInhabiles(int $anio): array
     {
@@ -255,6 +277,18 @@ class FuncionesCalculo
                 'params'      => ['valor'],
                 'tipos'       => ['number'],
                 'descripcion' => 'Convierte porcentaje a decimal (20.04 → 0.2004)',
+                'returns'     => null,
+            ],
+            'getUMA' => [
+                'params'      => [],
+                'tipos'       => [],
+                'descripcion' => 'UMA vigente desde API Tesorería NL',
+                'returns'     => null,
+            ],
+            'getIVA' => [
+                'params'      => [],
+                'tipos'       => [],
+                'descripcion' => 'Tasa de IVA vigente (0.16)',
                 'returns'     => null,
             ],
         ];
