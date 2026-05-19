@@ -59,29 +59,31 @@ class FuncionesCalculo
     // Calcula la fecha límite de pago ISN (día 17 del mes siguiente, ajustando días hábiles)
     public static function calcularFechaLimiteISN(int $mes_isn, int $anio_isn): string
     {
-        if($mes_isn == 12){ $mesLim = 1; $anioLim = $anio_isn + 1; }
-        else { $mesLim = $mes_isn + 1; $anioLim = $anio_isn; }
+        $mesLim  = $mes_isn == 12 ? 1          : $mes_isn + 1;
+        $anioLim = $mes_isn == 12 ? $anio_isn + 1 : $anio_isn;
 
-        $fechaLim = sprintf('%02d-%02d-%04d', 17, $mesLim, $anioLim);
+        $fechaLim  = Carbon::create($anioLim, $mesLim, 17);
         $inhabiles = self::getInhabiles($anioLim);
 
-        while(in_array(date("w", strtotime($fechaLim)), [0,6]) || in_array($fechaLim, $inhabiles)){
-            $fechaLim = date("d-m-Y", strtotime($fechaLim.' +1 days'));
+        while (in_array($fechaLim->dayOfWeek, [0, 6]) || in_array($fechaLim->format('Y-m-d'), $inhabiles)) {
+            $fechaLim->addDay();
         }
-        return $fechaLim; // formato dd-mm-YYYY
+        return $fechaLim->format('Y-m-d');
     }
 
     // Devuelve 1 si fecha_actual > fecha_limite (extemporáneo), 0 si es oportuno
     public static function esExtemporaneo(string $fecha_actual, string $fecha_limite): int
     {
-        return strtotime($fecha_actual." 00:00:00") > strtotime($fecha_limite." 23:59:59") ? 1 : 0;
+        return Carbon::parse($fecha_actual)->startOfDay()->gt(
+            Carbon::parse($fecha_limite)->endOfDay()
+        ) ? 1 : 0;
     }
 
     // Factor de actualización ISN: INPC reciente / INPC del mes anterior a fecha_limite
     public static function getFactorActualizacionISN(?string $fecha_limite): float
     {
         if (!$fecha_limite) return 1.0;
-        $fechaLimCarbon = Carbon::createFromFormat('d-m-Y', $fecha_limite);
+        $fechaLimCarbon = Carbon::parse($fecha_limite);
         $mesAntiguo  = $fechaLimCarbon->copy()->subMonth();
 
         $inpcReciente = DB::table('oper_inpc')
@@ -101,9 +103,8 @@ class FuncionesCalculo
     public static function getPorcentajeRecargosISN(?string $fecha_limite, string $fecha_actual): float
     {
         if (!$fecha_limite) return 0.0;
-        $unDiaMas = date("d-m-Y", strtotime($fecha_limite." +1 day"));
-        $anioMesI = date("Ym", strtotime($unDiaMas));
-        $anioMesF = date("Ym", strtotime($fecha_actual));
+        $anioMesI = Carbon::parse($fecha_limite)->addDay()->format('Ym');
+        $anioMesF = Carbon::parse($fecha_actual)->format('Ym');
 
         try {
             $result = DB::select("SELECT SUM(federal_vencido) porcentaje
@@ -126,8 +127,7 @@ class FuncionesCalculo
             ->where('Ano', $anio)->orWhere('Ano', $anio+1)
             ->select('Ano','Mes','Dia')->get();
         return $dias->map(fn($d) =>
-            str_pad($d->Dia,2,'0',STR_PAD_LEFT).'-'.
-            str_pad($d->Mes,2,'0',STR_PAD_LEFT).'-'.$d->Ano
+            sprintf('%04d-%02d-%02d', $d->Ano, $d->Mes, $d->Dia)
         )->toArray();
     }
 
@@ -222,10 +222,11 @@ class FuncionesCalculo
                 'returns'     => null,
             ],
             'calcularFechaLimiteISN' => [
-                'params'      => ['mes_isn', 'anio_isn'],
-                'tipos'       => ['number', 'number'],
-                'descripcion' => 'Fecha límite de pago ISN (día 17 hábil del mes siguiente)',
-                'returns'     => null,
+                'params'       => ['mes_isn', 'anio_isn'],
+                'tipos'        => ['number', 'number'],
+                'descripcion'  => 'Fecha límite de pago ISN (día 17 hábil del mes siguiente)',
+                'returns'      => null,
+                'tipo_retorno' => 'date',
             ],
             'esExtemporaneo' => [
                 'params'      => ['fecha_actual', 'fecha_limite'],
