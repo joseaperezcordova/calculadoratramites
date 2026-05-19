@@ -155,23 +155,6 @@ class MotorCalculadora
                 $vars[$name] = round($result, $v['decimals'] ?? 2);
                 break;
 
-            case 'custom':
-                if (($op['fn'] ?? '') === 'diffYears') {
-                    $arg0  = $op['args'][0] ?? '';
-                    $arg1  = $op['args'][1] ?? 'hoy';
-                    $d1str = $vars[$arg0] ?? $arg0 ?: '2000-01-01';
-                    $d2    = in_array($arg1, ['hoy', 'today'])
-                        ? Carbon::now()
-                        : Carbon::parse($vars[$arg1] ?? $arg1);
-                    $d1    = Carbon::parse($d1str);
-                    $diff  = $d2->year - $d1->year;
-                    if ($d2->month < $d1->month || ($d2->month === $d1->month && $d2->day < $d1->day)) {
-                        $diff--;
-                    }
-                    $vars[$name] = max(0, $diff);
-                }
-                break;
-
             case 'lookup':
                 $k           = $vars[$op['key'] ?? ''] ?? ($op['key'] ?? '');
                 $table       = $op['table'] ?? [];
@@ -179,13 +162,23 @@ class MotorCalculadora
                 $vars[$name] = is_numeric($raw) ? (float) $raw : $raw;
                 break;
 
+            case 'fn':
             case 'php_function':
+            case 'custom':
                 $fn           = $op['fn'] ?? '';
                 $argKeys      = $op['args'] ?? [];
                 $resolvedArgs = array_map(
-                    fn($a) => is_string($a) ? ($vars[$a] ?? $a) : ($a ?? ''),
+                    fn($a) => isset($vars[$a]) ? $vars[$a] : $a,
                     $argKeys
                 );
+                // Cast args según tipos declarados en el catálogo
+                $fnDef = FuncionesCalculo::catalogo()[$fn] ?? [];
+                foreach ($resolvedArgs as $i => &$argVal) {
+                    $tipo = $fnDef['tipos'][$i] ?? null;
+                    if ($tipo === 'number') $argVal = is_numeric($argVal) ? (float) $argVal : $argVal;
+                    if ($tipo === 'date')   $argVal = (string) $argVal;
+                }
+                unset($argVal);
                 try {
                     $resultado   = FuncionesCalculo::$fn(...$resolvedArgs);
                     $trace[]     = [
@@ -206,12 +199,6 @@ class MotorCalculadora
                         'error'    => $e->getMessage(),
                     ];
                 }
-                break;
-
-            case 'extractor':
-                $src         = $vars[$op['src'] ?? ''] ?? null;
-                $field       = $op['field'] ?? '';
-                $vars[$name] = is_array($src) ? ($src[$field] ?? null) : null;
                 break;
         }
     }
