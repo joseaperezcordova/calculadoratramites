@@ -27,10 +27,11 @@ class MotorCalculadora
             return $vars[$item] ?? $item;
         };
 
+        $trace  = [];
         $sorted = self::topoSort($config['variables'] ?? [], $config['rules'] ?? []);
 
         foreach ($sorted as $node) {
-            if ($node['type'] === 'var')  self::processVariable($node['data'], $vars, $val);
+            if ($node['type'] === 'var')  self::processVariable($node['data'], $vars, $val, $trace);
             if ($node['type'] === 'rule') self::procesarRegla($node['data'], $vars, $val);
         }
 
@@ -41,6 +42,7 @@ class MotorCalculadora
 
         return [
             'outputs' => $outputs,
+            '_trace'  => $trace,
             '_vars'   => $vars,
         ];
     }
@@ -126,7 +128,7 @@ class MotorCalculadora
         $vars[$r['name']] = $res;
     }
 
-    private static function processVariable(array $v, array &$vars, callable $val): void
+    private static function processVariable(array $v, array &$vars, callable $val, array &$trace = []): void
     {
         $op   = $v['operation'] ?? [];
         $name = $v['name'];
@@ -178,12 +180,32 @@ class MotorCalculadora
                 break;
 
             case 'php_function':
-                $fn   = $op['fn'] ?? '';
-                $args = array_map(
+                $fn           = $op['fn'] ?? '';
+                $argKeys      = $op['args'] ?? [];
+                $resolvedArgs = array_map(
                     fn($a) => is_string($a) ? ($vars[$a] ?? $a) : ($a ?? ''),
-                    $op['args'] ?? []
+                    $argKeys
                 );
-                $vars[$name] = FuncionesCalculo::$fn(...$args);
+                try {
+                    $resultado   = FuncionesCalculo::$fn(...$resolvedArgs);
+                    $trace[]     = [
+                        'variable'  => $name,
+                        'funcion'   => $fn,
+                        'args_in'   => count($argKeys) === count($resolvedArgs)
+                            ? array_combine($argKeys, $resolvedArgs)
+                            : $resolvedArgs,
+                        'resultado' => $resultado,
+                        'tipo_res'  => gettype($resultado),
+                    ];
+                    $vars[$name] = $resultado;
+                } catch (\Throwable $e) {
+                    $trace[]     = [
+                        'variable' => $name,
+                        'funcion'  => $fn,
+                        'args_in'  => $resolvedArgs,
+                        'error'    => $e->getMessage(),
+                    ];
+                }
                 break;
 
             case 'extractor':
