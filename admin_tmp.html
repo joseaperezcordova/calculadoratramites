@@ -739,12 +739,12 @@ function layoutAll(){
 function addNode(type){
   const id=uid();
   if(type==='input')   STATE.inputs.push({_id:id,type:'input',name:'',dataType:'number',label:'',required:true,_x:0,_y:0});
-  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',steps:[{val:'',op:'+'},{val:''}],fnName:'',fnArgs:[],lookupRows:[],decimals:2,_x:0,_y:0});
+  if(type==='var')     STATE.variables.push({_id:id,type:'var',name:'',opType:'math',operandA:'',operator:'+',operandB:'',steps:[{val:'',op:'+'},{val:''}],fnName:'',fnArgs:[],lookupRows:[],decimals:2,round_mode:'half_up',_x:0,_y:0});
   if(type==='extractor') STATE.variables.push({_id:id,type:'var',name:'',opType:'fn',fnName:'',fnArgs:[],decimals:2,_x:0,_y:0});
-  if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,description:'',_x:0,_y:0});
+  if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,round_mode:'half_up',description:'',_x:0,_y:0});
   if(type==='defined') STATE.defined.push({_id:id,type:'defined',name:'',catalogKey:'inpc',_x:0,_y:0});
-  if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,_x:0,_y:0});
-  if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,_x:0,_y:0});
+  if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,round_mode:'half_up',_x:0,_y:0});
+  if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,round_mode:'half_up',_x:0,_y:0});
   layoutAll(); markDirty();
   setTimeout(()=>selectNode(id), 60);
 }
@@ -1041,9 +1041,18 @@ function renderEditor(id){
       <div class="field"><label>Descripción</label>
         <input type="text" value="${esc(n.description)}" placeholder="ej. Meses del año" oninput="upd('${id}','description',this.value)">
       </div>
-      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+      <div class="field" style="flex:0 0 80px"><label>Decimales</label>
         <select onchange="upd('${id}','decimals',parseInt(this.value))">
           ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
+        <select onchange="upd('${id}','round_mode',this.value)">
+          <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
+          <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
+          <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
+          <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
+          <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
         </select>
       </div>
     </div>
@@ -1183,9 +1192,18 @@ function renderEditor(id){
           <option value="fn"     ${(['fn','custom','php_function','extractor'].includes(n.opType))?'selected':''}>⚡ Función — catálogo PHP</option>
         </select>
       </div>
-      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+      <div class="field" style="flex:0 0 80px"><label>Decimales</label>
         <select onchange="upd('${id}','decimals',parseInt(this.value))">
           ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
+        <select onchange="upd('${id}','round_mode',this.value)">
+          <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
+          <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
+          <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
+          <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
+          <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
         </select>
       </div>
     </div>${opF}`;
@@ -1213,9 +1231,18 @@ function renderEditor(id){
     <div class="field-row">
       <div class="field mono-in"><label style="color:var(--green)">THEN ✓</label>${cTh}</div>
       <div class="field mono-in"><label style="color:#b91c1c">ELSE ✗</label>${cEl}</div>
-      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+      <div class="field" style="flex:0 0 80px"><label>Decimales</label>
         <select onchange="upd('${id}','decimals',parseInt(this.value))">
           ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
+        <select onchange="upd('${id}','round_mode',this.value)">
+          <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
+          <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
+          <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
+          <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
+          <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
         </select>
       </div>
     </div>`;
@@ -1232,9 +1259,18 @@ function renderEditor(id){
       <div class="field"><label>Descripción</label>
         <input type="text" value="${esc(n.description)}" placeholder="ej. Monto total a cobrar" oninput="upd('${id}','description',this.value)">
       </div>
-      <div class="field" style="flex:0 0 90px"><label>Decimales</label>
+      <div class="field" style="flex:0 0 80px"><label>Decimales</label>
         <select onchange="upd('${id}','decimals',parseInt(this.value))">
           ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
+        <select onchange="upd('${id}','round_mode',this.value)">
+          <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
+          <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
+          <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
+          <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
+          <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
         </select>
       </div>
     </div>`;
@@ -1471,9 +1507,7 @@ function runDebugCalc(id){
       }
       ok=resolved;
       // Apply decimals rounding in simulator display
-      if(typeof result==='number' && resolved){
-        result = parseFloat(result.toFixed(n.decimals??2));
-      }
+      if(typeof result==='number' && resolved) result=applyRound(result, n.decimals??2, n.round_mode??'half_up');
       const resStr=result!==undefined?result:'?';
       html=`<div class="dbg-result">
         <div class="dbg-formula">${formula||'configurando...'}</div>
@@ -1668,7 +1702,7 @@ function buildConfig(){
     tramite_token: STATE.tramite.token||'',
     version:'1.1',
     inputs:   STATE.inputs.map(i=>({name:i.name,type:i.dataType,label:i.label||i.name,required:i.required,...(i._fixed?{token:true}:{})})),
-    constants:STATE.constants.map(c=>({name:c.name,value:c.value,decimals:c.decimals??2,description:c.description})),
+    constants:STATE.constants.map(c=>({name:c.name,value:c.value,decimals:c.decimals??2,round_mode:c.round_mode??'half_up',description:c.description})),
     defined:  STATE.defined.map(d=>({name:d.name||d.catalogKey,catalog_key:d.catalogKey})),
     variables:STATE.variables.map(v=>{
       let op={type:v.opType};
@@ -1683,13 +1717,29 @@ function buildConfig(){
       if(v.opType==='lookup'){op.key=v.operandA;op.table=v.lookupRows.reduce((a,r)=>{a[r.from]=r.value;return a},{});}
       if(v.opType==='fn'||v.opType==='php_function'||v.opType==='custom'){op.fn=v.fnName||v.phpFn||'';op.args=(v.fnArgs||v.phpArgs||[]).map(a=>a.val||a);}
       if(v.opType==='extractor'){op.src=v.srcVar;op.field=v.srcField;}
-      return{name:v.name,decimals:v.decimals??2,operation:op};
+      return{name:v.name,decimals:v.decimals??2,round_mode:v.round_mode??'half_up',operation:op};
     }),
-    rules:  STATE.rules.map(r=>({name:r.name,if_left:r.ifLeft,operator:r.operator,if_right:r.ifRight,then:r.then,else:r.else,decimals:r.decimals??2})),
-    outputs:STATE.outputs.map(o=>({name:o.name,map:o.map,description:o.description,decimals:o.decimals??2}))
+    rules:  STATE.rules.map(r=>({name:r.name,if_left:r.ifLeft,operator:r.operator,if_right:r.ifRight,then:r.then,else:r.else,decimals:r.decimals??2,round_mode:r.round_mode??'half_up'})),
+    outputs:STATE.outputs.map(o=>({name:o.name,map:o.map,description:o.description,decimals:o.decimals??2,round_mode:o.round_mode??'half_up'}))
   };
 }
 
+
+// ── ROUNDING ─────────────────────────────────────────────────
+function applyRound(val, decimals, mode){
+  if(typeof val !== 'number') return val;
+  const d = decimals ?? 2;
+  const m = mode ?? 'half_up';
+  if(m === 'none') return val;
+  if(m === 'floor') return Math.floor(val * Math.pow(10,d)) / Math.pow(10,d);
+  if(m === 'ceil')  return Math.ceil(val  * Math.pow(10,d)) / Math.pow(10,d);
+  if(m === 'half_down'){
+    // subtract epsilon to push .5 down
+    const factor = Math.pow(10, d);
+    return Math.round((val - Number.EPSILON) * factor) / factor;
+  }
+  return parseFloat(val.toFixed(d)); // half_up default
+}
 // ── ENGINE JS ────────────────────────────────────────────────
 function runEngineJS(config,inputs){
   const vars={...inputs};
@@ -1783,7 +1833,7 @@ function runEngineJS(config,inputs){
     if(typeof res==='string' && vars[res]!==undefined) res=vars[res];
     // If numeric string, convert
     if(!isNaN(Number(res)) && res!=='') res=Number(res);
-    if(typeof res==='number'){const dec=r.decimals??2;res=parseFloat(res.toFixed(dec));}
+    if(typeof res==='number') res=applyRound(res, r.decimals??2, r.round_mode??'half_up');
     vars[r.name]=res;
   }
 
@@ -1873,7 +1923,7 @@ function runEngineJS(config,inputs){
   const out={};
   (config.outputs||[]).forEach(o=>{
     let v=vars[o.map]??null;
-    if(typeof v==='number'&&v!==null){const dec=o.decimals??2;v=parseFloat(v.toFixed(dec));}
+    if(typeof v==='number'&&v!==null) v=applyRound(v, o.decimals??2, o.round_mode??'half_up');
     out[o.name]=v;
   });
   return{outputs:out,_debug_vars:vars};
@@ -2021,7 +2071,7 @@ function loadConfig(cfg){
   if(ti)ti.value=STATE.tramite.token;
   if(tu)tu.value=STATE.tramite.apiUrl;
   STATE.inputs   =(cfg.inputs||[]).filter(i=>!i.token).map(i=>({_id:uid(),type:'input',name:i.name,dataType:i.type||'number',label:i.label||'',required:i.required!==false,_x:0,_y:0}));
-  STATE.constants=(cfg.constants||[]).map(c=>({_id:uid(),type:'const',name:c.name,value:c.value??0,decimals:c.decimals??2,description:c.description||'',_x:0,_y:0}));
+  STATE.constants=(cfg.constants||[]).map(c=>({_id:uid(),type:'const',name:c.name,value:c.value??0,decimals:c.decimals??2,round_mode:c.round_mode??'half_up',description:c.description||'',_x:0,_y:0}));
   STATE.defined  =(cfg.defined||[]).map(d=>({_id:uid(),type:'defined',name:d.name||d.catalog_key,catalogKey:d.catalog_key||'inpc',_x:0,_y:0}));
   STATE.variables=(cfg.variables||[]).map(v=>{
     const op=v.operation||{};
@@ -2048,11 +2098,11 @@ function loadConfig(cfg){
       phpFn: isFn?(op.fn||''):'',
       phpArgs: isFn?(op.args||[]).map((val,i)=>({param:(FUNCIONES_CATALOGO[op.fn]?.params||[])[i]||'arg'+i,val:String(val||'')})):[],
       lookupRows:op.table?Object.entries(op.table).map(([from,value])=>({from,value})):[],
-      decimals:v.decimals??2,_x:0,_y:0
+      decimals:v.decimals??2,round_mode:v.round_mode??'half_up',_x:0,_y:0
     };
   });
-  STATE.rules  =(cfg.rules||[]).map(r=>({_id:uid(),type:'rule',name:r.name,ifLeft:r.if_left,operator:r.operator,ifRight:r.if_right,then:r.then,else:r.else,decimals:r.decimals??2,_x:0,_y:0}));
-  STATE.outputs=(cfg.outputs||[]).map(o=>({_id:uid(),type:'output',name:o.name,map:o.map,description:o.description||'',decimals:o.decimals??2,_x:0,_y:0}));
+  STATE.rules  =(cfg.rules||[]).map(r=>({_id:uid(),type:'rule',name:r.name,ifLeft:r.if_left,operator:r.operator,ifRight:r.if_right,then:r.then,else:r.else,decimals:r.decimals??2,round_mode:r.round_mode??'half_up',_x:0,_y:0}));
+  STATE.outputs=(cfg.outputs||[]).map(o=>({_id:uid(),type:'output',name:o.name,map:o.map,description:o.description||'',decimals:o.decimals??2,round_mode:o.round_mode??'half_up',_x:0,_y:0}));
   layoutAll();
 }
 
