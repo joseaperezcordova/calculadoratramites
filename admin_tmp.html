@@ -77,7 +77,27 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:13p
 .node-dec{font-size:9.5px;font-family:var(--mono);color:var(--txt3);
   background:var(--bg3);padding:1px 5px;border-radius:3px;margin-left:4px}
 
-/* MOTOR TOGGLE in test strip */
+/* DETALLE OUTPUT EDITOR */
+.detalle-item{background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--r);
+  margin-bottom:10px;overflow:hidden}
+.detalle-item-head{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:var(--bg3);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;
+  color:var(--txt2)}
+.detalle-item-body{padding:10px 12px}
+.detalle-field-row{display:grid;grid-template-columns:100px 1fr;gap:6px;align-items:center;margin-bottom:6px}
+.detalle-field-label{font-size:10.5px;font-weight:600;color:var(--txt2);letter-spacing:.04em;text-transform:uppercase}
+.detalle-field-type{display:flex;border:1px solid var(--border2);border-radius:5px;overflow:hidden;height:28px}
+.dft-opt{flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;
+  font-weight:600;cursor:pointer;transition:all .12s;color:var(--txt3)}
+.dft-opt.act{background:var(--orange);color:white}
+.detalle-add-field{width:100%;background:transparent;border:1px dashed var(--border2);
+  border-radius:5px;padding:5px;font-size:11px;color:var(--txt3);cursor:pointer;
+  font-family:var(--sans);transition:all .12s;margin-top:4px}
+.detalle-add-field:hover{border-color:var(--orange);color:var(--orange)}
+.detalle-descuentos{margin-top:8px;padding:8px;background:rgba(240,120,0,.04);
+  border:1px dashed var(--orange4);border-radius:var(--r)}
+.det-desc-title{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .motor-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--r);
   overflow:hidden;margin-bottom:6px;width:100%}
 .mt-opt{flex:1;padding:5px 8px;text-align:center;font-size:11px;font-weight:600;
@@ -744,7 +764,7 @@ function addNode(type){
   if(type==='const')   STATE.constants.push({_id:id,type:'const',name:'',value:0,decimals:2,round_mode:'half_up',description:'',_x:0,_y:0});
   if(type==='defined') STATE.defined.push({_id:id,type:'defined',name:'',catalogKey:'inpc',_x:0,_y:0});
   if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,round_mode:'half_up',_x:0,_y:0});
-  if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,round_mode:'half_up',_x:0,_y:0});
+  if(type==='output')  STATE.outputs.push({_id:id,type:'output',outputType:'simple',name:'',map:'',description:'',decimals:2,round_mode:'half_up',detalleItems:[],_x:0,_y:0});
   layoutAll(); markDirty();
   setTimeout(()=>selectNode(id), 60);
 }
@@ -810,7 +830,13 @@ function nodeBody(n){
     }
   }
   if(n.type==='rule') return `<span class="node-field">${n.ifLeft||'?'} ${n.operator} ${n.ifRight||'?'}</span><br><span style="font-size:10.5px;color:var(--txt3)">→ ${n.then||'?'} / ${n.else||'?'} <span class="node-dec">.${n.decimals??2}d</span></span>`;
-  if(n.type==='output') return `<span class="node-field">← ${n.map||'sin mapear'}</span><span class="node-dec">.${n.decimals??2}d</span>${n.description?`<br><span style="font-size:10.5px;color:var(--txt3)">${esc(n.description)}</span>`:''}`;
+  if(n.type==='output'){
+    if(n.outputType==='detalle'){
+      const cnt=(n.detalleItems||[]).length;
+      return `<span class="node-field" style="color:var(--green)">📋 detalle</span><br><span style="font-size:10.5px;color:var(--txt3)">${cnt} ítem${cnt!==1?'s':''}</span>`;
+    }
+    return `<span class="node-field">← ${n.map||'sin mapear'}</span><span class="node-dec">.${n.decimals??2}d</span>${n.description?`<br><span style="font-size:10.5px;color:var(--txt3)">${esc(n.description)}</span>`:''}`;
+  }
   return '';
 }
 
@@ -1247,33 +1273,46 @@ function renderEditor(id){
       </div>
     </div>`;
   } else if(n.type==='output'){
-    const cM=makeCombo('variable origen',n.map||'',`upd('${id}','map',this.value)`);
+    const isDetalle = n.outputType==='detalle';
+    const simpleFields = isDetalle ? '' : `
+      <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Mapeo</div>
+      <div class="field mono-in"><label>Variable origen</label>${makeCombo('variable origen',n.map||'',`upd('${id}','map',this.value)`)}</div>
+      <div class="field-row">
+        <div class="field"><label>Descripción</label>
+          <input type="text" value="${esc(n.description)}" placeholder="ej. Monto total" oninput="upd('${id}','description',this.value)">
+        </div>
+        <div class="field" style="flex:0 0 80px"><label>Decimales</label>
+          <select onchange="upd('${id}','decimals',parseInt(this.value))">
+            ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
+          <select onchange="upd('${id}','round_mode',this.value)">
+            <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
+            <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
+            <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
+            <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
+            <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
+          </select>
+        </div>
+      </div>`;
+
+    const detalleFields = !isDetalle ? '' : renderDetalleEditor(id, n);
+
     html=`
     <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Identificación</div>
-    <div class="field mono-in"><label>Nombre en respuesta JSON</label>
-      <input type="text" value="${esc(n.name)}" placeholder="ej. total_a_pagar" oninput="upd('${id}','name',this.value)">
-    </div>
-    <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Mapeo</div>
-    <div class="field mono-in"><label>Variable origen</label>${cM}</div>
     <div class="field-row">
-      <div class="field"><label>Descripción</label>
-        <input type="text" value="${esc(n.description)}" placeholder="ej. Monto total a cobrar" oninput="upd('${id}','description',this.value)">
+      <div class="field mono-in"><label>Nombre en respuesta JSON</label>
+        <input type="text" value="${esc(n.name)}" placeholder="ej. total_a_pagar" oninput="upd('${id}','name',this.value)">
       </div>
-      <div class="field" style="flex:0 0 80px"><label>Decimales</label>
-        <select onchange="upd('${id}','decimals',parseInt(this.value))">
-          ${[0,1,2,3,4,6].map(d=>`<option value="${d}" ${(n.decimals??2)===d?'selected':''}>${d} dec</option>`).join('')}
+      <div class="field" style="flex:0 0 110px"><label>Tipo output</label>
+        <select onchange="upd('${id}','outputType',this.value);renderEditor('${id}');renderCanvas()">
+          <option value="simple"  ${!isDetalle?'selected':''}>Simple</option>
+          <option value="detalle" ${isDetalle?'selected':''}>📋 Detalle</option>
         </select>
       </div>
-      <div class="field" style="flex:0 0 105px"><label>Redondeo</label>
-        <select onchange="upd('${id}','round_mode',this.value)">
-          <option value="half_up"   ${(n.round_mode??'half_up')==='half_up'  ?'selected':''}>½ Arriba</option>
-          <option value="half_down" ${(n.round_mode??'half_up')==='half_down'?'selected':''}>½ Abajo</option>
-          <option value="floor"     ${(n.round_mode??'half_up')==='floor'    ?'selected':''}>Truncar ↓</option>
-          <option value="ceil"      ${(n.round_mode??'half_up')==='ceil'     ?'selected':''}>Techo ↑</option>
-          <option value="none"      ${(n.round_mode??'half_up')==='none'     ?'selected':''}>Sin redondeo</option>
-        </select>
-      </div>
-    </div>`;
+    </div>
+    ${simpleFields}${detalleFields}`;
   }
 
   document.getElementById('ep-body').innerHTML=html;
@@ -1632,7 +1671,127 @@ function addVarType(opType){
   setTimeout(()=>selectNode(id), 60);
 }
 
-// ── MATH STEPS ───────────────────────────────────────────────
+// ── DETALLE OUTPUT EDITOR ────────────────────────────────────
+function renderDetalleEditor(id, n){
+  if(!n.detalleItems) n.detalleItems=[];
+  const items = n.detalleItems;
+
+  const renderFields = (fields, itemIdx, isDesc=false, descIdx=null) => {
+    return Object.entries(fields).filter(([k])=>k!=='descuentos').map(([campo, def])=>{
+      const isVar = def.type==='variable';
+      const typeToggle = `
+        <div class="detalle-field-type">
+          <div class="dft-opt ${!isVar?'act':''}" onclick="setDetalleFieldType('${id}',${itemIdx},'${campo}','fixed',${isDesc},${descIdx})">Fijo</div>
+          <div class="dft-opt ${isVar?'act':''}"  onclick="setDetalleFieldType('${id}',${itemIdx},'${campo}','variable',${isDesc},${descIdx})">Var</div>
+        </div>`;
+      const valueInput = isVar
+        ? makeCombo('variable', def.map||'', `setDetalleFieldVal('${id}',${itemIdx},'${campo}',this.value,${isDesc},${descIdx})`)
+        : `<input type="text" value="${esc(def.value||'')}" placeholder="valor fijo"
+             oninput="setDetalleFieldVal('${id}',${itemIdx},'${campo}',this.value,${isDesc},${descIdx})">`;
+      return `<div class="detalle-field-row">
+        <div style="display:flex;align-items:center;gap:4px">
+          <span class="detalle-field-label" style="font-size:9.5px">${campo}</span>
+          <button class="card-del" onclick="rmDetalleField('${id}',${itemIdx},'${campo}',${isDesc},${descIdx})" style="font-size:10px">✕</button>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          ${typeToggle}
+          <div style="flex:1">${valueInput}</div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  const itemsHtml = items.map((item, i)=>{
+    const fieldsHtml = renderFields(item, i);
+    const descItems = item.descuentos||[];
+    const descHtml = descItems.map((desc, di)=>`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:8px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:10px;font-weight:600;color:var(--txt3)">Descuento ${di+1}</span>
+          <button class="card-del" onclick="rmDetalleDesc('${id}',${i},${di})">✕</button>
+        </div>
+        ${renderFields(desc, i, true, di)}
+        <button class="detalle-add-field" onclick="addDetalleField('${id}',${i},true,${di})">+ campo</button>
+      </div>`).join('');
+
+    return `<div class="detalle-item">
+      <div class="detalle-item-head">
+        <span>Ítem ${i+1}</span>
+        <button class="card-del" style="margin-left:auto" onclick="rmDetalleItem('${id}',${i})">✕</button>
+      </div>
+      <div class="detalle-item-body">
+        ${fieldsHtml}
+        <button class="detalle-add-field" onclick="addDetalleField('${id}',${i},false,null)">+ campo al ítem</button>
+        <div class="detalle-descuentos">
+          <div class="det-desc-title">🏷 Descuentos <button class="detalle-add-field" style="margin-left:auto;width:auto;padding:2px 8px" onclick="addDetalleDesc('${id}',${i})">+ descuento</button></div>
+          ${descHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="ep-section" style="color:var(--green)"><span class="ep-sdot" style="background:var(--green)"></span>Ítems del detalle</div>
+    ${itemsHtml}
+    <button class="add-row-btn" style="border-radius:var(--r);width:100%;margin-top:4px" onclick="addDetalleItem('${id}')">+ agregar ítem</button>
+    <div style="font-size:11px;color:var(--txt3);margin-top:8px;padding:6px 10px;background:var(--bg3);border-radius:var(--r)">
+      💡 <strong>Fijo</strong> = valor que defines aquí · <strong>Var</strong> = toma el valor de una variable del motor
+    </div>`;
+}
+
+// ── DETALLE CRUD HELPERS ──────────────────────────────────────
+function getDetalleRef(id, itemIdx, isDesc, descIdx){
+  const n=getNode(id); if(!n||!n.detalleItems) return null;
+  if(!isDesc) return n.detalleItems[itemIdx];
+  return (n.detalleItems[itemIdx]?.descuentos||[])[descIdx];
+}
+
+function addDetalleItem(id){
+  const n=getNode(id); if(!n) return;
+  if(!n.detalleItems) n.detalleItems=[];
+  n.detalleItems.push({concepto:{type:'fixed',value:''},importe:{type:'variable',map:''},partida:{type:'fixed',value:''},descuentos:[]});
+  renderEditor(id); markDirty();
+}
+function rmDetalleItem(id, i){
+  const n=getNode(id); if(!n) return;
+  n.detalleItems.splice(i,1);
+  renderEditor(id); markDirty();
+}
+function addDetalleField(id, itemIdx, isDesc, descIdx){
+  const ref=getDetalleRef(id,itemIdx,isDesc,descIdx); if(!ref) return;
+  const campo='campo_'+(Object.keys(ref).filter(k=>k!=='descuentos').length+1);
+  ref[campo]={type:'fixed',value:''};
+  renderEditor(id); markDirty();
+}
+function rmDetalleField(id, itemIdx, campo, isDesc, descIdx){
+  const ref=getDetalleRef(id,itemIdx,isDesc,descIdx); if(!ref) return;
+  delete ref[campo];
+  renderEditor(id); markDirty();
+}
+function addDetalleDesc(id, itemIdx){
+  const n=getNode(id); if(!n) return;
+  if(!n.detalleItems[itemIdx].descuentos) n.detalleItems[itemIdx].descuentos=[];
+  n.detalleItems[itemIdx].descuentos.push({concepto_descuento:{type:'fixed',value:''},importe_descuento:{type:'variable',map:''},partida_descuento:{type:'fixed',value:''}});
+  renderEditor(id); markDirty();
+}
+function rmDetalleDesc(id, itemIdx, descIdx){
+  const n=getNode(id); if(!n) return;
+  n.detalleItems[itemIdx].descuentos.splice(descIdx,1);
+  renderEditor(id); markDirty();
+}
+function setDetalleFieldType(id, itemIdx, campo, tipo, isDesc, descIdx){
+  const ref=getDetalleRef(id,itemIdx,isDesc,descIdx); if(!ref||!ref[campo]) return;
+  ref[campo].type=tipo;
+  if(tipo==='fixed' && !ref[campo].value) ref[campo].value='';
+  if(tipo==='variable' && !ref[campo].map) ref[campo].map='';
+  renderEditor(id); markDirty();
+}
+function setDetalleFieldVal(id, itemIdx, campo, val, isDesc, descIdx){
+  const ref=getDetalleRef(id,itemIdx,isDesc,descIdx); if(!ref||!ref[campo]) return;
+  if(ref[campo].type==='fixed') ref[campo].value=val;
+  else ref[campo].map=val;
+  markDirty();
+}
 function normSteps(n){
   if(!n.steps||n.steps.length<2)
     n.steps=[{val:n.operandA||'',op:n.operator||'+'},{val:n.operandB||''}];
@@ -1720,7 +1879,10 @@ function buildConfig(){
       return{name:v.name,decimals:v.decimals??2,round_mode:v.round_mode??'half_up',operation:op};
     }),
     rules:  STATE.rules.map(r=>({name:r.name,if_left:r.ifLeft,operator:r.operator,if_right:r.ifRight,then:r.then,else:r.else,decimals:r.decimals??2,round_mode:r.round_mode??'half_up'})),
-    outputs:STATE.outputs.map(o=>({name:o.name,map:o.map,description:o.description,decimals:o.decimals??2,round_mode:o.round_mode??'half_up'}))
+    outputs:STATE.outputs.map(o=>{
+      if(o.outputType==='detalle') return {name:o.name,type:'detalle',items:o.detalleItems||[]};
+      return {name:o.name,type:'simple',map:o.map,description:o.description,decimals:o.decimals??2,round_mode:o.round_mode??'half_up'};
+    })
   };
 }
 
@@ -1920,12 +2082,35 @@ function runEngineJS(config,inputs){
     else if(ruleMap[name]) processRule(ruleMap[name]);
   });
 
+  // Resolver detalle outputs
+  function resolverDetalle(items){
+    return (items||[]).map(item=>{
+      const resuelto={};
+      Object.entries(item).forEach(([campo,def])=>{
+        if(campo==='descuentos'){resuelto.descuentos=resolverDetalle(def);return;}
+        if(def&&typeof def==='object'){
+          if(def.type==='fixed') resuelto[campo]=def.value;
+          else if(def.type==='variable'){
+            let v=vars[def.map]??null;
+            if(typeof v==='number') v=applyRound(v,def.decimals??2,def.round_mode??'half_up');
+            resuelto[campo]=v;
+          }
+        } else { resuelto[campo]=def; }
+      });
+      return resuelto;
+    });
+  }
+
   const out={};
   (config.outputs||[]).forEach(o=>{
+    if(o.type==='detalle'){out[o.name]=resolverDetalle(o.items||[]);return;}
     let v=vars[o.map]??null;
     if(typeof v==='number'&&v!==null) v=applyRound(v, o.decimals??2, o.round_mode??'half_up');
     out[o.name]=v;
   });
+  if(!config.outputs||!config.outputs.length){
+    return{outputs:{},mensaje:'Sin outputs configurados',_debug_vars:vars};
+  }
   return{outputs:out,_debug_vars:vars};
 }
 
@@ -2102,7 +2287,16 @@ function loadConfig(cfg){
     };
   });
   STATE.rules  =(cfg.rules||[]).map(r=>({_id:uid(),type:'rule',name:r.name,ifLeft:r.if_left,operator:r.operator,ifRight:r.if_right,then:r.then,else:r.else,decimals:r.decimals??2,round_mode:r.round_mode??'half_up',_x:0,_y:0}));
-  STATE.outputs=(cfg.outputs||[]).map(o=>({_id:uid(),type:'output',name:o.name,map:o.map,description:o.description||'',decimals:o.decimals??2,round_mode:o.round_mode??'half_up',_x:0,_y:0}));
+  STATE.outputs=(cfg.outputs||[]).map(o=>({
+    _id:uid(),type:'output',
+    outputType: o.type==='detalle'?'detalle':'simple',
+    name:o.name, map:o.map||'',
+    description:o.description||'',
+    decimals:o.decimals??2,
+    round_mode:o.round_mode??'half_up',
+    detalleItems: o.type==='detalle'?(o.items||[]):[],
+    _x:0,_y:0
+  }));
   layoutAll();
 }
 
