@@ -138,7 +138,8 @@ class FuncionesCalculo
             $data = json_decode($output);
             return ($data->status == 'ok') ? (float) $data->datos->daily : 2;
         } catch (\Exception $e) {
-            return 1;
+            $varR='1_'. $e->getMessage();
+            return $varR;
         }
     }
 
