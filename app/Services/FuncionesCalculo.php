@@ -136,9 +136,9 @@ class FuncionesCalculo
             $output = curl_exec($handle);
             curl_close($handle);
             $data = json_decode($output);
-            return ($data->status == 'ok') ? (float) $data->datos->daily : 0;
+            return ($data->status == 'ok') ? (float) $data->datos->daily : 2;
         } catch (\Exception $e) {
-            return 0;
+            return 1;
         }
     }
 
