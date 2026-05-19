@@ -75,7 +75,13 @@ class MotorCalculadora
         }
 
         foreach ($rules as $r) {
-            foreach ([$r['if_left'] ?? '', $r['if_right'] ?? ''] as $dep) {
+            $deps = [
+                $r['if_left']  ?? '',
+                $r['if_right'] ?? '',
+                $r['then']     ?? '',
+                $r['else']     ?? '',
+            ];
+            foreach ($deps as $dep) {
                 if ($dep && $nameToNode->has($dep) && !is_numeric($dep)) {
                     $adj[$dep][]         = $r['name'];
                     $inDegree[$r['name']]++;
