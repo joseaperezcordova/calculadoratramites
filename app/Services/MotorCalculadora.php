@@ -192,9 +192,8 @@ class MotorCalculadora
                 break;
 
             case 'lookup':
-                $k           = $vars[$op['key'] ?? ''] ?? ($op['key'] ?? '');
-                $table       = $op['table'] ?? [];
-                $raw         = $table[(string) $k] ?? 0;
+                $k           = (string) ($vars[$op['key'] ?? ''] ?? ($op['key'] ?? ''));
+                $raw         = $op['table'][$k] ?? $op['default'] ?? null;
                 $vars[$name] = is_numeric($raw) ? (float) $raw : $raw;
                 break;
 
