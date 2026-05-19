@@ -1829,10 +1829,10 @@ function runEngineJS(config,inputs){
       });
     });
 
-    // Rules also have dependencies (their if_left / if_right may reference vars)
+    // Rules depend on if_left, if_right AND then/else (if they reference variables)
     rules.forEach(r=>{
-      [r.if_left, r.if_right].forEach(dep=>{
-        if(dep && allNames.has(dep) && !isNaN(Number(dep))===false){
+      [r.if_left, r.if_right, r.then, r.else].forEach(dep=>{
+        if(dep && allNames.has(dep) && isNaN(Number(dep))){
           if(!adjList[dep]) adjList[dep]=[];
           adjList[dep].push(r.name);
           inDegree[r.name]=(inDegree[r.name]||0)+1;
