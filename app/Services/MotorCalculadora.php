@@ -179,14 +179,18 @@ class MotorCalculadora
                     if ($tipo === 'date')   $argVal = (string) $argVal;
                 }
                 unset($argVal);
+                // Nombres seguros para el trace: reemplaza nulls/''/numéricos por param_N
+                $argNames = array_map(
+                    fn($k, $a) => (is_string($a) && $a !== '') ? $a : 'param_' . $k,
+                    array_keys($argKeys),
+                    $argKeys
+                );
                 try {
                     $resultado   = FuncionesCalculo::$fn(...$resolvedArgs);
                     $trace[]     = [
                         'variable'  => $name,
                         'funcion'   => $fn,
-                        'args_in'   => count($argKeys) === count($resolvedArgs)
-                            ? array_combine($argKeys, $resolvedArgs)
-                            : $resolvedArgs,
+                        'args_in'   => array_combine($argNames, $resolvedArgs),
                         'resultado' => $resultado,
                         'tipo_res'  => gettype($resultado),
                     ];
@@ -195,7 +199,7 @@ class MotorCalculadora
                     $trace[]     = [
                         'variable' => $name,
                         'funcion'  => $fn,
-                        'args_in'  => $resolvedArgs,
+                        'args_in'  => array_combine($argNames, $resolvedArgs),
                         'error'    => $e->getMessage(),
                     ];
                 }
