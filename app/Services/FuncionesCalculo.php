@@ -125,7 +125,7 @@ class FuncionesCalculo
         return round($valor / 100, 6);
     }
 
-    public static function getUMA(): float
+    public static function getUMA(): string
     {
         try {
             $handle = curl_init();
