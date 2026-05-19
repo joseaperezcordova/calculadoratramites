@@ -120,6 +120,11 @@ class FuncionesCalculo
         }
     }
 
+    public static function porcentajeADecimal(float $valor): float
+    {
+        return round($valor / 100, 6);
+    }
+
     // Helper privado — días inhábiles del año
     private static function getInhabiles(int $anio): array
     {
@@ -244,6 +249,12 @@ class FuncionesCalculo
                 'params'      => ['fecha_limite', 'fecha_actual'],
                 'tipos'       => ['date', 'date'],
                 'descripcion' => 'Porcentaje total de recargos del período ISN',
+                'returns'     => null,
+            ],
+            'porcentajeADecimal' => [
+                'params'      => ['valor'],
+                'tipos'       => ['number'],
+                'descripcion' => 'Convierte porcentaje a decimal (20.04 → 0.2004)',
                 'returns'     => null,
             ],
         ];

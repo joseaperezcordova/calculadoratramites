@@ -37,7 +37,8 @@ class MotorCalculadora
 
         $outputs = [];
         foreach ($config['outputs'] ?? [] as $o) {
-            $outputs[$o['name']] = $vars[$o['map']] ?? null;
+            $raw = $vars[$o['map']] ?? null;
+            $outputs[$o['name']] = self::aplicarRedondeo($raw, $o['decimals'] ?? 2, $o['round_mode'] ?? 'half_up');
         }
 
         return [
@@ -168,7 +169,7 @@ class MotorCalculadora
                         default => 0,
                     };
                 }
-                $vars[$name] = round($result, $v['decimals'] ?? 2);
+                $vars[$name] = self::aplicarRedondeo($result, $v['decimals'] ?? 2, $v['round_mode'] ?? 'half_up');
                 break;
 
             case 'lookup':
@@ -203,6 +204,7 @@ class MotorCalculadora
                 );
                 try {
                     $resultado   = FuncionesCalculo::$fn(...$resolvedArgs);
+                    $resultado   = self::aplicarRedondeo($resultado, $v['decimals'] ?? 2, $v['round_mode'] ?? 'half_up');
                     $trace[]     = [
                         'variable'  => $name,
                         'funcion'   => $fn,
@@ -221,6 +223,23 @@ class MotorCalculadora
                 }
                 break;
         }
+    }
+
+    private static function aplicarRedondeo(mixed $valor, int $decimals, string $mode = 'half_up'): mixed
+    {
+        if (!is_numeric($valor)) return $valor;
+        $valor = (float) $valor;
+        return match ($mode) {
+            'half_down' => round($valor, $decimals, PHP_ROUND_HALF_DOWN),
+            'floor'     => $decimals === 0
+                ? (int) floor($valor)
+                : floor($valor * pow(10, $decimals)) / pow(10, $decimals),
+            'ceil'      => $decimals === 0
+                ? (int) ceil($valor)
+                : ceil($valor * pow(10, $decimals)) / pow(10, $decimals),
+            'none'      => $valor,
+            default     => round($valor, $decimals),
+        };
     }
 
     private static function resolveSystemVar(string $key): mixed
