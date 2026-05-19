@@ -594,14 +594,6 @@ body:not(.in-builder) #view-list{display:flex}
         <span class="col-add-btn" onclick="addNode('output');event.stopPropagation()" title="Agregar Output">+</span>
       </div>
     </div>
-    <div class="legend">
-      <div class="leg-i"><span class="leg-d" style="background:var(--blue)"></span>Input</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--rose)"></span>Const custom</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--teal)"></span>Const sistema</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--orange)"></span>Variable</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--amber)"></span>Regla</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--green)"></span>Output</div>
-    </div>
   </div>
 
   <div class="editor-panel" id="editor-panel">
@@ -754,7 +746,7 @@ function addNode(type){
   if(type==='rule')    STATE.rules.push({_id:id,type:'rule',name:'',ifLeft:'',operator:'==',ifRight:'',then:'',else:'',decimals:2,_x:0,_y:0});
   if(type==='output')  STATE.outputs.push({_id:id,type:'output',name:'',map:'',description:'',decimals:2,_x:0,_y:0});
   layoutAll(); markDirty();
-  setTimeout(()=>selectNode(id),60);
+  setTimeout(()=>{ selectNode(id); scrollToNode(id); }, 80);
 }
 
 function removeNode(id,e){
@@ -934,22 +926,61 @@ function vcPick(id,val){
 }
 
 // ── SELECT + EDITOR ──────────────────────────────────────────
+function scrollToNode(id){
+  const n=getNode(id); if(!n) return;
+  const wrap=document.querySelector('.canvas-wrap'); if(!wrap) return;
+
+  const EDITOR_W = 390;   // editor panel width when expanded
+  const PADDING  = 24;    // extra breathing room
+  const NODE_W_  = 195;
+  const NODE_H_  = 90;    // approx
+
+  const wrapW = wrap.clientWidth - EDITOR_W - PADDING;
+  const wrapH = wrap.clientHeight;
+
+  // Current scroll
+  const scrollL = wrap.scrollLeft;
+  const scrollT = wrap.scrollTop;
+
+  // Node bounds in canvas coords
+  const nx = n._x;
+  const ny = n._y;
+
+  // Horizontal: node right edge must be within visible area minus editor
+  let targetL = scrollL;
+  if(nx + NODE_W_ > scrollL + wrapW){
+    targetL = nx + NODE_W_ - wrapW + PADDING;
+  }
+  if(nx < scrollL + PADDING){
+    targetL = Math.max(0, nx - PADDING);
+  }
+
+  // Vertical
+  let targetT = scrollT;
+  if(ny + NODE_H_ > scrollT + wrapH - PADDING){
+    targetT = ny + NODE_H_ - wrapH + PADDING * 3;
+  }
+  if(ny < scrollT + PADDING){
+    targetT = Math.max(0, ny - PADDING);
+  }
+
+  wrap.scrollTo({ left: targetL, top: targetT, behavior: 'smooth' });
+}
+
 function selectNode(id){
   // collapse test strip if open
   const strip=document.getElementById('test-strip');
   if(strip.classList.contains('open')) strip.classList.remove('open');
 
   SEL=id;
-  // dim all other nodes, highlight selected
   document.querySelectorAll('.node').forEach(el=>{
     el.classList.remove('selected','dimmed');
     if(el.id==='node-'+id) el.classList.add('selected');
     else el.classList.add('dimmed');
   });
 
-  // expand editor panel
   document.getElementById('editor-panel').classList.add('expanded');
-
+  scrollToNode(id);  // ← scroll before rendering editor
   renderEditor(id);
 }
 
@@ -1580,7 +1611,7 @@ function addVarType(opType){
     phpFn:'', phpArgs:[], lookupRows:[], decimals:2, _x:0, _y:0
   });
   layoutAll(); markDirty();
-  setTimeout(()=>selectNode(id), 60);
+  setTimeout(()=>{ selectNode(id); scrollToNode(id); }, 80);
 }
 
 // ── MATH STEPS ───────────────────────────────────────────────
