@@ -35,11 +35,27 @@ class MotorCalculadora
             if ($node['type'] === 'rule') self::procesarRegla($node['data'], $vars, $val);
         }
 
+        if (empty($config['outputs'])) {
+            return [
+                'outputs' => [],
+                'mensaje' => 'Sin outputs configurados para este trámite',
+                '_trace'  => self::limpiarFloats($trace),
+                '_vars'   => self::limpiarFloats($vars),
+            ];
+        }
+
         $outputs = [];
-        foreach ($config['outputs'] ?? [] as $o) {
+        foreach ($config['outputs'] as $o) {
+            $type = $o['type'] ?? 'simple';
+
+            if ($type === 'detalle') {
+                $outputs[$o['name']] = self::resolverDetalle($o['items'] ?? [], $vars);
+                continue;
+            }
+
             $raw = $vars[$o['map']] ?? null;
-            if (is_float($raw) || is_int($raw)) {
-                $raw = self::aplicarRedondeo($raw, $o['decimals'] ?? 2, $o['round_mode'] ?? 'half_up');
+            if (is_numeric($raw)) {
+                $raw = self::aplicarRedondeo((float) $raw, $o['decimals'] ?? 2, $o['round_mode'] ?? 'half_up');
             }
             $outputs[$o['name']] = $raw;
         }
@@ -226,6 +242,36 @@ class MotorCalculadora
                 }
                 break;
         }
+    }
+
+    private static function resolverDetalle(array $items, array $vars): array
+    {
+        return array_map(function ($item) use ($vars) {
+            $resuelto = [];
+            foreach ($item as $campo => $def) {
+                if ($campo === 'descuentos' && is_array($def)) {
+                    $resuelto['descuentos'] = self::resolverDetalle($def, $vars);
+                    continue;
+                }
+                if (is_array($def)) {
+                    if (($def['type'] ?? '') === 'fixed') {
+                        $resuelto[$campo] = $def['value'] ?? null;
+                    } elseif (($def['type'] ?? '') === 'variable') {
+                        $val  = $vars[$def['map'] ?? ''] ?? null;
+                        $dec  = $def['decimals']   ?? 2;
+                        $mode = $def['round_mode'] ?? 'half_up';
+                        $resuelto[$campo] = is_numeric($val)
+                            ? self::aplicarRedondeo((float) $val, $dec, $mode)
+                            : $val;
+                    } else {
+                        $resuelto[$campo] = $def;
+                    }
+                } else {
+                    $resuelto[$campo] = $def;
+                }
+            }
+            return $resuelto;
+        }, $items);
     }
 
     private static function limpiarFloats(array $data): array
