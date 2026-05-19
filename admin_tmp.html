@@ -1442,21 +1442,23 @@ function runDebugCalc(id){
         else if(fn==='calcularPorcentajeRecargos'){result=27.99;resolved=true;}
         else if(fn==='esExtemporaneo'){
           try{
-            const fa=new Date(String(args[0]).split('-').reverse().join('-'));
-            const fl=new Date(String(args[1]).split('-').reverse().join('-'));
+            // Both dates now ISO YYYY-MM-DD — direct string compare works too
+            const fa=new Date(String(args[0]));
+            const fl=new Date(String(args[1]));
             result=fa>fl?1:0; resolved=true;
-          }catch(e2){result=1;resolved=true;}
+          }catch(e2){result=0;resolved=true;}
         }
         else if(fn==='restarAnios'){
-          try{const d=new Date(String(args[0]).split('-').reverse().join('-'));d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
+          try{const d=new Date(String(args[0]));d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
         }
         else if(fn==='calcularFechaLimiteISN'){
           const mes=parseInt(args[0])||1,anio=parseInt(args[1])||2025;
           const ml=mes===12?1:mes+1,al=mes===12?anio+1:anio;
-          result=`17-${String(ml).padStart(2,'0')}-${al}`;resolved=true;
+          // ISO format YYYY-MM-DD
+          result=`${al}-${String(ml).padStart(2,'0')}-17`;resolved=true;
         }
         else if(fn==='calcularFechaVencimiento'){
-          try{const d=new Date(String(args[0]).split('-').reverse().join('-'));d.setDate(d.getDate()+21);result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
+          try{const d=new Date(String(args[0]));d.setDate(d.getDate()+21);result=d.toISOString().slice(0,10);resolved=true;}catch(e2){}
         }
         else if(fn&&fn.toLowerCase().includes('fecha')){result=new Date().toISOString().slice(0,7)+'-01';resolved=true;}
         else{result=`[stub:${fn}]`;resolved=true;}
@@ -1734,12 +1736,12 @@ function runEngineJS(config,inputs){
         try{const d=new Date(args[0]);d.setFullYear(d.getFullYear()-parseFloat(args[1]||5));result=d.toISOString().slice(0,10);}catch(e2){result='2020-01-01';}
       }
       else if(fn==='calcularFechaVencimiento'){
-        try{const d=new Date(args[0].split('-').reverse().join('-'));d.setDate(d.getDate()+21);result=d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');}catch(e2){result=args[0]||'01-01-2026';}
+        try{const d=new Date(String(args[0]));d.setDate(d.getDate()+21);result=d.toISOString().slice(0,10);}catch(e2){result=args[0]||'2026-01-01';}
       }
       else if(fn==='calcularFechaLimiteISN'){
         const mes=parseInt(args[0])||1, anio=parseInt(args[1])||2025;
         const mesLim = mes===12?1:mes+1, anioLim = mes===12?anio+1:anio;
-        result = `17-${String(mesLim).padStart(2,'0')}-${anioLim}`;
+        result = `${anioLim}-${String(mesLim).padStart(2,'0')}-17`;
       }
       else if(fn==='esExtemporaneo'){
         try{
