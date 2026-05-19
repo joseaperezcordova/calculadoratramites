@@ -128,19 +128,42 @@ class FuncionesCalculo
     public static function getUMA(): string
     {
         try {
-            $handle = curl_init();
-            curl_setopt($handle, CURLOPT_URL, "http://admin-tesoreria.nl.gob.mx/api/uma");
-            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($handle, CURLOPT_HEADER, 0);
-            curl_setopt($handle, CURLOPT_TIMEOUT, 5);
-            $output = curl_exec($handle);
-            curl_close($handle);
-            $data = json_decode($output);
-            return ($data->status == 'ok') ? (float) $data->datos->daily : 2;
-        } catch (\Exception $e) {
-            $varR='1_'. $e->getMessage().json_encode($data).json_encode($output).json_encode($e->getTrace());
-            return $varR;
-        }
+
+    $handle = curl_init();
+
+    curl_setopt($handle, CURLOPT_URL, "https://admin-tesoreria.nl.gob.mx/api/uma");
+    curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($handle, CURLOPT_HEADER, false);
+    curl_setopt($handle, CURLOPT_TIMEOUT, 5);
+
+    // seguir redirects
+    curl_setopt($handle, CURLOPT_FOLLOWLOCATION, true);
+
+    $output = curl_exec($handle);
+
+    if (curl_errno($handle)) {
+        throw new \Exception(curl_error($handle));
+    }
+
+    curl_close($handle);
+
+    $data = json_decode($output);
+
+    if (!$data) {
+        throw new \Exception("JSON inválido: ".$output);
+    }
+
+    return ($data->status == 'ok')
+        ? (float)$data->datos->daily
+        : 2;
+
+} catch (\Exception $e) {
+
+    return json_encode([
+        'error' => $e->getMessage(),
+        'output' => $output ?? null,
+    ]);
+}
     }
 
     public static function getIVA(): float
