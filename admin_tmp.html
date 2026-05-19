@@ -103,34 +103,35 @@ body{font-family:var(--sans);background:var(--bg);color:var(--txt);font-size:13p
 .btn-sm{padding:5px 11px;font-size:12px}
 
 .workspace{flex:1;display:flex;overflow:hidden}
+/* col-header interactive add button */
+.col-header{position:absolute;top:18px;font-size:10px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);
+  display:flex;align-items:center;gap:6px;user-select:none}
+.col-add-btn{display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700;
+  color:var(--txt3);transition:all .15s;line-height:1;margin-left:2px;
+  background:transparent;border:1px solid transparent}
+.col-add-btn:hover{background:var(--surface);color:var(--orange);border-color:var(--border2);
+  box-shadow:var(--shadow)}
 
-/* ── ADD PANEL — dark sidebar ───────────────────────────── */
-.add-panel{width:62px;background:var(--dark2);border-right:none;
-  display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:5px;overflow-y:auto;
-  box-shadow:2px 0 8px rgba(0,0,0,.15)}
-.add-btn{width:44px;border-radius:8px;border:1px solid rgba(255,255,255,.12);padding:7px 4px;
-  cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;color:rgba(255,255,255,.4);transition:all .15s;font-size:9px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.03em;line-height:1.2;text-align:center}
-.add-btn .ic{font-size:15px;line-height:1}
-.add-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(240,120,0,.12)}
-.add-btn.ab-in:hover  {border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.12)}
-.add-btn.ab-var:hover {border-color:var(--orange);color:var(--orange);background:rgba(240,120,0,.12)}
-.add-btn.ab-cst:hover {border-color:#f9a8d4;color:#f9a8d4;background:rgba(249,168,212,.1)}
-.add-btn.ab-def:hover {border-color:#5eead4;color:#5eead4;background:rgba(94,234,212,.1)}
-.add-btn.ab-rule:hover{border-color:#fcd34d;color:#fcd34d;background:rgba(252,211,77,.1)}
-.add-btn.ab-out:hover {border-color:#6ee7b7;color:#6ee7b7;background:rgba(110,231,183,.1)}
-.add-divider{width:28px;height:1px;background:rgba(255,255,255,.1);margin:3px 0}
-.panel-lbl{font-size:9px;color:rgba(255,255,255,.25);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin:4px 0 2px}
+/* col dropdown */
+.col-dropdown{position:absolute;top:36px;background:var(--surface);
+  border:1.5px solid var(--border2);border-radius:var(--r);
+  box-shadow:var(--shadow2);z-index:200;min-width:160px;overflow:hidden;display:none}
+.col-dropdown.open{display:block}
+.col-dd-item{padding:8px 14px;cursor:pointer;font-size:12px;font-family:var(--sans);
+  color:var(--txt);display:flex;align-items:center;gap:8px;transition:background .1s;
+  font-weight:500}
+.col-dd-item:hover{background:var(--orange5);color:var(--orange)}
+.col-dd-sep{height:1px;background:var(--border);margin:2px 0}
+.col-dd-item .dd-ic{font-size:13px;width:18px;text-align:center}
 
 .canvas-wrap{flex:1;overflow:auto;position:relative;background:var(--bg);
   background-image:radial-gradient(var(--border) 1.2px,transparent 1.2px);
   background-size:22px 22px}
-#canvas{position:relative;min-width:1620px;min-height:600px}
+#canvas{position:relative;min-width:1200px;min-height:600px}
 #svg-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 
-.col-header{position:absolute;top:18px;font-size:10px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);display:flex;align-items:center;gap:6px}
 .col-dot{width:8px;height:8px;border-radius:50%}
 
 /* NODES */
@@ -551,35 +552,53 @@ body:not(.in-builder) #view-list{display:flex}
 
 <div class="workspace">
 
-  <div class="add-panel">
-    <div class="panel-lbl">Nuevo</div>
-    <div class="add-btn ab-in"   onclick="addNode('input')"   title="Input"><span class="ic">→</span><span>Input</span></div>
-    <div class="add-divider"></div>
-    <div class="add-btn ab-var"  onclick="addNode('var')"       title="Variable calculada"><span class="ic">⚙</span><span>Math</span></div>
-    <div class="add-btn ab-var"  onclick="addNode('extractor')" title="Extraer campo de objeto" style="font-size:8px"><span class="ic">⛏</span><span>Extr.</span></div>
-    <div class="add-btn ab-cst"  onclick="addNode('const')"   title="Constante fija"><span class="ic">#</span><span>Const</span></div>
-    <div class="add-btn ab-def"  onclick="addNode('defined')" title="Variable sistema"><span class="ic">◈</span><span>Sist.</span></div>
-    <div class="add-divider"></div>
-    <div class="add-btn ab-rule" onclick="addNode('rule')"    title="Regla condicional"><span class="ic">◇</span><span>Regla</span></div>
-    <div class="add-divider"></div>
-    <div class="add-btn ab-out"  onclick="addNode('output')"  title="Output"><span class="ic">←</span><span>Output</span></div>
-  </div>
 
   <div class="canvas-wrap">
     <div id="canvas">
       <svg id="svg-layer"></svg>
-      <div class="col-header" style="left:80px"><span class="col-dot" style="background:var(--blue)"></span>Inputs</div>
-      <div class="col-header" style="left:300px"><span class="col-dot" style="background:var(--rose)"></span>Constantes</div>
-      <div class="col-header" style="left:520px"><span class="col-dot" style="background:var(--orange)"></span>Variables</div>
-      <div class="col-header" style="left:740px"><span class="col-dot" style="background:var(--teal)"></span>Sistema</div>
-      <div class="col-header" style="left:960px"><span class="col-dot" style="background:var(--amber)"></span>Reglas</div>
-      <div class="col-header" style="left:1180px"><span class="col-dot" style="background:var(--green)"></span>Outputs</div>
+      <!-- Inputs -->
+      <div class="col-header" style="left:80px">
+        <span class="col-dot" style="background:var(--blue)"></span>Inputs
+        <span class="col-add-btn" onclick="addNode('input');event.stopPropagation()" title="Agregar Input">+</span>
+      </div>
+      <!-- Constantes (custom + sistema unificado) -->
+      <div class="col-header" style="left:300px;position:absolute">
+        <span class="col-dot" style="background:var(--rose)"></span>Constantes
+        <span class="col-add-btn" onclick="toggleColDD('dd-const');event.stopPropagation()" title="Agregar Constante">+</span>
+        <div class="col-dropdown" id="dd-const">
+          <div class="col-dd-item" onclick="addNode('const');closeColDDs()"><span class="dd-ic">#</span>Custom — valor fijo</div>
+          <div class="col-dd-item" onclick="addNode('defined');closeColDDs()"><span class="dd-ic">◈</span>Sistema — BD/catálogo</div>
+        </div>
+      </div>
+      <!-- Variables -->
+      <div class="col-header" style="left:520px;position:absolute">
+        <span class="col-dot" style="background:var(--orange)"></span>Variables
+        <span class="col-add-btn" onclick="toggleColDD('dd-var');event.stopPropagation()" title="Agregar Variable">+</span>
+        <div class="col-dropdown" id="dd-var">
+          <div class="col-dd-item" onclick="addNode('var');closeColDDs()"><span class="dd-ic">⚙</span>Math — operación</div>
+          <div class="col-dd-item" onclick="addNode('extractor');closeColDDs()"><span class="dd-ic">⛏</span>Extractor de campo</div>
+          <div class="col-dd-sep"></div>
+          <div class="col-dd-item" onclick="addVarType('custom');closeColDDs()"><span class="dd-ic">fn</span>Custom — diffYears</div>
+          <div class="col-dd-item" onclick="addVarType('lookup');closeColDDs()"><span class="dd-ic">≡</span>Lookup — tabla</div>
+          <div class="col-dd-item" onclick="addVarType('php_function');closeColDDs()"><span class="dd-ic">⚡</span>Función PHP</div>
+        </div>
+      </div>
+      <!-- Reglas -->
+      <div class="col-header" style="left:740px">
+        <span class="col-dot" style="background:var(--amber)"></span>Reglas
+        <span class="col-add-btn" onclick="addNode('rule');event.stopPropagation()" title="Agregar Regla">+</span>
+      </div>
+      <!-- Outputs -->
+      <div class="col-header" style="left:960px">
+        <span class="col-dot" style="background:var(--green)"></span>Outputs
+        <span class="col-add-btn" onclick="addNode('output');event.stopPropagation()" title="Agregar Output">+</span>
+      </div>
     </div>
     <div class="legend">
       <div class="leg-i"><span class="leg-d" style="background:var(--blue)"></span>Input</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--rose)"></span>Constante</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--rose)"></span>Const custom</div>
+      <div class="leg-i"><span class="leg-d" style="background:var(--teal)"></span>Const sistema</div>
       <div class="leg-i"><span class="leg-d" style="background:var(--orange)"></span>Variable</div>
-      <div class="leg-i"><span class="leg-d" style="background:var(--teal)"></span>Sistema</div>
       <div class="leg-i"><span class="leg-d" style="background:var(--amber)"></span>Regla</div>
       <div class="leg-i"><span class="leg-d" style="background:var(--green)"></span>Output</div>
     </div>
@@ -670,7 +689,7 @@ let SEL=null, _uid=0;
 const uid=()=>'n'+(++_uid);
 
 const TOKEN_ID='__token__'; // fixed node id
-const COL={input:80,const:300,var:520,defined:740,rule:960,output:1180};
+const COL={input:80,const:300,var:520,defined:300,rule:740,output:960};
 const NW=195, NG=14, TO=52;
 
 // ── AVAILABLE VARS FOR COMBO ─────────────────────────────────
@@ -1535,6 +1554,34 @@ function updArg(id,i,val){
 function addLk(id){const n=getNode(id);if(!n)return;n.lookupRows.push({from:'',value:''});renderEditor(id);renderCanvas();markDirty();}
 function rmLk(id,i){const n=getNode(id);if(!n)return;n.lookupRows.splice(i,1);renderEditor(id);renderCanvas();markDirty();}
 function updLk(id,i,k,v){const n=getNode(id);if(!n)return;n.lookupRows[i][k]=v;markDirty();}
+
+// ── COLUMN HEADER DROPDOWNS ──────────────────────────────────
+function toggleColDD(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const wasOpen=el.classList.contains('open');
+  closeColDDs();
+  if(!wasOpen) el.classList.add('open');
+}
+function closeColDDs(){
+  document.querySelectorAll('.col-dropdown').forEach(d=>d.classList.remove('open'));
+}
+// Close dropdowns when clicking canvas
+document.addEventListener('click', closeColDDs);
+
+// Add var with specific opType pre-set
+function addVarType(opType){
+  const id=uid();
+  STATE.variables.push({
+    _id:id, type:'var', name:'', opType:opType,
+    operandA:'', operator:'+', operandB:'',
+    steps:[{val:'',op:'+'},{val:''}],
+    fn:'diffYears', args:['',''],
+    phpFn:'', phpArgs:[], lookupRows:[], decimals:2, _x:0, _y:0
+  });
+  layoutAll(); markDirty();
+  setTimeout(()=>selectNode(id), 60);
+}
 
 // ── MATH STEPS ───────────────────────────────────────────────
 function normSteps(n){
