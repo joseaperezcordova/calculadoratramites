@@ -38,13 +38,16 @@ class MotorCalculadora
         $outputs = [];
         foreach ($config['outputs'] ?? [] as $o) {
             $raw = $vars[$o['map']] ?? null;
-            $outputs[$o['name']] = self::aplicarRedondeo($raw, $o['decimals'] ?? 2, $o['round_mode'] ?? 'half_up');
+            if (is_float($raw) || is_int($raw)) {
+                $raw = self::aplicarRedondeo($raw, $o['decimals'] ?? 2, $o['round_mode'] ?? 'half_up');
+            }
+            $outputs[$o['name']] = $raw;
         }
 
         return [
             'outputs' => $outputs,
-            '_trace'  => $trace,
-            '_vars'   => $vars,
+            '_trace'  => self::limpiarFloats($trace),
+            '_vars'   => self::limpiarFloats($vars),
         ];
     }
 
@@ -223,6 +226,15 @@ class MotorCalculadora
                 }
                 break;
         }
+    }
+
+    private static function limpiarFloats(array $data): array
+    {
+        return array_map(function ($v) {
+            if (is_float($v))  return round($v, 10);
+            if (is_array($v))  return self::limpiarFloats($v);
+            return $v;
+        }, $data);
     }
 
     private static function aplicarRedondeo(mixed $valor, int $decimals, string $mode = 'half_up'): mixed

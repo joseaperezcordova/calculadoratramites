@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        ini_set('serialize_precision', -1);
+        ini_set('precision', 14);
     }
 }
