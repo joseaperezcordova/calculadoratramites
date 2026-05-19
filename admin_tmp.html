@@ -1749,7 +1749,7 @@ function getDetalleRef(id, itemIdx, isDesc, descIdx){
 function addDetalleItem(id){
   const n=getNode(id); if(!n) return;
   if(!n.detalleItems) n.detalleItems=[];
-  n.detalleItems.push({concepto:{type:'fixed',value:''},importe:{type:'variable',map:''},partida:{type:'fixed',value:''},descuentos:[]});
+  n.detalleItems.push({concepto:{type:'fixed',value:''},importe_concepto:{type:'variable',map:''},partida:{type:'fixed',value:''},descuentos:[]});
   renderEditor(id); markDirty();
 }
 function rmDetalleItem(id, i){
