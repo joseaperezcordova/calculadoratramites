@@ -1779,7 +1779,10 @@ function runEngineJS(config,inputs){
     const L=val(r.if_left),R=val(r.if_right);
     const match={'==':L==R,'!=':L!=R,'>':L>R,'<':L<R,'>=':L>=R,'<=':L<=R}[r.operator]??false;
     let res=match?r.then:r.else;
-    if(!isNaN(Number(res)))res=Number(res);
+    // If result is a variable name, resolve it
+    if(typeof res==='string' && vars[res]!==undefined) res=vars[res];
+    // If numeric string, convert
+    if(!isNaN(Number(res)) && res!=='') res=Number(res);
     if(typeof res==='number'){const dec=r.decimals??2;res=parseFloat(res.toFixed(dec));}
     vars[r.name]=res;
   }
