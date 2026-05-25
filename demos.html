@@ -1,152 +1,1335 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="es-MX">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>CSS Card Hover Effects</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colectivo La Duna · Conservación Costera BCS</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+/* ================================================================
+   VARIABLES & RESET
+================================================================ */
+:root {
+  --ocean-deep:   #012A4A;
+  --ocean:        #0077B6;
+  --turquoise:    #00B4D8;
+  --aqua:         #90E0EF;
+  --coral:        #E76F51;
+  --sand:         #F4A261;
+  --sand-light:   #FFF1E6;
+  --green-deep:   #1B4332;
+  --green:        #2D6A4F;
+  --green-light:  #95D5B2;
+  --cream:        #FFFBF5;
+  --warm:         #FFF6EC;
+  --ink:          #12141E;
+  --ink-soft:     #4A4A6A;
+  --white:        #FFFFFF;
+
+  --ff-display: 'Playfair Display', Georgia, serif;
+  --ff-body:    'Jost', system-ui, sans-serif;
+
+  --r: 16px;
+  --sh: 0 8px 32px rgba(0,0,0,.12);
+  --sh-lg: 0 20px 60px rgba(0,0,0,.18);
+  --ease: .3s cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration:none; color:inherit; }
+img { display:block; max-width:100%; }
+
+/* ================================================================
+   UTILITIES
+================================================================ */
+.wrap { max-width:1200px; margin:0 auto; padding:0 36px; }
+
+.label {
+  display:block;
+  font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.25em;
+  color:var(--turquoise); margin-bottom:14px;
+}
+.h2 {
+  font-family:var(--ff-display);
+  font-size: clamp(34px,5vw,54px);
+  font-weight:700; line-height:1.1;
+  color:var(--ink); margin-bottom:22px;
+}
+.lead {
+  font-size:17px; line-height:1.72;
+  color:var(--ink-soft); max-width:580px;
+}
+
+/* scroll reveal */
+.up { opacity:0; transform:translateY(44px); transition:opacity .72s ease, transform .72s ease; }
+.up.in { opacity:1; transform:none; }
+
+/* ================================================================
+   NAV
+================================================================ */
+#nav {
+  position:fixed; inset:0 0 auto;
+  z-index:1000;
+  padding:22px 0;
+  transition: background var(--ease), padding var(--ease), box-shadow var(--ease);
+}
+#nav.scrolled {
+  background:rgba(255,251,245,.96);
+  backdrop-filter:blur(14px);
+  padding:12px 0;
+  box-shadow:0 2px 20px rgba(0,0,0,.07);
+}
+.nav-inner {
+  display:flex; justify-content:space-between; align-items:center;
+  max-width:1200px; margin:0 auto; padding:0 36px;
+}
+.logo {
+  font-family:var(--ff-display);
+  font-size:20px; font-weight:700;
+  color:#fff; line-height:1; transition:color var(--ease);
+}
+#nav.scrolled .logo { color:var(--green-deep); }
+.logo small {
+  display:block; font-family:var(--ff-body);
+  font-size:10px; font-weight:400;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--aqua); margin-top:3px;
+}
+#nav.scrolled .logo small { color:var(--turquoise); }
+
+.nav-links { display:flex; gap:28px; list-style:none; }
+.nav-links a {
+  font-size:14px; font-weight:500;
+  color:rgba(255,255,255,.85);
+  transition:color var(--ease);
+}
+#nav.scrolled .nav-links a { color:var(--ink-soft); }
+.nav-links a:hover { color:var(--turquoise) !important; }
+.nav-cta {
+  background:var(--turquoise) !important;
+  color:#fff !important;
+  padding:10px 24px; border-radius:100px;
+  font-weight:600 !important;
+  transition:background var(--ease), transform var(--ease) !important;
+}
+.nav-cta:hover { background:var(--ocean) !important; transform:translateY(-2px); }
+
+/* ================================================================
+   HERO
+================================================================ */
+#hero {
+  min-height:100vh;
+  position:relative;
+  display:flex; align-items:center;
+  overflow:hidden;
+  background: linear-gradient(160deg,
+    var(--ocean-deep) 0%,
+    #013E6B 30%,
+    #0096C7 65%,
+    #48CAE4 100%
+  );
+}
+
+/* Grain texture overlay */
+#hero::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0;
+}
+
+/* Animated waves */
+.waves {
+  position:absolute; bottom:0; left:0; right:0; height:130px;
+  overflow:hidden; z-index:1;
+}
+.wv {
+  position:absolute; bottom:0;
+  width:220%; left:-10%;
+  height:100px; border-radius:42% 58% 0 0 / 60px 60px 0 0;
+}
+.wv1 { background:rgba(255,255,255,.08); animation:wvanim 9s linear infinite; bottom:24px; }
+.wv2 { background:rgba(255,255,255,.12); animation:wvanim 6s linear infinite reverse; bottom:12px; }
+.wv3 { background:var(--cream); animation:wvanim 12s linear infinite; bottom:0; }
+@keyframes wvanim { to { transform:translateX(45.5%); } }
+
+/* Floating bubbles */
+.bubble {
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,.07);
+  animation:rise linear infinite;
+}
+@keyframes rise {
+  0%   { transform:translateY(110vh) scale(.1); opacity:0; }
+  10%  { opacity:1; }
+  90%  { opacity:.8; }
+  100% { transform:translateY(-20vh) scale(1); opacity:0; }
+}
+
+.hero-content {
+  position:relative; z-index:2;
+  width:100%; max-width:1200px;
+  margin:0 auto;
+  padding:130px 36px 170px;
+}
+
+.hero-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.22);
+  backdrop-filter:blur(8px);
+  border-radius:100px; padding:8px 18px;
+  margin-bottom:30px;
+  font-size:13px; font-weight:500;
+  color:rgba(255,255,255,.92); letter-spacing:.04em;
+}
+.ping {
+  width:8px; height:8px; border-radius:50%;
+  background:#00E676;
+  animation:ping 2s ease infinite;
+}
+@keyframes ping {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:.55; transform:scale(1.5); }
+}
+
+.hero-title {
+  font-family:var(--ff-display);
+  font-size:clamp(50px,8vw,94px);
+  font-weight:900; line-height:1.0;
+  color:#fff; max-width:740px;
+  margin-bottom:24px; letter-spacing:-.02em;
+}
+.hero-title em { font-style:normal; color:var(--sand); }
+
+.hero-sub {
+  font-size:18px; font-weight:300; line-height:1.68;
+  color:rgba(255,255,255,.78);
+  max-width:480px; margin-bottom:44px;
+}
+.hero-btns { display:flex; gap:14px; flex-wrap:wrap; }
+
+.btn-A {
+  background:var(--sand); color:var(--ink);
+  padding:16px 36px; border-radius:100px;
+  font-size:15px; font-weight:600; letter-spacing:.03em;
+  display:inline-flex; align-items:center; gap:8px;
+  transition:all var(--ease); border:none; cursor:pointer;
+}
+.btn-A:hover { background:#fff; transform:translateY(-3px); box-shadow:0 14px 40px rgba(0,0,0,.25); }
+
+.btn-B {
+  background:transparent; color:#fff;
+  padding:16px 36px; border-radius:100px;
+  font-size:15px; font-weight:500;
+  border:2px solid rgba(255,255,255,.38);
+  transition:all var(--ease); cursor:pointer;
+  font-family:var(--ff-body);
+}
+.btn-B:hover { border-color:#fff; background:rgba(255,255,255,.1); transform:translateY(-3px); }
+
+.hero-stats {
+  display:flex; gap:52px; flex-wrap:wrap;
+  margin-top:60px; padding-top:44px;
+  border-top:1px solid rgba(255,255,255,.18);
+}
+.hs-num {
+  font-family:var(--ff-display);
+  font-size:38px; font-weight:700;
+  color:var(--sand); line-height:1; margin-bottom:6px;
+}
+.hs-num small { font-size:.55em; }
+.hs-lbl { font-size:13px; color:rgba(255,255,255,.68); max-width:140px; line-height:1.4; }
+
+/* ================================================================
+   QUÉ SON LAS DUNAS
+================================================================ */
+#que-son { background:var(--warm); padding:110px 0; }
+
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+
+/* CSS dune illustration */
+.dune-art {
+  position:relative; height:440px;
+  border-radius:var(--r); overflow:hidden;
+}
+.sky {
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, #87CEEB 0%, #B0E0FF 40%, #f9e89f 40%, #d4ab5c 58%, #c8956c 72%, #2D6A4F 72%, #1B4332 100%);
+}
+.dune-s {
+  position:absolute; bottom:28%;
+  border-radius:50%; height:70px;
+}
+.dune-s:nth-child(2) { background:#E8C547; left:-5%; width:75%; }
+.dune-s:nth-child(3) { background:#D4A845; right:-5%; width:65%; bottom:24%; }
+.dune-s:nth-child(4) { background:#C8A040; left:10%; width:55%; bottom:20%; }
+
+.dune-badge {
+  position:absolute; top:22px; right:22px;
+  background:rgba(255,255,255,.94); backdrop-filter:blur(8px);
+  border-radius:12px; padding:14px 20px;
+}
+.dune-badge-num {
+  font-family:var(--ff-display); font-size:26px; font-weight:700;
+  color:var(--ocean); line-height:1;
+}
+.dune-badge-lbl { font-size:11px; color:var(--ink-soft); margin-top:4px; }
+
+.dune-caption {
+  position:absolute; bottom:0; left:0; right:0; padding:26px 28px;
+  background:linear-gradient(transparent, rgba(0,0,0,.65));
+}
+.dune-caption-title { font-family:var(--ff-display); font-size:20px; font-weight:700; color:#fff; }
+.dune-caption-sub { font-size:13px; color:rgba(255,255,255,.7); margin-top:3px; }
+
+.info-cards { display:flex; flex-direction:column; gap:18px; margin-top:32px; }
+
+.icard {
+  background:#fff; border-radius:var(--r); padding:22px;
+  display:flex; align-items:flex-start; gap:16px;
+  box-shadow:0 4px 16px rgba(0,0,0,.06);
+  transition:transform var(--ease), box-shadow var(--ease);
+}
+.icard:hover { transform:translateX(8px); box-shadow:var(--sh); }
+.icard-icon {
+  width:46px; height:46px; border-radius:13px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; flex-shrink:0;
+}
+.icard-title { font-family:var(--ff-display); font-size:16px; font-weight:600; color:var(--ink); margin-bottom:5px; }
+.icard-text { font-size:14px; color:var(--ink-soft); line-height:1.62; }
+
+/* ================================================================
+   GUARDIANAS
+================================================================ */
+#guardianas { background:var(--green-deep); padding:100px 0; }
+#guardianas .label { color:var(--green-light); }
+#guardianas .h2 { color:#fff; }
+
+.g-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:52px; }
+
+.g-card {
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r); padding:36px 22px;
+  text-align:center;
+  transition:all var(--ease);
+}
+.g-card:hover {
+  background:rgba(255,255,255,.13);
+  transform:translateY(-8px);
+  box-shadow:0 22px 44px rgba(0,0,0,.3);
+  border-color:rgba(255,255,255,.2);
+}
+.g-icon { font-size:54px; margin-bottom:18px; display:block; }
+.g-name { font-family:var(--ff-display); font-size:17px; font-weight:700; color:#fff; margin-bottom:10px; }
+.g-text { font-size:13.5px; color:rgba(255,255,255,.58); line-height:1.65; }
+
+/* ================================================================
+   STATS
+================================================================ */
+#stats {
+  padding:100px 0;
+  background:linear-gradient(140deg, var(--turquoise), #0077B6);
+  position:relative; overflow:hidden;
+}
+#stats::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 70% 50%, rgba(255,255,255,.1) 0%, transparent 60%);
+}
+
+.stats-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:2px; background:rgba(255,255,255,.15);
+  border-radius:var(--r); overflow:hidden;
+}
+.stat-item {
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(8px);
+  padding:54px 40px; text-align:center;
+}
+.stat-num {
+  font-family:var(--ff-display);
+  font-size:clamp(52px,7vw,78px);
+  font-weight:900; color:#fff; line-height:1;
+  margin-bottom:12px; letter-spacing:-.02em;
+}
+.stat-num span { color:var(--sand); }
+.stat-lbl { font-size:15px; color:rgba(255,255,255,.72); line-height:1.55; max-width:180px; margin:0 auto; }
+
+/* ================================================================
+   PROGRAMA
+================================================================ */
+#programa { background:var(--warm); padding:100px 0; }
+
+.p-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; margin-top:52px; }
+
+.p-card {
+  background:#fff; border-radius:var(--r);
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.07);
+  transition:all var(--ease);
+}
+.p-card:hover { transform:translateY(-8px); box-shadow:var(--sh-lg); }
+.p-thumb {
+  height:196px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:62px;
+}
+.pt-geo { background:linear-gradient(135deg,#DCEEFB,#B3D9F7); }
+.pt-veg { background:linear-gradient(135deg,#E6F7EE,#A3E4BC); }
+.pt-ave { background:linear-gradient(135deg,#FEF1E6,#FAD0AA); }
+.p-body { padding:28px; }
+.p-title { font-family:var(--ff-display); font-size:19px; font-weight:700; color:var(--ink); margin-bottom:10px; }
+.p-text { font-size:14px; color:var(--ink-soft); line-height:1.68; }
+
+/* ================================================================
+   MAPA INTERACTIVO
+================================================================ */
+#mapa { background:var(--ocean-deep); padding:100px 0 0; }
+#mapa .label { color:var(--turquoise); }
+#mapa .h2 { color:#fff; }
+#mapa .lead { color:rgba(255,255,255,.68); }
+
+.map-wrap {
+  display:grid;
+  grid-template-columns:360px 1fr;
+  margin-top:52px;
+  border-radius:var(--r) var(--r) 0 0;
+  overflow:hidden;
+  min-height:580px;
+}
+
+.map-sidebar {
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-right:none; border-bottom:none;
+  padding:28px; overflow-y:auto;
+}
+.sb-heading {
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.22em; color:rgba(255,255,255,.4); margin-bottom:18px;
+}
+.zona-row {
+  padding:14px;  border-radius:12px; margin-bottom:7px;
+  cursor:pointer; transition:all var(--ease);
+  border:1px solid transparent;
+  display:flex; align-items:center; gap:14px;
+}
+.zona-row:hover, .zona-row.active {
+  background:rgba(255,255,255,.1);
+  border-color:rgba(255,255,255,.14);
+}
+.z-dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+.z-name { font-family:var(--ff-display); font-size:14.5px; font-weight:600; color:#fff; margin-bottom:3px; }
+.z-sub  { font-size:12px; color:rgba(255,255,255,.45); }
+
+.zona-detail {
+  margin-top:22px; padding:18px;
+  background:rgba(255,255,255,.08);
+  border-radius:12px;
+  display:none;
+}
+.zona-detail.show { display:block; }
+.zd-title { font-family:var(--ff-display); font-size:17px; color:#fff; font-weight:700; margin-bottom:8px; }
+.zd-text  { font-size:13px; color:rgba(255,255,255,.62); line-height:1.68; margin-bottom:14px; }
+.zd-tags  { display:flex; flex-wrap:wrap; gap:6px; }
+.ztag {
+  background:rgba(255,255,255,.12);
+  color:rgba(255,255,255,.82);
+  font-size:11px; padding:4px 12px;
+  border-radius:100px; font-weight:500;
+}
+
+#leaflet-map { height:580px; width:100%; }
+
+/* Leaflet popup reset */
+.leaflet-popup-content-wrapper {
+  border-radius:14px !important; padding:0 !important;
+  overflow:hidden;
+  box-shadow:0 14px 50px rgba(0,0,0,.24) !important;
+}
+.leaflet-popup-content { margin:0 !important; width:256px !important; }
+.leaflet-popup-tip-container { display:none; }
+
+/* ================================================================
+   COLECTIVO + ALIADOS
+================================================================ */
+#colectivo { background:var(--warm); padding:100px 0; }
+
+.col-wrap { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; }
+
+.col-pills { display:flex; gap:14px; flex-wrap:wrap; margin-top:32px; }
+.col-pill {
+  background:#fff; border-radius:12px;
+  padding:18px 24px; text-align:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.06);
+}
+.cp-num { font-family:var(--ff-display); font-size:32px; font-weight:700; line-height:1; }
+.cp-lbl { font-size:12px; color:var(--ink-soft); margin-top:5px; }
+
+.logo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:36px; }
+.ally {
+  background:#fff; border-radius:12px;
+  height:68px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:600; color:var(--ink-soft);
+  text-align:center; letter-spacing:.04em;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  transition:all var(--ease);
+}
+.ally:hover { box-shadow:var(--sh); transform:translateY(-3px); color:var(--ocean); }
+
+/* ================================================================
+   CIENCIA CIUDADANA
+================================================================ */
+#ciencia {
+  padding:100px 0;
+  background:linear-gradient(145deg, #012A4A, #023E7D);
+}
+#ciencia .label { color:var(--aqua); }
+#ciencia .h2 { color:#fff; }
+#ciencia .lead { color:rgba(255,255,255,.68); }
+
+.cc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:52px; }
+
+.cc-card {
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r); overflow:hidden;
+  transition:all var(--ease);
+}
+.cc-card:hover {
+  background:rgba(255,255,255,.1);
+  transform:translateY(-7px);
+  border-color:rgba(255,255,255,.18);
+}
+.cc-thumb {
+  height:175px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:58px;
+}
+.ct1 { background:rgba(0,180,216,.22); }
+.ct2 { background:rgba(149,213,178,.22); }
+.ct3 { background:rgba(244,162,97,.22); }
+.cc-body { padding:26px; }
+.cc-title { font-family:var(--ff-display); font-size:18px; font-weight:700; color:#fff; margin-bottom:10px; }
+.cc-text  { font-size:14px; color:rgba(255,255,255,.58); line-height:1.68; }
+
+/* ================================================================
+   CÓMO APOYAR
+================================================================ */
+#apoyar { background:var(--warm); padding:100px 0; text-align:center; }
+#apoyar .h2 { margin:0 auto 16px; }
+#apoyar .lead { margin:0 auto 52px; }
+
+.ap-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; text-align:left; }
+
+.ap-card {
+  background:#fff; border-radius:var(--r); padding:32px 24px;
+  box-shadow:0 4px 16px rgba(0,0,0,.07);
+  transition:all var(--ease); cursor:pointer;
+  border:2px solid transparent;
+}
+.ap-card:hover { transform:translateY(-8px); box-shadow:var(--sh-lg); }
+.ap-card:nth-child(1):hover { border-color:var(--turquoise); }
+.ap-card:nth-child(2):hover { border-color:var(--green); }
+.ap-card:nth-child(3):hover { border-color:var(--sand); }
+.ap-card:nth-child(4):hover { border-color:var(--coral); }
+
+.ap-icon { font-size:46px; margin-bottom:18px; display:block; }
+.ap-title { font-family:var(--ff-display); font-size:18px; font-weight:700; color:var(--ink); margin-bottom:10px; }
+.ap-text { font-size:14px; color:var(--ink-soft); line-height:1.62; margin-bottom:18px; }
+.ap-cta { font-size:13px; font-weight:600; color:var(--ocean); }
+.ap-cta:hover { text-decoration:underline; }
+
+/* ================================================================
+   REPORTE / LEAD MAGNET
+================================================================ */
+#reporte {
+  padding:100px 0;
+  background:linear-gradient(140deg, #F4A261 0%, #E76F51 100%);
+}
+#reporte .label { color:rgba(255,255,255,.78); }
+#reporte .h2 { color:#fff; }
+#reporte .lead { color:rgba(255,255,255,.85); }
+
+.rep-wrap { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+
+.rep-checks { display:flex; flex-direction:column; gap:12px; margin-top:28px; }
+.rep-check { display:flex; align-items:center; gap:12px; font-size:15px; color:rgba(255,255,255,.9); }
+
+.rep-form {
+  background:#fff; border-radius:var(--r);
+  padding:40px; box-shadow:var(--sh-lg);
+}
+.form-title { font-family:var(--ff-display); font-size:22px; font-weight:700; color:var(--ink); margin-bottom:24px; }
+.fg { margin-bottom:18px; }
+.fl { display:block; font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:7px; }
+.fi {
+  width:100%; padding:13px 16px;
+  border:2px solid #EEE; border-radius:10px;
+  font-family:var(--ff-body); font-size:15px; color:var(--ink);
+  outline:none; transition:border-color var(--ease);
+  background:var(--warm);
+}
+.fi:focus { border-color:var(--turquoise); }
+.btn-dl {
+  width:100%;
+  background:linear-gradient(135deg, var(--ocean), var(--turquoise));
+  color:#fff; border:none;
+  padding:17px; border-radius:10px;
+  font-size:16px; font-weight:600;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; gap:10px;
+  font-family:var(--ff-body);
+  transition:all var(--ease); margin-top:6px;
+}
+.btn-dl:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(0,119,182,.4); }
+.form-note { font-size:11.5px; color:#AAA; text-align:center; margin-top:12px; }
+
+/* ================================================================
+   FOOTER
+================================================================ */
+footer { background:var(--ink); padding:80px 0 36px; }
+
+.ft-top {
+  display:grid; grid-template-columns:2fr 1fr 1fr 1fr;
+  gap:56px; margin-bottom:56px;
+}
+.ft-brand { font-family:var(--ff-display); font-size:22px; font-weight:700; color:#fff; margin-bottom:12px; }
+.ft-sub { font-size:11px; color:rgba(255,255,255,.35); letter-spacing:.18em; text-transform:uppercase; margin-bottom:20px; }
+.ft-desc { font-size:14px; color:rgba(255,255,255,.5); line-height:1.72; max-width:270px; }
+.ft-col-title { font-size:12px; font-weight:600; color:#fff; text-transform:uppercase; letter-spacing:.14em; margin-bottom:18px; }
+.ft-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.ft-list a { font-size:14px; color:rgba(255,255,255,.5); transition:color var(--ease); }
+.ft-list a:hover { color:var(--turquoise); }
+.ft-bottom {
+  border-top:1px solid rgba(255,255,255,.08);
+  padding-top:28px;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:13px; color:rgba(255,255,255,.4);
+}
+.ft-bottom a { color:var(--turquoise); }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="face face1">
-        <div class="content">
-          <h2>Lorem Ipsum</h2> 
-          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry when an unknown printer took a galley of type and scrambled it to make a type specimen book. </p>
-        </div>
-      </div>
-      <div class="face face2">
-        <h2>01</h2>
-      </div>
+
+<!-- ================================================================
+     NAV
+================================================================ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      La Duna
+      <small>Colectivo · BCS</small>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#que-son">Las Dunas</a></li>
+      <li><a href="#programa">Investigación</a></li>
+      <li><a href="#mapa">Zonas</a></li>
+      <li><a href="#ciencia">Participar</a></li>
+      <li><a href="#reporte" class="nav-cta">Reporte 2024</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ================================================================
+     HERO
+================================================================ -->
+<section id="hero">
+  <!-- Bubbles -->
+  <div class="bubble" style="width:6px;height:6px;left:12%;animation-duration:13s;animation-delay:0s"></div>
+  <div class="bubble" style="width:4px;height:4px;left:22%;animation-duration:17s;animation-delay:3s"></div>
+  <div class="bubble" style="width:9px;height:9px;left:42%;animation-duration:11s;animation-delay:5s"></div>
+  <div class="bubble" style="width:5px;height:5px;left:58%;animation-duration:19s;animation-delay:1s"></div>
+  <div class="bubble" style="width:7px;height:7px;left:72%;animation-duration:14s;animation-delay:7s"></div>
+  <div class="bubble" style="width:3px;height:3px;left:86%;animation-duration:16s;animation-delay:4s"></div>
+  <div class="bubble" style="width:6px;height:6px;left:95%;animation-duration:12s;animation-delay:9s"></div>
+
+  <div class="hero-content">
+    <div class="hero-pill">
+      <div class="ping"></div>
+      Bahía de La Paz · Baja California Sur
     </div>
-    <div class="card">
-      <div class="face face1">
-        <div class="content">
-          <h2>Lorem Ipsum</h2> 
-          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry when an unknown printer took a galley of type and scrambled it to make a type specimen book. </p>
-        </div>
-      </div>
-      <div class="face face2">
-        <h2>02</h2>
-      </div>
+
+    <h1 class="hero-title">
+      Protegemos<br>las <em>dunas costeras</em><br>de México
+    </h1>
+
+    <p class="hero-sub">
+      Colectivo de conservación que investiga, protege y restaura los sistemas dunares de Bahía de La Paz a través de ciencia, comunidad y acción directa.
+    </p>
+
+    <div class="hero-btns">
+      <a href="#mapa" class="btn-A">Ver zonas en el mapa ↓</a>
+      <button class="btn-B" onclick="document.getElementById('ciencia').scrollIntoView({behavior:'smooth'})">Únete al colectivo</button>
     </div>
-    <div class="card">
-      <div class="face face1">
-        <div class="content">
-          <h2>Lorem Ipsum</h2> 
-          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry when an unknown printer took a galley of type and scrambled it to make a type specimen book. </p>
-        </div>
+
+    <div class="hero-stats">
+      <div>
+        <div class="hs-num">2,230<small>km</small></div>
+        <div class="hs-lbl">de litoral monitoreado en BCS</div>
       </div>
-      <div class="face face2">
-        <h2>03</h2>
+      <div>
+        <div class="hs-num">800K<small>ha</small></div>
+        <div class="hs-lbl">de ecosistema costero protegido</div>
+      </div>
+      <div>
+        <div class="hs-num">5</div>
+        <div class="hs-lbl">zonas activas de conservación</div>
       </div>
     </div>
   </div>
+
+  <div class="waves">
+    <div class="wv wv1"></div>
+    <div class="wv wv2"></div>
+    <div class="wv wv3"></div>
+  </div>
+</section>
+
+<!-- ================================================================
+     QUÉ SON LAS DUNAS
+================================================================ -->
+<section id="que-son">
+  <div class="wrap">
+    <div class="two-col">
+      <div class="up">
+        <span class="label">¿Qué son las dunas costeras?</span>
+        <h2 class="h2">Guardianes naturales del litoral</h2>
+        <p class="lead">
+          Las dunas costeras son acumulaciones de arena esculpidas por el viento que actúan como barrera natural entre el mar y la tierra. En Bahía de La Paz, son uno de los ecosistemas más frágiles y biodiversos de México.
+        </p>
+        <div class="info-cards">
+          <div class="icard">
+            <div class="icard-icon" style="background:#DCEEFB">🌊</div>
+            <div>
+              <div class="icard-title">Barrera contra tormentas</div>
+              <div class="icard-text">Absorben la energía de marejadas y protegen comunidades costeras de la erosión, reduciendo daños a infraestructura y ecosistemas.</div>
+            </div>
+          </div>
+          <div class="icard">
+            <div class="icard-icon" style="background:#E6F7EE">🌿</div>
+            <div>
+              <div class="icard-title">Reservas de biodiversidad</div>
+              <div class="icard-text">Albergan flora y fauna endémica única, adaptada a condiciones extremas de salinidad, calor y viento costero.</div>
+            </div>
+          </div>
+          <div class="icard">
+            <div class="icard-icon" style="background:#FEF6E4">💧</div>
+            <div>
+              <div class="icard-title">Recarga de acuíferos</div>
+              <div class="icard-text">Filtran y almacenan agua de lluvia, recargando los mantos freáticos costeros que abastecen a comunidades locales.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="up" style="transition-delay:.22s">
+        <div class="dune-art">
+          <div class="sky"></div>
+          <div class="dune-s"></div>
+          <div class="dune-s"></div>
+          <div class="dune-s"></div>
+          <div class="dune-badge">
+            <div class="dune-badge-num">BCS</div>
+            <div class="dune-badge-lbl">Dunas únicas</div>
+          </div>
+          <div class="dune-caption">
+            <div class="dune-caption-title">Bahía de La Paz</div>
+            <div class="dune-caption-sub">Baja California Sur · México</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     GUARDIANAS SUDCALIFORNIANAS
+================================================================ -->
+<section id="guardianas">
+  <div class="wrap">
+    <div class="up" style="text-align:center;max-width:600px;margin:0 auto">
+      <span class="label">Guardianas Sudcalifornianas</span>
+      <h2 class="h2" style="color:#fff">Especies que dependen de este ecosistema</h2>
+      <p class="lead" style="color:rgba(255,255,255,.62);margin:0 auto">
+        Cuatro grupos de especies que necesitan las dunas costeras de BCS para sobrevivir y reproducirse.
+      </p>
+    </div>
+
+    <div class="g-grid">
+      <div class="g-card up" style="transition-delay:.08s">
+        <span class="g-icon">🐢</span>
+        <div class="g-name">Tortuga Golfina</div>
+        <div class="g-text">Anida en las dunas de Bahía de La Paz en verano, depositando sus nidos en la arena húmeda a metros del mar.</div>
+      </div>
+      <div class="g-card up" style="transition-delay:.18s">
+        <span class="g-icon">🦎</span>
+        <div class="g-name">Lagartija Dunera</div>
+        <div class="g-text">Especie endémica de BCS que solo existe en sistemas dunares activos. Su presencia indica salud del ecosistema.</div>
+      </div>
+      <div class="g-card up" style="transition-delay:.28s">
+        <span class="g-icon">🌸</span>
+        <div class="g-name">Verbena Costera</div>
+        <div class="g-text">Planta fijadora que estabiliza la arena y crea microhábitats para docenas de especies de invertebrados.</div>
+      </div>
+      <div class="g-card up" style="transition-delay:.38s">
+        <span class="g-icon">🦅</span>
+        <div class="g-name">Gaviota Californiana</div>
+        <div class="g-text">Nidifica en las depresiones entre dunas, usando la vegetación costera como refugio para criar a sus polluelos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     STATS
+================================================================ -->
+<section id="stats">
+  <div class="wrap" style="position:relative;z-index:1">
+    <div class="up" style="text-align:center;margin-bottom:52px">
+      <span class="label" style="color:rgba(255,255,255,.7)">Por qué importan</span>
+      <h2 class="h2" style="color:#fff;text-align:center">La urgencia en números</h2>
+    </div>
+    <div class="stats-grid up">
+      <div class="stat-item">
+        <div class="stat-num"><span id="c1">0</span><span style="font-size:.6em;margin-left:4px">km</span></div>
+        <div class="stat-lbl">de litoral con dunas costeras en Baja California Sur</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span id="c2">0</span><span style="font-size:.6em;margin-left:4px">K ha</span></div>
+        <div class="stat-lbl">de área dunar amenazada por desarrollo urbano</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span id="c3">0</span><span style="font-size:.6em;margin-left:4px">%</span></div>
+        <div class="stat-lbl">de las dunas originales ya afectadas por actividad humana</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     PROGRAMA DE INVESTIGACIÓN
+================================================================ -->
+<section id="programa">
+  <div class="wrap">
+    <div class="up">
+      <span class="label">Programa de Investigación</span>
+      <h2 class="h2">Ciencia para proteger</h2>
+      <p class="lead">Monitoreamos tres dimensiones clave de los ecosistemas dunares para entender su dinámica y proponer estrategias de conservación con base científica.</p>
+    </div>
+    <div class="p-grid">
+      <div class="p-card up" style="transition-delay:.08s">
+        <div class="p-thumb pt-geo">🗺️</div>
+        <div class="p-body">
+          <div class="p-title">Geomorfología</div>
+          <div class="p-text">Mapeamos cambios en la forma y extensión de las dunas con drones y GPS de precisión para detectar erosión en etapas tempranas.</div>
+        </div>
+      </div>
+      <div class="p-card up" style="transition-delay:.18s">
+        <div class="p-thumb pt-veg">🌱</div>
+        <div class="p-body">
+          <div class="p-title">Vegetación</div>
+          <div class="p-text">Catalogamos flora nativa e identificamos especies invasoras que alteran la dinámica natural de los sistemas dunares costeros.</div>
+        </div>
+      </div>
+      <div class="p-card up" style="transition-delay:.28s">
+        <div class="p-thumb pt-ave">🐦</div>
+        <div class="p-body">
+          <div class="p-title">Aves</div>
+          <div class="p-text">Monitoreamos poblaciones de aves playeras y marinas que dependen de las dunas para anidar, alimentarse y descansar en su migración.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     MAPA INTERACTIVO
+================================================================ -->
+<section id="mapa">
+  <div class="wrap">
+    <div class="up">
+      <span class="label">Zonas de conservación</span>
+      <h2 class="h2">5 zonas activas en Bahía de La Paz</h2>
+      <p class="lead">Explora nuestras zonas de monitoreo. Haz clic en un marcador o en la lista lateral para conocer el estado, biodiversidad y actividades de cada zona.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="map-wrap up" style="transition-delay:.15s">
+
+      <!-- Sidebar -->
+      <div class="map-sidebar">
+        <div class="sb-heading">Zonas activas</div>
+
+        <div class="zona-row active" onclick="selZona(0)">
+          <div class="z-dot" style="background:#FF6B6B"></div>
+          <div>
+            <div class="z-name">Z1 · El Mogote</div>
+            <div class="z-sub">Activa · 12 voluntarios</div>
+          </div>
+        </div>
+        <div class="zona-row" onclick="selZona(1)">
+          <div class="z-dot" style="background:#4ECDC4"></div>
+          <div>
+            <div class="z-name">Z2 · Centenario</div>
+            <div class="z-sub">Activa · 8 voluntarios</div>
+          </div>
+        </div>
+        <div class="zona-row" onclick="selZona(2)">
+          <div class="z-dot" style="background:#45B7D1"></div>
+          <div>
+            <div class="z-name">Z3 · Punta Arena</div>
+            <div class="z-sub">Monitoreo · 5 voluntarios</div>
+          </div>
+        </div>
+        <div class="zona-row" onclick="selZona(3)">
+          <div class="z-dot" style="background:#96CEB4"></div>
+          <div>
+            <div class="z-name">Z4 · Los Planes</div>
+            <div class="z-sub">Activa · 10 voluntarios</div>
+          </div>
+        </div>
+        <div class="zona-row" onclick="selZona(4)">
+          <div class="z-dot" style="background:#F9CA24"></div>
+          <div>
+            <div class="z-name">Z5 · Bahía Falsa</div>
+            <div class="z-sub">Restauración · 7 voluntarios</div>
+          </div>
+        </div>
+
+        <!-- Detail panel -->
+        <div id="zona-detail" class="zona-detail show">
+          <div id="zd-title" class="zd-title">Z1 · El Mogote</div>
+          <div id="zd-text" class="zd-text">Península arenosa frente a La Paz. Sistema de dunas activas de importancia crítica para el anidamiento de tortuga golfina. Primera zona en ser declarada área de protección.</div>
+          <div id="zd-tags" class="zd-tags">
+            <span class="ztag">🐢 Tortugas</span>
+            <span class="ztag">🌿 Flora endémica</span>
+            <span class="ztag">📊 Alta prioridad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaflet map -->
+      <div id="leaflet-map"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SOBRE EL COLECTIVO + ALIADOS
+================================================================ -->
+<section id="colectivo">
+  <div class="wrap">
+    <div class="col-wrap">
+      <div class="up">
+        <span class="label">Sobre el colectivo</span>
+        <h2 class="h2">Ciencia, comunidad<br>y compromiso</h2>
+        <p class="lead">Colectivo La Duna nació en 2018 para documentar y proteger los ecosistemas dunares de Bahía de La Paz. Somos científicos, ciudadanos, artistas y activistas unidos por un mismo ecosistema.</p>
+        <div class="col-pills">
+          <div class="col-pill">
+            <div class="cp-num" style="color:var(--ocean)">8+</div>
+            <div class="cp-lbl">años activos</div>
+          </div>
+          <div class="col-pill">
+            <div class="cp-num" style="color:var(--green)">42</div>
+            <div class="cp-lbl">publicaciones</div>
+          </div>
+          <div class="col-pill">
+            <div class="cp-num" style="color:var(--coral)">200+</div>
+            <div class="cp-lbl">voluntarios</div>
+          </div>
+          <div class="col-pill">
+            <div class="cp-num" style="color:var(--sand)">5</div>
+            <div class="cp-lbl">zonas activas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="up" style="transition-delay:.2s">
+        <div style="font-size:13px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px">Organizaciones aliadas</div>
+        <div class="logo-grid">
+          <div class="ally">UABCS</div>
+          <div class="ally">CONANP</div>
+          <div class="ally">CIBNOR</div>
+          <div class="ally">SEMARNAT</div>
+          <div class="ally">iNaturalist</div>
+          <div class="ally">UNAM</div>
+          <div class="ally">WWF México</div>
+          <div class="ally">Pronatura</div>
+          <div class="ally">GECI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     CIENCIA CIUDADANA
+================================================================ -->
+<section id="ciencia">
+  <div class="wrap">
+    <div class="up" style="text-align:center;max-width:640px;margin:0 auto">
+      <span class="label">Ciencia Ciudadana</span>
+      <h2 class="h2" style="color:#fff">Participa desde donde estás</h2>
+      <p class="lead" style="color:rgba(255,255,255,.65);margin:0 auto">No necesitas ser científico. Nuestro programa de ciencia ciudadana te permite contribuir de manera real y medible a la conservación de las dunas.</p>
+    </div>
+    <div class="cc-grid">
+      <div class="cc-card up" style="transition-delay:.08s">
+        <div class="cc-thumb ct1">📸</div>
+        <div class="cc-body">
+          <div class="cc-title">Fotografía de campo</div>
+          <div class="cc-text">Documenta especies en las zonas con iNaturalist. Tus fotos alimentan directamente nuestra base de datos científica y validan registros de biodiversidad.</div>
+        </div>
+      </div>
+      <div class="cc-card up" style="transition-delay:.18s">
+        <div class="cc-thumb ct2">🏖️</div>
+        <div class="cc-body">
+          <div class="cc-title">Jornadas de restauración</div>
+          <div class="cc-text">Únete a las brigadas mensuales en cada zona. Retiramos residuos, sembramos vegetación nativa y documentamos el estado de la duna en tiempo real.</div>
+        </div>
+      </div>
+      <div class="cc-card up" style="transition-delay:.28s">
+        <div class="cc-thumb ct3">🐢</div>
+        <div class="cc-body">
+          <div class="cc-title">Monitoreo de nidos</div>
+          <div class="cc-text">Durante la temporada de tortugas, participa en la vigilancia nocturna de nidos y el registro de datos de anidamiento en las zonas activas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     CÓMO APOYAR
+================================================================ -->
+<section id="apoyar">
+  <div class="wrap">
+    <span class="label" style="display:block;text-align:center">Cómo puedes apoyar</span>
+    <h2 class="h2" style="text-align:center">Tu participación cambia todo</h2>
+    <p class="lead" style="text-align:center;margin:0 auto 52px">Hay muchas maneras de sumarte a la conservación de las dunas costeras de Bahía de La Paz.</p>
+    <div class="ap-grid">
+      <div class="ap-card up" style="transition-delay:.06s">
+        <span class="ap-icon">💙</span>
+        <div class="ap-title">Donador</div>
+        <div class="ap-text">Tu donación financia equipamiento, expediciones de campo y publicaciones científicas de acceso libre.</div>
+        <a href="#" class="ap-cta">Donar ahora →</a>
+      </div>
+      <div class="ap-card up" style="transition-delay:.14s">
+        <span class="ap-icon">🤝</span>
+        <div class="ap-title">Voluntario</div>
+        <div class="ap-text">Participa en jornadas, monitoreos y actividades de restauración en las 5 zonas activas de La Paz.</div>
+        <a href="#" class="ap-cta">Inscribirme →</a>
+      </div>
+      <div class="ap-card up" style="transition-delay:.22s">
+        <span class="ap-icon">🔬</span>
+        <div class="ap-title">Investigadores</div>
+        <div class="ap-text">Colabora en proyectos de ciencia y accede a nuestros datos de campo para publicación académica.</div>
+        <a href="#" class="ap-cta">Colaborar →</a>
+      </div>
+      <div class="ap-card up" style="transition-delay:.30s">
+        <span class="ap-icon">📢</span>
+        <div class="ap-title">Difunde</div>
+        <div class="ap-text">Comparte en redes, asiste a eventos o ayúdanos a llegar a más personas que quieran proteger las dunas.</div>
+        <a href="#" class="ap-cta">Compartir →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     REPORTE / LEAD MAGNET
+================================================================ -->
+<section id="reporte">
+  <div class="wrap">
+    <div class="rep-wrap">
+      <div class="up">
+        <span class="label">Reporte de Conservación 2024</span>
+        <h2 class="h2">Descarga el Informe Anual</h2>
+        <p class="lead">Nuestro reporte incluye el estado actual de las 5 zonas, avances en investigación, datos de biodiversidad y el plan de acción para 2025.</p>
+        <div class="rep-checks">
+          <div class="rep-check"><span style="font-size:18px">✅</span> Estado detallado de las 5 zonas activas</div>
+          <div class="rep-check"><span style="font-size:18px">✅</span> 42 páginas con datos científicos actualizados</div>
+          <div class="rep-check"><span style="font-size:18px">✅</span> Mapas e infografías de biodiversidad</div>
+          <div class="rep-check"><span style="font-size:18px">✅</span> Plan de conservación y metas 2025</div>
+        </div>
+      </div>
+      <div class="up" style="transition-delay:.2s">
+        <div class="rep-form">
+          <div class="form-title">Accede al reporte gratuito</div>
+          <div class="fg">
+            <label class="fl">Nombre</label>
+            <input type="text" class="fi" placeholder="Tu nombre completo">
+          </div>
+          <div class="fg">
+            <label class="fl">Correo electrónico</label>
+            <input type="email" class="fi" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="fg">
+            <label class="fl">¿Cómo nos conociste?</label>
+            <select class="fi" style="cursor:pointer">
+              <option>Instagram</option>
+              <option>Recomendación</option>
+              <option>iNaturalist</option>
+              <option>Búsqueda en Google</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <button class="btn-dl" id="btn-dl" onclick="handleDl(this)">
+            <span>⬇</span> Descargar Reporte PDF
+          </button>
+          <p class="form-note">Al registrarte recibirás actualizaciones. Puedes darte de baja en cualquier momento.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     FOOTER
+================================================================ -->
+<footer>
+  <div class="wrap">
+    <div class="ft-top">
+      <div>
+        <div class="ft-brand">Colectivo La Duna</div>
+        <div class="ft-sub">Bahía de La Paz · BCS · México</div>
+        <div class="ft-desc">Organización de conservación costera dedicada a la investigación, protección y restauración de los ecosistemas de dunas de Baja California Sur desde 2018.</div>
+      </div>
+      <div>
+        <div class="ft-col-title">Explorar</div>
+        <ul class="ft-list">
+          <li><a href="#">Las Dunas</a></li>
+          <li><a href="#">Programa</a></li>
+          <li><a href="#">Zonas</a></li>
+          <li><a href="#">El Colectivo</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="ft-col-title">Participar</div>
+        <ul class="ft-list">
+          <li><a href="#">Aula Viva</a></li>
+          <li><a href="#">Voluntariado</a></li>
+          <li><a href="#">Ciencia ciudadana</a></li>
+          <li><a href="#">Donar</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="ft-col-title">Recursos</div>
+        <ul class="ft-list">
+          <li><a href="#">Reporte 2024</a></li>
+          <li><a href="#">Publicaciones</a></li>
+          <li><a href="#">Galería</a></li>
+          <li><a href="#">Contacto</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ft-bottom">
+      <span>© 2025 Colectivo La Duna · Bahía de La Paz, BCS</span>
+      <span>Diseñado por <a href="#">jpcorelab</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ================================================================
+     JS: Leaflet
+================================================================ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* -------- NAV scroll -------- */
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* -------- Scroll reveal -------- */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.up').forEach(el => obs.observe(el));
+
+/* -------- Counters -------- */
+const counters = [
+  { id:'c1', val:2230 },
+  { id:'c2', val:800  },
+  { id:'c3', val:50   }
+];
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    counters.forEach(({id, val}) => {
+      const el = document.getElementById(id);
+      const start = performance.now();
+      const dur = 2000;
+      const tick = now => {
+        const p = Math.min((now - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.floor(ease * val).toLocaleString('es-MX');
+        if (p < 1) requestAnimationFrame(tick);
+        else el.textContent = val.toLocaleString('es-MX');
+      };
+      requestAnimationFrame(tick);
+    });
+    cObs.unobserve(e.target);
+  });
+}, { threshold: 0.3 });
+cObs.observe(document.getElementById('stats'));
+
+/* -------- Map data -------- */
+const ZONAS = [
+  {
+    name: 'Z1 · El Mogote',
+    lat: 24.178, lng: -110.340,
+    color: '#FF6B6B',
+    desc: 'Península arenosa frente a La Paz. Sistema de dunas activas de importancia crítica para el anidamiento de tortuga golfina. Primera zona en ser declarada área de protección.',
+    tags: ['🐢 Tortugas', '🌿 Flora endémica', '📊 Alta prioridad'],
+    ha: '340 ha', sp: '48 sp', vol: 12
+  },
+  {
+    name: 'Z2 · Centenario',
+    lat: 24.258, lng: -110.380,
+    color: '#4ECDC4',
+    desc: 'Zona de dunas en el límite norte de La Paz. Área de transición urbana-natural con presión inmobiliaria alta. Monitoreo de fragmentación activa.',
+    tags: ['🏗️ Presión urbana', '🦎 Lagartijas', '⚠️ Monitoreo urgente'],
+    ha: '120 ha', sp: '32 sp', vol: 8
+  },
+  {
+    name: 'Z3 · Punta Arena',
+    lat: 24.045, lng: -110.155,
+    color: '#45B7D1',
+    desc: 'Punta rocosa con dunas de arena fina en la costa este. Alto valor escénico y ecológico, poco perturbado. Acceso restringido por acuerdo comunitario.',
+    tags: ['🦅 Aves migratorias', '🌊 Erosión activa', '📍 Acceso restringido'],
+    ha: '210 ha', sp: '61 sp', vol: 5
+  },
+  {
+    name: 'Z4 · Los Planes',
+    lat: 24.022, lng: -109.940,
+    color: '#96CEB4',
+    desc: 'Sistema dunar en la bahía interior, próximo a zonas agrícolas. Investigamos la interacción entre agricultura y ecosistemas dunares costeros.',
+    tags: ['🌾 Interfaz agrícola', '💧 Acuífero', '🔬 Investigación activa'],
+    ha: '480 ha', sp: '55 sp', vol: 10
+  },
+  {
+    name: 'Z5 · Bahía Falsa',
+    lat: 23.908, lng: -110.215,
+    color: '#F9CA24',
+    desc: 'Campo dunar aislado en la parte sur de la bahía. Proceso activo de restauración de vegetación nativa con técnicas de bioingeniería y siembra de planta local.',
+    tags: ['🌱 En restauración', '🤿 Acceso por mar', '✨ Alta biodiversidad'],
+    ha: '195 ha', sp: '44 sp', vol: 7
+  }
+];
+
+/* -------- Init map -------- */
+const map = L.map('leaflet-map', {
+  center: [24.10, -110.22],
+  zoom: 10,
+  zoomControl: true,
+  attributionControl: true
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap · © CARTO',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+const markers = [];
+
+ZONAS.forEach((z, i) => {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:42px;height:42px;
+      background:${z.color};
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:3px solid #fff;
+      box-shadow:0 4px 14px rgba(0,0,0,.35);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+      transition:transform .2s;">
+        <span style="transform:rotate(45deg);font-size:15px;font-weight:700;color:${i===4?'#333':'#fff'}">${i+1}</span>
+      </div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 42],
+    popupAnchor: [0, -44]
+  });
+
+  const isDark = i !== 4;
+  const popup = L.popup({ maxWidth: 260, minWidth: 230, closeButton: true })
+    .setContent(`
+      <div style="font-family:'Jost',sans-serif;">
+        <div style="background:${z.color};padding:14px 18px;">
+          <div style="font-size:11px;color:${isDark?'rgba(255,255,255,.75)':'rgba(0,0,0,.6)'};text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">${z.ha} · ${z.sp}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:${isDark?'#fff':'#1a1a1a'};">${z.name}</div>
+        </div>
+        <div style="padding:14px 18px;">
+          <p style="font-size:13px;color:#555;line-height:1.62;margin-bottom:12px;">${z.desc}</p>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            ${z.tags.map(t=>`<span style="background:#F0F0F0;border-radius:20px;padding:3px 10px;font-size:11px;color:#555;">${t}</span>`).join('')}
+          </div>
+          <div style="margin-top:13px;padding-top:11px;border-top:1px solid #EEE;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;color:#999;">👥 ${z.vol} voluntarios</span>
+            <span style="font-size:12px;font-weight:600;color:#0077B6;cursor:pointer;">Ver zona →</span>
+          </div>
+        </div>
+      </div>`);
+
+  const m = L.marker([z.lat, z.lng], { icon }).addTo(map).bindPopup(popup);
+  m.on('click', () => selZona(i));
+  markers.push(m);
+});
+
+/* -------- Select zona -------- */
+function selZona(idx) {
+  const z = ZONAS[idx];
+  // Update sidebar
+  document.querySelectorAll('.zona-row').forEach((r, i) => r.classList.toggle('active', i===idx));
+  // Update detail panel
+  document.getElementById('zd-title').textContent = z.name;
+  document.getElementById('zd-text').textContent  = z.desc;
+  document.getElementById('zd-tags').innerHTML = z.tags.map(t=>`<span class="ztag">${t}</span>`).join('');
+  document.getElementById('zona-detail').classList.add('show');
+  // Fly to
+  map.flyTo([z.lat, z.lng], 12, { duration: 1.3, easeLinearity: 0.3 });
+  setTimeout(() => markers[idx].openPopup(), 800);
+}
+
+/* -------- Download button -------- */
+function handleDl(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span>⏳</span> Enviando...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.innerHTML = '<span>✅</span> ¡Reporte enviado a tu correo!';
+    btn.style.background = 'linear-gradient(135deg,#2D6A4F,#52B788)';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.disabled = false;
+      btn.style.background = '';
+    }, 3500);
+  }, 1600);
+}
+</script>
 </body>
 </html>
-<style>
-body{
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(45deg, #24006b, #f42f8c);
-  }
-  
-  .container{
-    width: 1200px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    grid-gap: 15px;
-    margin: 0 auto;
-  }
-  
-  .card{
-    position: relative;
-    width: 350px;
-    height: 400px;
-    margin: 0 auto;
-    background: #fff;
-    box-shadow: 0 15px 60px rgba(0,0,0, .5);
-    border-radius: 15px;
-  }
-  
-  .card .face{
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .card .face.face1{
-    box-sizing: border-box;
-    padding: 20px;
-  }
-  
-  .card .face.face1 h2{
-    margin: 0;
-    padding: 0;
-  }
-  
-  .card .face.face1 .content{
-    font-size:1.2em;
-    margin:0;
-    padding:0 0 1em 0;
-    font-weight:500;
-  }
-  
-  .card .face.face2{
-    background: #111;
-    transition: 0.5s;
-  }
-  
-  .card:nth-child(1) .face.face2{
-    background: linear-gradient(45deg, #3503ad, #f7308c);
-    border-radius: 15px;
-  }
-  
-  .card:nth-child(2) .face.face2{
-    background: linear-gradient(45deg, #ccff00, #09afff);
-    border-radius: 15px;
-  }
-  
-  .card:nth-child(3) .face.face2{
-    background: linear-gradient(45deg, #e91e63, #ffeb3b);
-    border-radius: 15px;
-  }
-  
-  .card:hover .face.face2{
-    height: 60px;
-    border-radius: 0 0 15px 15px;
-  }
-  
-  .card .face.face2:before{
-    content:'';
-    position: absolute;
-    top:0;
-    left:0;
-    width: 50%;
-    height: 100%;
-    background: rgba(255,255,255, 0.1);
-    border-radius: 15px 0 0 15px;
-  }
-  
-  .card .face.face2 h2{
-    margin: 0;
-    padding: 0;
-    font-size: 10em;
-    color: #fff;
-    transition: 0.5s;
-    text-shadow: 0 2px 5px rgba(0,0,0, .2);
-  }
-  
-  .card:hover .face.face2 h2{
-    font-size: 2em;
-  }</style>
