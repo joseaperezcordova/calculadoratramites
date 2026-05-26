@@ -872,6 +872,41 @@ img { display:block; max-width:100%; }
   margin-top: -5px;
 }
 
+/* ─── Card face slide effect (Zona Pichilingue) ─────────────────── */
+.zt-pich-face1 {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.zt-pich-face2 {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  background: linear-gradient(45deg, #034A52, #16A99F);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: height 0.5s;
+  overflow: hidden;
+}
+.zt-pich-face2::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%; height: 100%;
+  background: rgba(255,255,255,.1);
+}
+.zt-pich-icon {
+  font-size: 4.5em;
+  line-height: 1;
+  position: relative;
+  transition: font-size 0.5s;
+  text-shadow: 0 2px 5px rgba(0,0,0,.2);
+}
+.zt--pich:hover .zt-pich-face2 { height: 46px; }
+.zt--pich:hover .zt-pich-icon  { font-size: 1.6em; }
+
 /* ─── Goo blob hover effect (Zona Punta Norte) ────────────────── */
 .zt-goo-wrap {
   position: absolute;
@@ -1187,13 +1222,20 @@ footer { background:var(--ink); padding:80px 0 36px; }
 
         <div class="zt-tags-layer">
 
-          <!-- ① Zona Pichilingue -->
-          <div class="zt" style="left:28%;top:42%;--zt-bg:#16A99F;--zt-badge:#066C79">
+          <!-- ① Zona Pichilingue (card face effect) -->
+          <div class="zt zt--pich" style="left:28%;top:42%;--zt-bg:#16A99F;--zt-badge:#066C79">
             <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#034A52,#16A99F)">🐢</div>
-              <div class="zt-info">
-                <div class="zt-title">ZONA<br>PICHILINGUE</div>
-                <div class="zt-badge">Nidos de tortuga</div>
+              <!-- face1: foto revelada al hacer hover -->
+              <div class="zt-pich-face1">
+                <div class="zt-photo" style="background:linear-gradient(160deg,#034A52,#16A99F)">🐢</div>
+                <div class="zt-info">
+                  <div class="zt-title">ZONA<br>PICHILINGUE</div>
+                  <div class="zt-badge">Nidos de tortuga</div>
+                </div>
+              </div>
+              <!-- face2: cubierta de color que se desliza al fondo en hover -->
+              <div class="zt-pich-face2">
+                <span class="zt-pich-icon">🐢</span>
               </div>
             </div>
             <div class="zt-tip"></div>
