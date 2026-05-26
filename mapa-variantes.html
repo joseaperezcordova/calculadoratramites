@@ -7,23 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ── RESET & FULL SCREEN ──────────────────────────────────────── */
+/* ── RESET & FULL SCREEN ───────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html, body {
-  width:100vw; height:100vh;
-  overflow:hidden;
+html, body { width:100vw; height:100vh; overflow:hidden;
   font-family:'Jost', system-ui, sans-serif;
-  background:#0A1628;
-  color:#fff;
-  -webkit-font-smoothing:antialiased;
-}
+  background:#0A1628; color:#fff;
+  -webkit-font-smoothing:antialiased; }
 img { display:block; }
 
-/* ── TABS OVERLAY ─────────────────────────────────────────────── */
+/* ── TABS FLOTANTES ────────────────────────────────────────────── */
 .tabs-bar {
   position:fixed; top:20px; left:50%; transform:translateX(-50%);
-  z-index:200;
-  display:flex; gap:8px;
+  z-index:200; display:flex; gap:8px;
   background:rgba(10,22,40,.72);
   backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
   border:1px solid rgba(255,255,255,.14);
@@ -35,43 +30,55 @@ img { display:block; }
   border:none; background:transparent;
   color:rgba(255,255,255,.5);
   font-family:'Jost', sans-serif; font-size:13px; font-weight:600;
-  cursor:pointer; letter-spacing:.03em;
-  transition:all .22s; white-space:nowrap;
+  cursor:pointer; letter-spacing:.03em; transition:all .22s; white-space:nowrap;
 }
-.tab-btn.active, .tab-btn:hover {
-  background:rgba(255,255,255,.15);
-  color:#fff;
-}
-.tab-btn.active {
-  background:#fff;
-  color:#0A1628;
-}
+.tab-btn.active { background:#fff; color:#0A1628; }
+.tab-btn:hover:not(.active) { background:rgba(255,255,255,.15); color:#fff; }
 
-/* ── VARIANT CONTAINER ────────────────────────────────────────── */
+/* ── VARIANTE CONTAINER ────────────────────────────────────────── */
 .variant { display:none; position:fixed; inset:0; }
 .variant.active { display:block; }
 
-/* ── MAP FALLBACK BG ──────────────────────────────────────────── */
-.map-bg {
+/* ── MAPA BASE (imagen + SVG superpuesto) ──────────────────────── */
+.map-box {
+  position:relative; width:100vw; height:100vh;
   background:linear-gradient(160deg,
-    #7FBDCA 0%, #9BCDD4 12%, #AACBBF 28%,
-    #C2D6A8 42%, #D4D09A 55%, #D4C28A 66%,
-    #C8AD78 76%, #8AADB8 90%);
+    #7FBDCA 0%,#9BCDD4 12%,#AACBBF 28%,
+    #C2D6A8 42%,#D4D09A 55%,#D4C28A 66%,
+    #C8AD78 76%,#8AADB8 90%);
+}
+.map-box img {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+}
+
+/*
+  SVG OVERLAY — viewBox 1774×887 (dimensiones reales de mapa.png)
+  preserveAspectRatio="xMidYMid slice" replica object-fit:cover exacto.
+  Para mover un punto edita x e y del <foreignObject> correspondiente.
+  Las coordenadas son píxeles de la imagen original.
+*/
+.map-svg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  overflow:visible;
+  pointer-events:none;
+}
+.map-svg foreignObject {
+  overflow:visible;
+  pointer-events:none;
+}
+/* Ancla: contenedor 0×0 desde donde los chips se posicionan */
+.fo-anchor {
+  position:absolute; top:0; left:0;
+  width:0; height:0;
+  overflow:visible; pointer-events:none;
 }
 
 /* ================================================================
    VARIANTE 1 · BLOBS ORGÁNICOS
 ================================================================ */
-.v1-map-box {
-  position:relative; width:100vw; height:100vh;
-}
-.v1-map-box img {
-  width:100%; height:100%;
-  object-fit:cover; object-position:center;
-  display:block;
-}
-.v1-tags { position:absolute; inset:0; pointer-events:none; }
-
 .zt {
   position:absolute; pointer-events:auto; cursor:pointer;
   transform:translate(-50%,-100%);
@@ -79,39 +86,30 @@ img { display:block; }
   filter:drop-shadow(0 8px 24px rgba(0,0,0,.38));
   z-index:10;
 }
-.zt:hover {
-  transform:translate(-50%,-100%) scale(1.1);
-  filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
-  z-index:20;
-}
+.zt:hover { transform:translate(-50%,-100%) scale(1.1);
+  filter:drop-shadow(0 18px 40px rgba(0,0,0,.55)); z-index:20; }
+
 .zt--down {
   display:flex; flex-direction:column-reverse;
+  position:absolute;
   transform:translate(-50%,0);
 }
 .zt--down:hover { transform:translate(-50%,0) scale(1.1); }
-.zt--down .zt-tip {
-  border-top:none;
-  border-bottom:16px solid var(--zt-bg,#16A99F);
-}
-.zt--down .zt-arrow {
-  border-top:none;
-  border-bottom:12px solid var(--zt-bg,#16A99F);
-  margin-top:0; margin-bottom:-5px;
-}
+.zt--down .zt-tip { border-top:none; border-bottom:16px solid var(--zt-bg,#16A99F); }
+.zt--down .zt-arrow { border-top:none; border-bottom:12px solid var(--zt-bg,#16A99F); margin-top:0; margin-bottom:-5px; }
+
 .zt-blob {
   width:150px; height:176px;
   border-radius:54% 46% 48% 52% / 46% 44% 56% 54%;
-  overflow:hidden;
-  border:3px solid rgba(255,255,255,.88);
-  position:relative;
-  background:var(--zt-bg,#16A99F);
+  overflow:hidden; border:3px solid rgba(255,255,255,.88);
+  position:relative; background:var(--zt-bg,#16A99F);
 }
 .zt-photo {
   position:absolute; inset:0;
   display:flex; align-items:center; justify-content:center;
   font-size:54px; transition:transform .35s;
 }
-.zt:hover .zt-photo { transform:scale(1.08); }
+.zt:hover .zt-photo, .zt--down:hover .zt-photo { transform:scale(1.08); }
 .zt-info {
   position:absolute; bottom:0; left:0; right:0;
   padding:24px 10px 12px;
@@ -131,31 +129,22 @@ img { display:block; }
 .zt-tip {
   width:0; height:0;
   border-left:13px solid transparent; border-right:13px solid transparent;
-  border-top:16px solid var(--zt-bg,#16A99F);
-  margin:0 auto;
+  border-top:16px solid var(--zt-bg,#16A99F); margin:0 auto;
 }
 .zt-arrow {
   width:0; height:0;
   border-left:9px solid transparent; border-right:9px solid transparent;
-  border-top:12px solid #F5C218;
-  margin:0 auto; margin-top:-5px;
+  border-top:12px solid #F5C218; margin:0 auto; margin-top:-5px;
 }
 .zt-pich-face1 { position:absolute; inset:0; z-index:1; }
 .zt-pich-face2 {
-  position:absolute; bottom:0; left:0;
-  width:100%; height:100%; z-index:2;
+  position:absolute; bottom:0; left:0; width:100%; height:100%; z-index:2;
   background:linear-gradient(45deg,#7F0000,#D32F2F);
   display:flex; justify-content:center; align-items:center;
   transition:height .5s; overflow:hidden;
 }
-.zt-pich-face2::before {
-  content:''; position:absolute; top:0; left:0;
-  width:50%; height:100%; background:rgba(255,255,255,.1);
-}
-.zt-pich-icon {
-  font-size:4.5em; line-height:1; position:relative;
-  transition:font-size .5s; text-shadow:0 2px 5px rgba(0,0,0,.2);
-}
+.zt-pich-face2::before { content:''; position:absolute; top:0; left:0; width:50%; height:100%; background:rgba(255,255,255,.1); }
+.zt-pich-icon { font-size:4.5em; line-height:1; position:relative; transition:font-size .5s; text-shadow:0 2px 5px rgba(0,0,0,.2); }
 .zt--pich:hover .zt-pich-face2 { height:46px; }
 .zt--pich:hover .zt-pich-icon  { font-size:1.6em; }
 .zt-goo-wrap { position:absolute; inset:0; z-index:2; overflow:hidden; }
@@ -178,16 +167,6 @@ img { display:block; }
 /* ================================================================
    VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
 ================================================================ */
-.v4-map-box {
-  position:relative; width:100vw; height:100vh;
-}
-.v4-map-box img {
-  width:100%; height:100%;
-  object-fit:cover; object-position:center;
-  display:block;
-}
-.v4-chips { position:absolute; inset:0; pointer-events:none; }
-
 .v4-chip {
   position:absolute; pointer-events:auto; cursor:pointer;
   transform:translate(-50%,-100%);
@@ -195,7 +174,6 @@ img { display:block; }
   transition:filter .25s;
 }
 .v4-chip:hover { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
-
 .v4-chip-row {
   display:flex; flex-direction:row; align-items:center;
   background:rgba(255,255,255,.16);
@@ -204,15 +182,8 @@ img { display:block; }
   border-radius:100px; overflow:hidden;
   transition:background .35s, border-color .35s, border-radius .45s;
 }
-.v4-chip:hover .v4-chip-row {
-  background:var(--vc);
-  border-color:rgba(255,255,255,.28);
-  border-radius:18px;
-}
-.v4-pill {
-  display:flex; align-items:center; gap:8px;
-  padding:10px 16px; white-space:nowrap; flex-shrink:0;
-}
+.v4-chip:hover .v4-chip-row { background:var(--vc); border-color:rgba(255,255,255,.28); border-radius:18px; }
+.v4-pill { display:flex; align-items:center; gap:8px; padding:10px 16px; white-space:nowrap; flex-shrink:0; }
 .v4-emoji { font-size:20px; line-height:1; }
 .v4-name {
   font-family:'Playfair Display',serif;
@@ -226,10 +197,7 @@ img { display:block; }
   display:flex; flex-direction:column; justify-content:center;
   transition:max-width .45s cubic-bezier(.34,1.2,.64,1), padding .45s, border-color .4s;
 }
-.v4-chip:hover .v4-expand {
-  max-width:210px; padding:10px 18px 10px 14px;
-  border-left-color:rgba(255,255,255,.2);
-}
+.v4-chip:hover .v4-expand { max-width:210px; padding:10px 18px 10px 14px; border-left-color:rgba(255,255,255,.2); }
 .v4-sub {
   display:inline-block; background:rgba(255,255,255,.22);
   color:#fff; font-size:9px; font-weight:700;
@@ -245,46 +213,33 @@ img { display:block; }
   margin:0 auto; transition:border-top-color .35s;
 }
 .v4-chip:hover .v4-tip { border-top-color:var(--vc); }
-.v4--down {
+
+/* Chip apuntando hacia arriba (cuelga hacia abajo) */
+.v4-chip.down {
   display:flex; flex-direction:column-reverse;
   transform:translate(-50%,0);
 }
-.v4--down:hover { transform:translate(-50%,0); }
-.v4--down .v4-tip {
-  border-top:none;
-  border-bottom:14px solid rgba(255,255,255,.16);
-  transition:border-bottom-color .35s;
-}
-.v4--down:hover .v4-tip { border-bottom-color:var(--vc); }
+.v4-chip.down:hover { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
+.v4-chip.down .v4-tip { border-top:none; border-bottom:14px solid rgba(255,255,255,.16); transition:border-bottom-color .35s; }
+.v4-chip.down:hover .v4-tip { border-top-color:transparent; border-bottom-color:var(--vc); }
 
 /* ================================================================
-   VARIANTE 5 · PINS + FOOTER STRIP
+   VARIANTE 5 · PINS SVG NATIVOS + FOOTER STRIP
 ================================================================ */
-.v5-map-box {
-  position:relative; width:100vw; height:100vh;
+.v5-pin-g {
+  cursor:pointer; pointer-events:auto;
+  transform-box:fill-box; transform-origin:center;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
 }
-.v5-map-box img {
-  width:100%; height:100%;
-  object-fit:cover; object-position:center;
-  display:block;
+.v5-pin-g:hover { transform:scale(1.28); }
+.v5-pulse {
+  fill:none; stroke-width:2;
+  animation:svgPulse 2.4s ease-out infinite;
 }
-.v5-pins { position:absolute; inset:0; pointer-events:none; }
-
-.v5-pin {
-  position:absolute; transform:translate(-50%,-50%);
-  width:38px; height:38px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Jost',sans-serif; font-size:15px; font-weight:700;
-  color:#fff; cursor:pointer; pointer-events:auto;
-  border:2.5px solid rgba(255,255,255,.75);
-  box-shadow:0 4px 16px rgba(0,0,0,.45);
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+@keyframes svgPulse {
+  0%   { r:18; opacity:.8; }
+  100% { r:36; opacity:0; }
 }
-.v5-pin:hover, .v5-pin.v5-active {
-  transform:translate(-50%,-50%) scale(1.25);
-  box-shadow:0 8px 30px rgba(0,0,0,.65);
-}
-
 .v5-footer {
   position:fixed; bottom:0; left:0; right:0;
   background:rgba(10,22,40,.82);
@@ -297,130 +252,120 @@ img { display:block; }
   gap:10px; padding:22px 32px;
   color:rgba(255,255,255,.35); font-size:13px; font-weight:500; letter-spacing:.04em;
 }
-.v5-zone-strip {
-  display:none; padding:20px 40px;
-  align-items:center; gap:24px;
-}
-.v5-zone-strip.v5-show { display:flex; animation:v5In .3s ease; }
-@keyframes v5In {
-  from { opacity:0; transform:translateY(10px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+.v5-zone-strip { display:none; padding:20px 40px; align-items:center; gap:24px; }
+.v5-zone-strip.show { display:flex; animation:v5In .3s ease; }
+@keyframes v5In { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 .v5-color-bar { width:4px; min-height:72px; border-radius:100px; flex-shrink:0; }
 .v5-zone-emoji { font-size:36px; flex-shrink:0; }
 .v5-zone-content { flex:1; }
-.v5-zone-name {
-  font-family:'Playfair Display',serif;
-  font-size:20px; font-weight:900; color:#fff; margin-bottom:2px;
-}
-.v5-zone-sub {
-  font-size:10px; font-weight:700; letter-spacing:.12em;
-  text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:8px;
-}
+.v5-zone-name { font-family:'Playfair Display',serif; font-size:20px; font-weight:900; color:#fff; margin-bottom:2px; }
+.v5-zone-sub { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:8px; }
 .v5-zone-desc { font-size:12px; color:rgba(255,255,255,.7); line-height:1.65; }
 .v5-zone-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
-.v5-ztag {
-  font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-  padding:3px 10px; border-radius:100px;
-  background:rgba(255,255,255,.12); color:rgba(255,255,255,.65);
-}
+.v5-ztag { font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 10px; border-radius:100px; background:rgba(255,255,255,.12); color:rgba(255,255,255,.65); }
 .v5-nav-dots { display:flex; gap:8px; flex-direction:column; justify-content:center; flex-shrink:0; }
-.v5-dot {
-  width:8px; height:8px; border-radius:50%;
-  border:1.5px solid rgba(255,255,255,.3); cursor:pointer;
-  transition:background .2s, border-color .2s;
-}
-.v5-dot.v5-active { border-color:transparent; }
+.v5-dot { width:8px; height:8px; border-radius:50%; border:1.5px solid rgba(255,255,255,.3); cursor:pointer; transition:background .2s,border-color .2s; }
+.v5-dot.active { border-color:transparent; }
 </style>
 </head>
 <body>
 
-<!-- ── TABS FLOTANTES ────────────────────────────────────────────── -->
+<!-- ── TABS ─────────────────────────────────────────────────────── -->
 <div class="tabs-bar">
-  <button class="tab-btn active" onclick="setTab(1)">Blobs orgánicos</button>
-  <button class="tab-btn"        onclick="setTab(4)">Chips → derecha</button>
-  <button class="tab-btn"        onclick="setTab(5)">Pins + footer</button>
+  <button class="tab-btn active" onclick="setTab('v1')">Blobs orgánicos</button>
+  <button class="tab-btn"        onclick="setTab('v4')">Chips → derecha</button>
+  <button class="tab-btn"        onclick="setTab('v5')">Pins + footer</button>
 </div>
 
 <!-- ================================================================
      VARIANTE 1 · BLOBS ORGÁNICOS
 ================================================================ -->
 <div class="variant active" id="v1">
-  <div class="v1-map-box map-bg">
+  <div class="map-box">
     <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
-    <div class="v1-tags">
+    <!--
+      COORDENADAS en píxeles de la imagen original (1774 × 887 px).
+      Cambia x e y de cada <foreignObject> para mover el blob.
+      El punto x,y es donde la punta del blob toca el mapa.
+    -->
+    <svg class="map-svg" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice">
 
-      <!-- El Cajete · rojo · card face -->
-      <div class="zt zt--pich" style="left:28%;top:42%;--zt-bg:#D32F2F;--zt-badge:#B71C1C">
-        <div class="zt-blob">
-          <div class="zt-pich-face1">
-            <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
-            <div class="zt-info">
-              <div class="zt-title">EL<br>CAJETE</div>
-              <div class="zt-badge">Dunas interiores</div>
+      <!-- ROJO · El Cajete · x:185 y:162 · cuelga abajo -->
+      <foreignObject x="185" y="162" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="zt zt--pich zt--down" style="--zt-bg:#D32F2F;--zt-badge:#B71C1C;pointer-events:auto">
+            <div class="zt-blob">
+              <div class="zt-pich-face1">
+                <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
+                <div class="zt-info"><div class="zt-title">EL<br>CAJETE</div><div class="zt-badge">Dunas interiores</div></div>
+              </div>
+              <div class="zt-pich-face2"><span class="zt-pich-icon">🌋</span></div>
             </div>
-          </div>
-          <div class="zt-pich-face2"><span class="zt-pich-icon">🌋</span></div>
-        </div>
-        <div class="zt-tip"></div><div class="zt-arrow"></div>
-      </div>
-
-      <!-- Las Pacas · violeta -->
-      <div class="zt zt--down" style="left:50%;top:30%;--zt-bg:#7B1FA2;--zt-badge:#6A1B9A">
-        <div class="zt-blob">
-          <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
-          <div class="zt-info">
-            <div class="zt-title">LAS<br>PACAS</div>
-            <div class="zt-badge">Flora costera</div>
+            <div class="zt-tip"></div><div class="zt-arrow"></div>
           </div>
         </div>
-        <div class="zt-tip"></div><div class="zt-arrow"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Punta León · azul -->
-      <div class="zt" style="left:73%;top:48%;--zt-bg:#1565C0;--zt-badge:#0D47A1">
-        <div class="zt-blob">
-          <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
-          <div class="zt-info">
-            <div class="zt-title">PUNTA<br>LEÓN</div>
-            <div class="zt-badge">Geomorfología</div>
+      <!-- MORADO · Las Pacas · x:298 y:234 · cuelga abajo -->
+      <foreignObject x="298" y="234" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="zt zt--down" style="--zt-bg:#7B1FA2;--zt-badge:#6A1B9A;pointer-events:auto">
+            <div class="zt-blob">
+              <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
+              <div class="zt-info"><div class="zt-title">LAS<br>PACAS</div><div class="zt-badge">Flora costera</div></div>
+            </div>
+            <div class="zt-tip"></div><div class="zt-arrow"></div>
           </div>
         </div>
-        <div class="zt-tip"></div><div class="zt-arrow"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Cactimar · verde · goo -->
-      <div class="zt zt--goo zt--down" style="left:18%;top:72%;--zt-bg:#2E7D32;--zt-badge:#1B5E20">
-        <div class="zt-blob">
-          <div class="zt-goo-wrap">
-            <span class="zt-goo-blobs">
-              <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-              <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-            </span>
-          </div>
-          <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
-          <div class="zt-info">
-            <div class="zt-title">CACTIMAR</div>
-            <div class="zt-badge">Ecosistema mixto</div>
+      <!-- AZUL · Punta León · x:449 y:307 · flota arriba -->
+      <foreignObject x="449" y="307" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="zt" style="--zt-bg:#1565C0;--zt-badge:#0D47A1;pointer-events:auto">
+            <div class="zt-blob">
+              <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
+              <div class="zt-info"><div class="zt-title">PUNTA<br>LEÓN</div><div class="zt-badge">Geomorfología</div></div>
+            </div>
+            <div class="zt-tip"></div><div class="zt-arrow"></div>
           </div>
         </div>
-        <div class="zt-tip"></div><div class="zt-arrow"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Mogote · amarillo -->
-      <div class="zt" style="left:62%;top:76%;--zt-bg:#F57F17;--zt-badge:#E65100">
-        <div class="zt-blob">
-          <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
-          <div class="zt-info">
-            <div class="zt-title">MOGOTE</div>
-            <div class="zt-badge">Cordón dunar</div>
+      <!-- VERDE · Cactimar · x:580 y:346 · cuelga abajo -->
+      <foreignObject x="580" y="346" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="zt zt--goo zt--down" style="--zt-bg:#2E7D32;--zt-badge:#1B5E20;pointer-events:auto">
+            <div class="zt-blob">
+              <div class="zt-goo-wrap">
+                <span class="zt-goo-blobs">
+                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
+                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
+                </span>
+              </div>
+              <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
+              <div class="zt-info"><div class="zt-title">CACTIMAR</div><div class="zt-badge">Ecosistema mixto</div></div>
+            </div>
+            <div class="zt-tip"></div><div class="zt-arrow"></div>
           </div>
         </div>
-        <div class="zt-tip"></div><div class="zt-arrow"></div>
-      </div>
+      </foreignObject>
 
-    </div>
+      <!-- AMARILLO · Mogote · x:775 y:384 · flota arriba -->
+      <foreignObject x="775" y="384" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="zt" style="--zt-bg:#F57F17;--zt-badge:#E65100;pointer-events:auto">
+            <div class="zt-blob">
+              <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
+              <div class="zt-info"><div class="zt-title">MOGOTE</div><div class="zt-badge">Cordón dunar</div></div>
+            </div>
+            <div class="zt-tip"></div><div class="zt-arrow"></div>
+          </div>
+        </div>
+      </foreignObject>
+
+    </svg>
   </div>
 </div>
 
@@ -428,89 +373,135 @@ img { display:block; }
      VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
 ================================================================ -->
 <div class="variant" id="v4">
-  <div class="v4-map-box map-bg">
+  <div class="map-box">
     <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
-    <div class="v4-chips">
+    <!--
+      COORDENADAS en píxeles de la imagen original (1774 × 887 px).
+      Cambia x e y de cada <foreignObject> para mover el chip.
+      chips sin clase "down" flotan ARRIBA del punto.
+      chips con clase "down" cuelgan ABAJO del punto.
+    -->
+    <svg class="map-svg" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice">
 
-      <!-- El Cajete -->
-      <div class="v4-chip" style="left:28%;top:42%;--vc:#D32F2F">
-        <div class="v4-chip-row">
-          <div class="v4-pill"><span class="v4-emoji">🌋</span><span class="v4-name">El Cajete</span></div>
-          <div class="v4-expand">
-            <span class="v4-sub">Dunas interiores</span>
-            <p class="v4-desc">Dunas volcánicas y tepetate aflorante.</p>
+      <!-- ROJO · El Cajete · x:185 y:162 · cuelga abajo -->
+      <foreignObject x="185" y="162" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="v4-chip down" style="--vc:#D32F2F;pointer-events:auto">
+            <div class="v4-chip-row">
+              <div class="v4-pill"><span class="v4-emoji">🌋</span><span class="v4-name">El Cajete</span></div>
+              <div class="v4-expand"><span class="v4-sub">Dunas interiores</span><p class="v4-desc">Dunas volcánicas y tepetate aflorante.</p></div>
+            </div>
+            <div class="v4-tip"></div>
           </div>
         </div>
-        <div class="v4-tip"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Las Pacas · abajo -->
-      <div class="v4-chip v4--down" style="left:50%;top:30%;--vc:#7B1FA2">
-        <div class="v4-chip-row">
-          <div class="v4-pill"><span class="v4-emoji">🦋</span><span class="v4-name">Las Pacas</span></div>
-          <div class="v4-expand">
-            <span class="v4-sub">Flora costera</span>
-            <p class="v4-desc">Flora endémica de alta biodiversidad.</p>
+      <!-- MORADO · Las Pacas · x:298 y:234 · cuelga abajo -->
+      <foreignObject x="298" y="234" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="v4-chip down" style="--vc:#7B1FA2;pointer-events:auto">
+            <div class="v4-chip-row">
+              <div class="v4-pill"><span class="v4-emoji">🦋</span><span class="v4-name">Las Pacas</span></div>
+              <div class="v4-expand"><span class="v4-sub">Flora costera</span><p class="v4-desc">Flora endémica de alta biodiversidad.</p></div>
+            </div>
+            <div class="v4-tip"></div>
           </div>
         </div>
-        <div class="v4-tip"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Punta León -->
-      <div class="v4-chip" style="left:73%;top:48%;--vc:#1565C0">
-        <div class="v4-chip-row">
-          <div class="v4-pill"><span class="v4-emoji">🦁</span><span class="v4-name">Punta León</span></div>
-          <div class="v4-expand">
-            <span class="v4-sub">Geomorfología</span>
-            <p class="v4-desc">Sedimentos marinos y erosión costera.</p>
+      <!-- AZUL · Punta León · x:449 y:307 · flota arriba -->
+      <foreignObject x="449" y="307" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="v4-chip" style="--vc:#1565C0;pointer-events:auto">
+            <div class="v4-chip-row">
+              <div class="v4-pill"><span class="v4-emoji">🦁</span><span class="v4-name">Punta León</span></div>
+              <div class="v4-expand"><span class="v4-sub">Geomorfología</span><p class="v4-desc">Sedimentos marinos y erosión costera.</p></div>
+            </div>
+            <div class="v4-tip"></div>
           </div>
         </div>
-        <div class="v4-tip"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Cactimar · abajo -->
-      <div class="v4-chip v4--down" style="left:18%;top:72%;--vc:#2E7D32">
-        <div class="v4-chip-row">
-          <div class="v4-pill"><span class="v4-emoji">🌵</span><span class="v4-name">Cactimar</span></div>
-          <div class="v4-expand">
-            <span class="v4-sub">Ecosistema mixto</span>
-            <p class="v4-desc">Xerófitas y lagartija dunera endémica.</p>
+      <!-- VERDE · Cactimar · x:580 y:346 · flota arriba -->
+      <foreignObject x="580" y="346" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="v4-chip" style="--vc:#2E7D32;pointer-events:auto">
+            <div class="v4-chip-row">
+              <div class="v4-pill"><span class="v4-emoji">🌵</span><span class="v4-name">Cactimar</span></div>
+              <div class="v4-expand"><span class="v4-sub">Ecosistema mixto</span><p class="v4-desc">Xerófitas y lagartija dunera endémica.</p></div>
+            </div>
+            <div class="v4-tip"></div>
           </div>
         </div>
-        <div class="v4-tip"></div>
-      </div>
+      </foreignObject>
 
-      <!-- Mogote -->
-      <div class="v4-chip" style="left:62%;top:76%;--vc:#F57F17">
-        <div class="v4-chip-row">
-          <div class="v4-pill"><span class="v4-emoji">🏖️</span><span class="v4-name">Mogote</span></div>
-          <div class="v4-expand">
-            <span class="v4-sub">Cordón dunar</span>
-            <p class="v4-desc">+40 especies de aves playeras migratorias.</p>
+      <!-- AMARILLO · Mogote · x:775 y:384 · flota arriba -->
+      <foreignObject x="775" y="384" width="0" height="0">
+        <div class="fo-anchor">
+          <div class="v4-chip" style="--vc:#F57F17;pointer-events:auto">
+            <div class="v4-chip-row">
+              <div class="v4-pill"><span class="v4-emoji">🏖️</span><span class="v4-name">Mogote</span></div>
+              <div class="v4-expand"><span class="v4-sub">Cordón dunar</span><p class="v4-desc">+40 especies de aves playeras migratorias.</p></div>
+            </div>
+            <div class="v4-tip"></div>
           </div>
         </div>
-        <div class="v4-tip"></div>
-      </div>
+      </foreignObject>
 
-    </div>
+    </svg>
   </div>
 </div>
 
 <!-- ================================================================
-     VARIANTE 5 · PINS + FOOTER STRIP
+     VARIANTE 5 · PINS SVG + FOOTER STRIP
 ================================================================ -->
 <div class="variant" id="v5">
-  <div class="v5-map-box map-bg">
+  <div class="map-box">
     <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
-    <div class="v5-pins">
-      <div class="v5-pin" style="left:28%;top:42%;background:#D32F2F" onmouseenter="showV5(0)">1</div>
-      <div class="v5-pin" style="left:50%;top:30%;background:#7B1FA2" onmouseenter="showV5(1)">2</div>
-      <div class="v5-pin" style="left:73%;top:48%;background:#1565C0" onmouseenter="showV5(2)">3</div>
-      <div class="v5-pin" style="left:18%;top:72%;background:#2E7D32" onmouseenter="showV5(3)">4</div>
-      <div class="v5-pin" style="left:62%;top:76%;background:#F57F17" onmouseenter="showV5(4)">5</div>
-    </div>
+    <!--
+      Pins como elementos SVG nativos — coordenadas en píxeles de la imagen (1774×887).
+      Cambia cx e cy de cada <g> para mover el pin.
+    -->
+    <svg class="map-svg" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice">
+
+      <!-- ROJO · El Cajete · cx:185 cy:162 -->
+      <g class="v5-pin-g" onmouseenter="showV5(0)">
+        <circle class="v5-pulse" cx="185" cy="162" r="18" stroke="#D32F2F"/>
+        <circle cx="185" cy="162" r="18" fill="#D32F2F" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+        <text x="185" y="162" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">1</text>
+      </g>
+
+      <!-- MORADO · Las Pacas · cx:298 cy:234 -->
+      <g class="v5-pin-g" onmouseenter="showV5(1)">
+        <circle class="v5-pulse" cx="298" cy="234" r="18" stroke="#7B1FA2"/>
+        <circle cx="298" cy="234" r="18" fill="#7B1FA2" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+        <text x="298" y="234" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">2</text>
+      </g>
+
+      <!-- AZUL · Punta León · cx:449 cy:307 -->
+      <g class="v5-pin-g" onmouseenter="showV5(2)">
+        <circle class="v5-pulse" cx="449" cy="307" r="18" stroke="#1565C0"/>
+        <circle cx="449" cy="307" r="18" fill="#1565C0" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+        <text x="449" y="307" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">3</text>
+      </g>
+
+      <!-- VERDE · Cactimar · cx:580 cy:346 -->
+      <g class="v5-pin-g" onmouseenter="showV5(3)">
+        <circle class="v5-pulse" cx="580" cy="346" r="18" stroke="#2E7D32"/>
+        <circle cx="580" cy="346" r="18" fill="#2E7D32" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+        <text x="580" y="346" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">4</text>
+      </g>
+
+      <!-- AMARILLO · Mogote · cx:775 cy:384 -->
+      <g class="v5-pin-g" onmouseenter="showV5(4)">
+        <circle class="v5-pulse" cx="775" cy="384" r="18" stroke="#F57F17"/>
+        <circle cx="775" cy="384" r="18" fill="#F57F17" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+        <text x="775" y="384" text-anchor="middle" dominant-baseline="middle" fill="#333" font-family="Jost,sans-serif" font-size="14" font-weight="700">5</text>
+      </g>
+
+    </svg>
   </div>
 
   <div class="v5-footer">
@@ -523,7 +514,7 @@ img { display:block; }
       <div class="v5-zone-emoji" id="v5zemoji"></div>
       <div class="v5-zone-content">
         <div class="v5-zone-name" id="v5name"></div>
-        <div class="v5-zone-sub" id="v5sub"></div>
+        <div class="v5-zone-sub"  id="v5sub"></div>
         <div class="v5-zone-desc" id="v5desc"></div>
         <div class="v5-zone-tags" id="v5tags"></div>
       </div>
@@ -532,7 +523,7 @@ img { display:block; }
   </div>
 </div>
 
-<!-- SVG Goo filter (Variante 1 · Cactimar) -->
+<!-- SVG Goo filter (V1 · Cactimar) -->
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">
   <defs>
     <filter id="goo">
@@ -544,63 +535,50 @@ img { display:block; }
 </svg>
 
 <script>
-/* ── Tab switching ─────────────────────────────────────────────── */
-const TAB_IDS = [1, 4, 5];
-
-function setTab(n) {
+/* ── Tabs ──────────────────────────────────────────────────────── */
+const TAB_IDS = ['v1','v4','v5'];
+function setTab(id) {
   document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('v' + n).classList.add('active');
-  const idx = TAB_IDS.indexOf(n);
-  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-btn')[TAB_IDS.indexOf(id)].classList.add('active');
 }
 
 /* ── Zone data ─────────────────────────────────────────────────── */
 const zones = [
-  {
-    name:'El Cajete', sub:'Dunas interiores', emoji:'🌋', color:'#D32F2F',
+  { name:'El Cajete',  sub:'Dunas interiores',  emoji:'🌋', color:'#D32F2F',
     desc:'Sistema dunar de origen volcánico con las formaciones más altas de la bahía. Presencia de tepetate aflorante y dunas fósiles de alto valor geológico.',
-    tags:['Geología volcánica','Dunas activas','Alta prioridad']
-  },
-  {
-    name:'Las Pacas', sub:'Flora costera', emoji:'🦋', color:'#7B1FA2',
+    tags:['Geología volcánica','Dunas activas','Alta prioridad'] },
+  { name:'Las Pacas',  sub:'Flora costera',      emoji:'🦋', color:'#7B1FA2',
     desc:'Zona de transición entre ecosistema terrestre y costero. Rica biodiversidad de flora endémica sudcaliforniana, con varias especies exclusivas de BCS.',
-    tags:['Flora endémica','Zona de transición','Monitoreo activo']
-  },
-  {
-    name:'Punta León', sub:'Geomorfología', emoji:'🦁', color:'#1565C0',
+    tags:['Flora endémica','Zona de transición','Monitoreo activo'] },
+  { name:'Punta León', sub:'Geomorfología',      emoji:'🦁', color:'#1565C0',
     desc:'Punto de acumulación activa de sedimentos marinos. Los ciclos anuales de erosión y acreción están documentados desde 2018 con imágenes satelitales.',
-    tags:['Sedimentación','Erosión costera','Estudio longitudinal']
-  },
-  {
-    name:'Cactimar', sub:'Ecosistema mixto', emoji:'🌵', color:'#2E7D32',
+    tags:['Sedimentación','Erosión costera','Estudio longitudinal'] },
+  { name:'Cactimar',   sub:'Ecosistema mixto',   emoji:'🌵', color:'#2E7D32',
     desc:'Ecosistema singular donde la vegetación xerófita coexiste con la flora costera pionera. Hábitat exclusivo de la lagartija dunera endémica de BCS.',
-    tags:['Vegetación nativa','Fauna endémica','Restauración activa']
-  },
-  {
-    name:'Mogote', sub:'Cordón dunar', emoji:'🏖️', color:'#F57F17',
+    tags:['Vegetación nativa','Fauna endémica','Restauración activa'] },
+  { name:'Mogote',     sub:'Cordón dunar',       emoji:'🏖️', color:'#F57F17',
     desc:'Cordón litoral de arena que separa la bahía interior. Hábitat crítico para aves playeras migratorias con más de 40 especies registradas por temporada.',
-    tags:['Avifauna','Corredor migratorio','Zona protegida']
-  }
+    tags:['Avifauna','Corredor migratorio','Zona protegida'] }
 ];
 
 /* ── Variante 5 ─────────────────────────────────────────────────── */
 function showV5(idx) {
   const z = zones[idx];
-  document.querySelectorAll('.v5-pin').forEach((p, i) => p.classList.toggle('v5-active', i === idx));
   document.getElementById('v5default').style.display = 'none';
   const strip = document.getElementById('v5strip');
-  strip.classList.remove('v5-show');
+  strip.classList.remove('show');
   void strip.offsetWidth;
-  strip.classList.add('v5-show');
-  document.getElementById('v5bar').style.background = z.color;
-  document.getElementById('v5zemoji').textContent = z.emoji;
-  document.getElementById('v5name').textContent = z.name;
-  document.getElementById('v5sub').textContent = z.sub;
-  document.getElementById('v5desc').textContent = z.desc;
-  document.getElementById('v5tags').innerHTML = z.tags.map(t => `<span class="v5-ztag">${t}</span>`).join('');
-  document.getElementById('v5dots').innerHTML = zones.map((_, i) =>
-    `<div class="v5-dot${i===idx?' v5-active':''}" style="${i===idx?'background:'+z.color:''}" onclick="showV5(${i})"></div>`
+  strip.classList.add('show');
+  document.getElementById('v5bar').style.background    = z.color;
+  document.getElementById('v5zemoji').textContent      = z.emoji;
+  document.getElementById('v5name').textContent        = z.name;
+  document.getElementById('v5sub').textContent         = z.sub;
+  document.getElementById('v5desc').textContent        = z.desc;
+  document.getElementById('v5tags').innerHTML          = z.tags.map(t=>`<span class="v5-ztag">${t}</span>`).join('');
+  document.getElementById('v5dots').innerHTML          = zones.map((_,i)=>
+    `<div class="v5-dot${i===idx?' active':''}" style="${i===idx?'background:'+z.color:''}" onclick="showV5(${i})"></div>`
   ).join('');
 }
 </script>
