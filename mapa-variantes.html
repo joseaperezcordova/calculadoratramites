@@ -93,7 +93,7 @@ img { display:block; }
   z-index:10; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35));
   transition:filter .25s;
 }
-.v4-chip:hover { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
+.v4-chip:hover, .v4-chip.open { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
 .v4-chip-row {
   display:flex; flex-direction:row; align-items:center;
   background:rgba(0,0,0,.48);
@@ -102,7 +102,8 @@ img { display:block; }
   border-radius:100px; overflow:hidden;
   transition:background .35s, border-color .35s, border-radius .45s;
 }
-.v4-chip:hover .v4-chip-row { background:var(--vc); border-color:rgba(255,255,255,.28); border-radius:18px; }
+.v4-chip:hover .v4-chip-row,
+.v4-chip.open .v4-chip-row { background:var(--vc); border-color:rgba(255,255,255,.28); border-radius:18px; }
 .v4-pill { display:flex; align-items:center; gap:8px; padding:10px 16px; white-space:nowrap; flex-shrink:0; }
 .v4-emoji { font-size:20px; line-height:1; }
 .v4-name {
@@ -117,7 +118,8 @@ img { display:block; }
   display:flex; flex-direction:column; justify-content:center;
   transition:max-width .45s cubic-bezier(.34,1.2,.64,1), padding .45s, border-color .4s;
 }
-.v4-chip:hover .v4-expand { max-width:210px; padding:10px 18px 10px 14px; border-left-color:rgba(255,255,255,.2); }
+.v4-chip:hover .v4-expand,
+.v4-chip.open .v4-expand { max-width:210px; padding:10px 18px 10px 14px; border-left-color:rgba(255,255,255,.2); }
 .v4-sub {
   display:inline-block; background:rgba(255,255,255,.22);
   color:#fff; font-size:9px; font-weight:700;
@@ -132,7 +134,8 @@ img { display:block; }
   border-top:14px solid rgba(0,0,0,.48);
   margin:0 auto; transition:border-top-color .35s;
 }
-.v4-chip:hover .v4-tip { border-top-color:var(--vc); }
+.v4-chip:hover .v4-tip,
+.v4-chip.open .v4-tip { border-top-color:var(--vc); }
 
 /* Chip apuntando hacia arriba (cuelga hacia abajo) */
 .v4-chip.down {
@@ -141,7 +144,8 @@ img { display:block; }
 }
 .v4-chip.down:hover { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
 .v4-chip.down .v4-tip { border-top:none; border-bottom:14px solid rgba(0,0,0,.48); transition:border-bottom-color .35s; }
-.v4-chip.down:hover .v4-tip { border-top-color:transparent; border-bottom-color:var(--vc); }
+.v4-chip.down:hover .v4-tip,
+.v4-chip.down.open .v4-tip { border-top-color:transparent; border-bottom-color:var(--vc); }
 
 /* ================================================================
    VARIANTE 5 · PINS SVG NATIVOS + FOOTER STRIP
@@ -186,6 +190,37 @@ img { display:block; }
 .v5-nav-dots { display:flex; gap:8px; flex-direction:column; justify-content:center; flex-shrink:0; }
 .v5-dot { width:8px; height:8px; border-radius:50%; border:1.5px solid rgba(255,255,255,.3); cursor:pointer; transition:background .2s,border-color .2s; }
 .v5-dot.active { border-color:transparent; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width:768px) {
+  html, body { overflow-y:auto; height:auto; }
+
+  .variant { position:relative; height:auto; padding-top:62px; }
+
+  .map-box {
+    width:100%; height:auto;
+    aspect-ratio:1774/887;
+  }
+
+  .v5-footer { position:sticky; bottom:0; }
+
+  .v4-pill { padding:6px 10px; gap:5px; }
+  .v4-emoji { font-size:14px; }
+  .v4-name { font-size:10px; }
+  .v4-chip:hover .v4-expand,
+  .v4-chip.open .v4-expand { max-width:160px; padding:6px 12px 6px 10px; }
+  .v4-sub { font-size:8px; }
+  .v4-desc { font-size:9px; }
+  .v4-tip { border-left-width:8px; border-right-width:8px; border-top-width:10px; }
+  .v4-chip.down .v4-tip { border-bottom-width:10px; }
+}
+@media (max-width:480px) {
+  .v4-pill { padding:5px 8px; gap:3px; }
+  .v4-emoji { font-size:12px; }
+  .v4-name { font-size:9px; letter-spacing:.02em; }
+  .v4-chip:hover .v4-expand,
+  .v4-chip.open .v4-expand { max-width:140px; }
+}
 </style>
 </head>
 <body>
@@ -358,6 +393,19 @@ function setTab(id) {
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-btn')[TAB_IDS.indexOf(id)].classList.add('active');
 }
+
+/* ── Touch toggle chips ────────────────────────────────────────── */
+document.addEventListener('click', e => {
+  const chip = e.target.closest('.v4-chip');
+  if (chip) {
+    const isOpen = chip.classList.contains('open');
+    document.querySelectorAll('.v4-chip.open').forEach(c => c.classList.remove('open'));
+    if (!isOpen) chip.classList.add('open');
+    e.stopPropagation();
+  } else {
+    document.querySelectorAll('.v4-chip.open').forEach(c => c.classList.remove('open'));
+  }
+});
 
 /* ── Zone data ─────────────────────────────────────────────────── */
 const zones = [
