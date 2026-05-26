@@ -77,94 +77,6 @@ img { display:block; }
 }
 
 /* ================================================================
-   VARIANTE 1 · BLOBS ORGÁNICOS
-================================================================ */
-.zt {
-  position:absolute; pointer-events:auto; cursor:pointer;
-  transform:translate(-50%,-100%);
-  transition:transform .32s cubic-bezier(.34,1.56,.64,1), filter .25s;
-  filter:drop-shadow(0 8px 24px rgba(0,0,0,.38));
-  z-index:10;
-}
-.zt:hover { transform:translate(-50%,-100%) scale(1.1);
-  filter:drop-shadow(0 18px 40px rgba(0,0,0,.55)); z-index:20; }
-
-.zt--down {
-  display:flex; flex-direction:column-reverse;
-  position:absolute;
-  transform:translate(-50%,0);
-}
-.zt--down:hover { transform:translate(-50%,0) scale(1.1); }
-.zt--down .zt-tip { border-top:none; border-bottom:16px solid var(--zt-bg,#16A99F); }
-.zt--down .zt-arrow { border-top:none; border-bottom:12px solid var(--zt-bg,#16A99F); margin-top:0; margin-bottom:-5px; }
-
-.zt-blob {
-  width:150px; height:176px;
-  border-radius:54% 46% 48% 52% / 46% 44% 56% 54%;
-  overflow:hidden; border:3px solid rgba(255,255,255,.88);
-  position:relative; background:var(--zt-bg,#16A99F);
-}
-.zt-photo {
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:54px; transition:transform .35s;
-}
-.zt:hover .zt-photo, .zt--down:hover .zt-photo { transform:scale(1.08); }
-.zt-info {
-  position:absolute; bottom:0; left:0; right:0;
-  padding:24px 10px 12px;
-  background:linear-gradient(transparent,rgba(0,0,0,.72) 52%);
-}
-.zt-title {
-  font-family:'More Sugar','Playfair Display',serif;
-  font-size:12.5px; font-weight:900; color:#fff;
-  text-transform:uppercase; line-height:1.12; letter-spacing:.01em;
-  margin-bottom:6px; text-shadow:0 1px 6px rgba(0,0,0,.55);
-}
-.zt-badge {
-  display:inline-flex; background:var(--zt-badge,#066C79);
-  color:#fff; font-size:9px; font-weight:700;
-  padding:2px 8px; border-radius:100px; letter-spacing:.05em;
-}
-.zt-tip {
-  width:0; height:0;
-  border-left:13px solid transparent; border-right:13px solid transparent;
-  border-top:16px solid var(--zt-bg,#16A99F); margin:0 auto;
-}
-.zt-arrow {
-  width:0; height:0;
-  border-left:9px solid transparent; border-right:9px solid transparent;
-  border-top:12px solid #F5C218; margin:0 auto; margin-top:-5px;
-}
-.zt-pich-face1 { position:absolute; inset:0; z-index:1; }
-.zt-pich-face2 {
-  position:absolute; bottom:0; left:0; width:100%; height:100%; z-index:2;
-  background:linear-gradient(45deg,#7F0000,#D32F2F);
-  display:flex; justify-content:center; align-items:center;
-  transition:height .5s; overflow:hidden;
-}
-.zt-pich-face2::before { content:''; position:absolute; top:0; left:0; width:50%; height:100%; background:rgba(255,255,255,.1); }
-.zt-pich-icon { font-size:4.5em; line-height:1; position:relative; transition:font-size .5s; text-shadow:0 2px 5px rgba(0,0,0,.2); }
-.zt--pich:hover .zt-pich-face2 { height:46px; }
-.zt--pich:hover .zt-pich-icon  { font-size:1.6em; }
-.zt-goo-wrap { position:absolute; inset:0; z-index:2; overflow:hidden; }
-.zt-goo-blobs { display:block; position:relative; height:100%; filter:url('#goo'); }
-.zt-goo-blob {
-  position:absolute; top:2px; width:25%; height:100%;
-  background:#2E7D32; border-radius:50%;
-  transform:translate3d(0,150%,0) scale(1.7); transition:transform .45s;
-}
-@supports(filter:url('#goo')) { .zt-goo-blob { transform:translate3d(0,150%,0) scale(1.4); } }
-.zt-goo-blob:nth-child(1){left:0%;  transition-delay:0s}
-.zt-goo-blob:nth-child(2){left:25%; transition-delay:.08s}
-.zt-goo-blob:nth-child(3){left:50%; transition-delay:.16s}
-.zt-goo-blob:nth-child(4){left:75%; transition-delay:.24s}
-.zt--goo:hover .zt-goo-blob { transform:translateZ(0) scale(1.7); }
-@supports(filter:url('#goo')) { .zt--goo:hover .zt-goo-blob { transform:translateZ(0) scale(1.4); } }
-.zt--goo .zt-photo { z-index:1; }
-.zt--goo .zt-info  { z-index:3; }
-
-/* ================================================================
    VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
 ================================================================ */
 .v4-chip {
@@ -272,113 +184,19 @@ img { display:block; }
 
 <!-- ── TABS ─────────────────────────────────────────────────────── -->
 <div class="tabs-bar">
-  <button class="tab-btn active" onclick="setTab('v1')">Blobs orgánicos</button>
-  <button class="tab-btn"        onclick="setTab('v4')">Chips → derecha</button>
+  <button class="tab-btn active" onclick="setTab('v4')">Chips → derecha</button>
   <button class="tab-btn"        onclick="setTab('v5')">Pins + footer</button>
-</div>
-
-<!-- ================================================================
-     VARIANTE 1 · BLOBS ORGÁNICOS
-================================================================ -->
-<div class="variant active" id="v1">
-  <div class="map-box">
-    <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
-
-    <!--
-      COORDENADAS en píxeles de la imagen original (1774 × 887 px).
-      Cambia x e y de cada <foreignObject> para mover el blob.
-      El punto x,y es donde la punta del blob toca el mapa.
-    -->
-    <svg class="map-svg" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice">
-
-      <!-- ROJO · El Cajete · x:220 y:125 · cuelga abajo -->
-      <foreignObject x="220" y="125" width="0" height="0">
-        <div class="fo-anchor">
-          <div class="zt zt--pich zt--down" style="--zt-bg:#D32F2F;--zt-badge:#B71C1C;pointer-events:auto">
-            <div class="zt-blob">
-              <div class="zt-pich-face1">
-                <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
-                <div class="zt-info"><div class="zt-title">EL<br>CAJETE</div><div class="zt-badge">Dunas interiores</div></div>
-              </div>
-              <div class="zt-pich-face2"><span class="zt-pich-icon">🌋</span></div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-        </div>
-      </foreignObject>
-
-      <!-- MORADO · Las Pacas · x:310 y:241 · cuelga abajo -->
-      <foreignObject x="310" y="241" width="0" height="0">
-        <div class="fo-anchor">
-          <div class="zt zt--down" style="--zt-bg:#7B1FA2;--zt-badge:#6A1B9A;pointer-events:auto">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
-              <div class="zt-info"><div class="zt-title">LAS<br>PACAS</div><div class="zt-badge">Flora costera</div></div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-        </div>
-      </foreignObject>
-
-      <!-- AZUL · Punta León · x:385 y:310 · flota arriba -->
-      <foreignObject x="385" y="310" width="0" height="0">
-        <div class="fo-anchor">
-          <div class="zt" style="--zt-bg:#1565C0;--zt-badge:#0D47A1;pointer-events:auto">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
-              <div class="zt-info"><div class="zt-title">PUNTA<br>LEÓN</div><div class="zt-badge">Geomorfología</div></div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-        </div>
-      </foreignObject>
-
-      <!-- VERDE · Cactimar · x:527 y:353 · cuelga abajo -->
-      <foreignObject x="527" y="353" width="0" height="0">
-        <div class="fo-anchor">
-          <div class="zt zt--goo zt--down" style="--zt-bg:#2E7D32;--zt-badge:#1B5E20;pointer-events:auto">
-            <div class="zt-blob">
-              <div class="zt-goo-wrap">
-                <span class="zt-goo-blobs">
-                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-                </span>
-              </div>
-              <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
-              <div class="zt-info"><div class="zt-title">CACTIMAR</div><div class="zt-badge">Ecosistema mixto</div></div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-        </div>
-      </foreignObject>
-
-      <!-- AMARILLO · Mogote · x:850 y:447 · flota arriba -->
-      <foreignObject x="850" y="447" width="0" height="0">
-        <div class="fo-anchor">
-          <div class="zt" style="--zt-bg:#F57F17;--zt-badge:#E65100;pointer-events:auto">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
-              <div class="zt-info"><div class="zt-title">MOGOTE</div><div class="zt-badge">Cordón dunar</div></div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-        </div>
-      </foreignObject>
-
-    </svg>
-  </div>
 </div>
 
 <!-- ================================================================
      VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
 ================================================================ -->
-<div class="variant" id="v4">
+<div class="variant active" id="v4">
   <div class="map-box">
     <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
     <!--
       COORDENADAS en píxeles de la imagen original (1774 × 887 px).
-      Cambia x e y de cada <foreignObject> para mover el chip.
       chips sin clase "down" flotan ARRIBA del punto.
       chips con clase "down" cuelgan ABAJO del punto.
     -->
@@ -466,35 +284,35 @@ img { display:block; }
     -->
     <svg class="map-svg" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice">
 
-      <!-- ROJO · El Cajete · cx:185 cy:162 -->
+      <!-- ROJO · El Cajete -->
       <g class="v5-pin-g" onmouseenter="showV5(0)">
         <circle class="v5-pulse" cx="220" cy="125" r="18" stroke="#D32F2F"/>
         <circle cx="220" cy="125" r="18" fill="#D32F2F" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
         <text x="220" y="125" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">1</text>
       </g>
 
-      <!-- MORADO · Las Pacas · cx:298 cy:234 -->
+      <!-- MORADO · Las Pacas -->
       <g class="v5-pin-g" onmouseenter="showV5(1)">
         <circle class="v5-pulse" cx="310" cy="241" r="18" stroke="#7B1FA2"/>
         <circle cx="310" cy="241" r="18" fill="#7B1FA2" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
         <text x="310" y="241" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">2</text>
       </g>
 
-      <!-- AZUL · Punta León · cx:449 cy:307 -->
+      <!-- AZUL · Punta León -->
       <g class="v5-pin-g" onmouseenter="showV5(2)">
         <circle class="v5-pulse" cx="385" cy="310" r="18" stroke="#1565C0"/>
         <circle cx="385" cy="310" r="18" fill="#1565C0" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
         <text x="385" y="310" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">3</text>
       </g>
 
-      <!-- VERDE · Cactimar · cx:580 cy:346 -->
+      <!-- VERDE · Cactimar -->
       <g class="v5-pin-g" onmouseenter="showV5(3)">
         <circle class="v5-pulse" cx="527" cy="353" r="18" stroke="#2E7D32"/>
         <circle cx="527" cy="353" r="18" fill="#2E7D32" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
         <text x="527" y="353" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-family="Jost,sans-serif" font-size="14" font-weight="700">4</text>
       </g>
 
-      <!-- AMARILLO · Mogote · cx:850 cy:447 -->
+      <!-- AMARILLO · Mogote -->
       <g class="v5-pin-g" onmouseenter="showV5(4)">
         <circle class="v5-pulse" cx="850" cy="447" r="18" stroke="#F57F17"/>
         <circle cx="850" cy="447" r="18" fill="#F57F17" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
@@ -523,20 +341,9 @@ img { display:block; }
   </div>
 </div>
 
-<!-- SVG Goo filter (V1 · Cactimar) -->
-<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">
-  <defs>
-    <filter id="goo">
-      <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"/>
-      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -7" result="goo"/>
-      <feBlend in2="goo" in="SourceGraphic" result="mix"/>
-    </filter>
-  </defs>
-</svg>
-
 <script>
 /* ── Tabs ──────────────────────────────────────────────────────── */
-const TAB_IDS = ['v1','v4','v5'];
+const TAB_IDS = ['v4','v5'];
 function setTab(id) {
   document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
