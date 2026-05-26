@@ -3,61 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mapa · 3 Variantes · Colectivo La Duna</title>
+<title>Mapa · Variantes · Colectivo La Duna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ── RESET ─────────────────────────────────────────────────────── */
+/* ── RESET & FULL SCREEN ──────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-body {
+html, body {
+  width:100vw; height:100vh;
+  overflow:hidden;
   font-family:'Jost', system-ui, sans-serif;
   background:#0A1628;
   color:#fff;
-  min-height:100vh;
   -webkit-font-smoothing:antialiased;
 }
-img { display:block; max-width:100%; }
+img { display:block; }
 
-/* ── LAYOUT ─────────────────────────────────────────────────────── */
-.page { max-width:1100px; margin:0 auto; padding:0 32px 80px; }
-
-/* ── HEADER ─────────────────────────────────────────────────────── */
-.page-header { text-align:center; padding:48px 0 32px; }
-.page-header h1 {
-  font-family:'Playfair Display', serif;
-  font-size:clamp(24px,4vw,42px);
-  font-weight:900; color:#fff; margin-bottom:8px;
+/* ── TABS OVERLAY ─────────────────────────────────────────────── */
+.tabs-bar {
+  position:fixed; top:20px; left:50%; transform:translateX(-50%);
+  z-index:200;
+  display:flex; gap:8px;
+  background:rgba(10,22,40,.72);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:100px; padding:6px 8px;
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
 }
-.page-header p { font-size:14px; color:rgba(255,255,255,.45); }
-
-/* ── TAB NAV ────────────────────────────────────────────────────── */
-.tabs { display:flex; gap:10px; justify-content:center; margin-bottom:36px; flex-wrap:wrap; }
 .tab-btn {
-  padding:10px 26px; border-radius:100px;
-  border:1.5px solid rgba(255,255,255,.2);
-  background:transparent; color:rgba(255,255,255,.55);
+  padding:9px 22px; border-radius:100px;
+  border:none; background:transparent;
+  color:rgba(255,255,255,.5);
   font-family:'Jost', sans-serif; font-size:13px; font-weight:600;
-  cursor:pointer; letter-spacing:.04em; transition:all .22s;
-  display:flex; flex-direction:column; align-items:center; gap:2px;
+  cursor:pointer; letter-spacing:.03em;
+  transition:all .22s; white-space:nowrap;
 }
-.tab-btn .num { font-size:9px; opacity:.55; letter-spacing:.15em; text-transform:uppercase; }
 .tab-btn.active, .tab-btn:hover {
-  background:#fff; color:#0A1628; border-color:#fff;
+  background:rgba(255,255,255,.15);
+  color:#fff;
 }
-.tab-btn.active .num, .tab-btn:hover .num { opacity:.6; }
-
-/* ── SECTION LABEL ──────────────────────────────────────────────── */
-.v-label {
-  font-size:10px; font-weight:700; letter-spacing:.22em;
-  text-transform:uppercase; color:rgba(255,255,255,.3);
-  text-align:center; margin-bottom:24px;
+.tab-btn.active {
+  background:#fff;
+  color:#0A1628;
 }
 
-.variant { display:none; }
+/* ── VARIANT CONTAINER ────────────────────────────────────────── */
+.variant { display:none; position:fixed; inset:0; }
 .variant.active { display:block; }
 
-/* ── MAP FALLBACK BG ────────────────────────────────────────────── */
+/* ── MAP FALLBACK BG ──────────────────────────────────────────── */
 .map-bg {
   background:linear-gradient(160deg,
     #7FBDCA 0%, #9BCDD4 12%, #AACBBF 28%,
@@ -68,16 +62,16 @@ img { display:block; max-width:100%; }
 /* ================================================================
    VARIANTE 1 · BLOBS ORGÁNICOS
 ================================================================ */
-.v1-map-wrap { position:relative; }
 .v1-map-box {
-  border-radius:20px; overflow:hidden;
-  box-shadow:0 28px 80px rgba(0,0,0,.55);
-  min-height:480px;
+  position:relative; width:100vw; height:100vh;
 }
-.v1-map-box img { width:100%; height:auto; display:block; object-fit:cover; }
+.v1-map-box img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+}
 .v1-tags { position:absolute; inset:0; pointer-events:none; }
 
-/* Blob tag base */
 .zt {
   position:absolute; pointer-events:auto; cursor:pointer;
   transform:translate(-50%,-100%);
@@ -90,14 +84,11 @@ img { display:block; max-width:100%; }
   filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
   z-index:20;
 }
-/* Variante abajo: blob cuelga debajo del ancla, flecha apunta arriba */
 .zt--down {
   display:flex; flex-direction:column-reverse;
   transform:translate(-50%,0);
 }
-.zt--down:hover {
-  transform:translate(-50%,0) scale(1.1);
-}
+.zt--down:hover { transform:translate(-50%,0) scale(1.1); }
 .zt--down .zt-tip {
   border-top:none;
   border-bottom:16px solid var(--zt-bg,#16A99F);
@@ -149,8 +140,6 @@ img { display:block; max-width:100%; }
   border-top:12px solid #F5C218;
   margin:0 auto; margin-top:-5px;
 }
-
-/* Card face (El Cajete) */
 .zt-pich-face1 { position:absolute; inset:0; z-index:1; }
 .zt-pich-face2 {
   position:absolute; bottom:0; left:0;
@@ -169,8 +158,6 @@ img { display:block; max-width:100%; }
 }
 .zt--pich:hover .zt-pich-face2 { height:46px; }
 .zt--pich:hover .zt-pich-icon  { font-size:1.6em; }
-
-/* Goo effect (Cactimar) */
 .zt-goo-wrap { position:absolute; inset:0; z-index:2; overflow:hidden; }
 .zt-goo-blobs { display:block; position:relative; height:100%; filter:url('#goo'); }
 .zt-goo-blob {
@@ -189,175 +176,16 @@ img { display:block; max-width:100%; }
 .zt--goo .zt-info  { z-index:3; }
 
 /* ================================================================
-   VARIANTE 2 · PINS NUMERADOS + PANEL LATERAL
-================================================================ */
-.v2-layout {
-  display:grid; grid-template-columns:1fr 296px;
-  gap:24px; align-items:start;
-}
-.v2-map-wrap {
-  position:relative; border-radius:20px; overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  min-height:480px;
-}
-.v2-map-wrap img { width:100%; display:block; }
-
-/* Pin */
-.v2-pin {
-  position:absolute; width:44px; height:44px; border-radius:50%;
-  transform:translate(-50%,-50%); cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  font-size:17px; font-weight:900; color:#fff;
-  border:3px solid rgba(255,255,255,.9);
-  box-shadow:0 4px 20px rgba(0,0,0,.45);
-  transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s;
-  z-index:10; font-family:'Jost',sans-serif;
-}
-.v2-pin:hover { transform:translate(-50%,-50%) scale(1.28); box-shadow:0 10px 36px rgba(0,0,0,.6); }
-.v2-pin::after {
-  content:''; position:absolute; inset:-6px; border-radius:50%;
-  border:2px solid var(--pc); opacity:0;
-  animation:pinPulse 2.4s ease-out infinite;
-}
-@keyframes pinPulse {
-  0%   { transform:scale(.8); opacity:.85; }
-  100% { transform:scale(1.8); opacity:0; }
-}
-
-/* Panel */
-.v2-panel {
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:20px; overflow:hidden;
-  backdrop-filter:blur(16px);
-  min-height:400px; position:relative;
-}
-.v2-panel-inner {
-  position:absolute; inset:0;
-  transition:opacity .28s;
-}
-.v2-default {
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:14px; padding:36px 28px; text-align:center;
-}
-.v2-default-icon { font-size:40px; opacity:.3; }
-.v2-default p { font-size:13px; color:rgba(255,255,255,.3); line-height:1.7; max-width:200px; }
-.v2-zone-info { opacity:0; pointer-events:none; }
-.v2-zone-info.show { opacity:1; pointer-events:auto; }
-
-.v2-zone-head {
-  padding:26px 24px 18px;
-  display:flex; align-items:center; gap:16px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.v2-zone-emoji-wrap {
-  width:58px; height:58px; border-radius:18px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:28px;
-}
-.v2-zone-name {
-  font-family:'Playfair Display',serif;
-  font-size:19px; font-weight:900; color:#fff;
-  line-height:1.2; margin-bottom:4px;
-}
-.v2-zone-sub { font-size:12px; color:rgba(255,255,255,.45); font-style:italic; }
-.v2-zone-body { padding:18px 24px 24px; }
-.v2-zone-desc { font-size:13.5px; color:rgba(255,255,255,.68); line-height:1.75; margin-bottom:16px; }
-.v2-zone-tags { display:flex; flex-wrap:wrap; gap:6px; }
-.v2-ztag {
-  font-size:11px; font-weight:600; padding:4px 12px;
-  border-radius:100px; background:rgba(255,255,255,.1);
-  color:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.1);
-}
-.v2-zone-bar { position:absolute; bottom:0; left:0; right:0; height:4px; }
-
-/* ================================================================
-   VARIANTE 3 · GLASSMORPHISM CHIPS EXPANDIBLES
-================================================================ */
-.v3-map-wrap {
-  position:relative; border-radius:20px; overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  min-height:480px;
-}
-.v3-map-wrap img { width:100%; display:block; }
-.v3-chips { position:absolute; inset:0; pointer-events:none; }
-
-.v3-chip {
-  position:absolute; pointer-events:auto; cursor:pointer;
-  transform:translate(-50%,-100%);
-  z-index:10; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35));
-  transition:filter .25s, z-index 0s;
-}
-.v3-chip:hover { filter:drop-shadow(0 12px 36px rgba(0,0,0,.55)); z-index:20; }
-
-.v3-chip-body {
-  background:rgba(255,255,255,.16);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  border:1.5px solid rgba(255,255,255,.38);
-  border-radius:14px; overflow:hidden;
-  transition:background .35s, border-color .35s, transform .32s cubic-bezier(.34,1.56,.64,1);
-}
-.v3-chip:hover .v3-chip-body {
-  background:var(--vc);
-  border-color:rgba(255,255,255,.28);
-  transform:translateY(-4px);
-}
-
-.v3-chip-pill {
-  display:flex; align-items:center; gap:8px;
-  padding:10px 16px; white-space:nowrap;
-}
-.v3-chip-emoji { font-size:20px; line-height:1; }
-.v3-chip-name {
-  font-family:'Playfair Display',serif;
-  font-size:13px; font-weight:900; color:#fff;
-  text-transform:uppercase; letter-spacing:.05em;
-  text-shadow:0 1px 4px rgba(0,0,0,.4);
-}
-
-.v3-chip-expand {
-  max-height:0; overflow:hidden; padding:0 16px;
-  border-top:1px solid rgba(255,255,255,.0);
-  transition:max-height .4s ease, padding .4s ease, border-color .4s;
-}
-.v3-chip:hover .v3-chip-expand {
-  max-height:110px; padding:10px 16px;
-  border-color:rgba(255,255,255,.15);
-}
-.v3-chip-sub {
-  display:inline-block; background:rgba(255,255,255,.22);
-  color:#fff; font-size:9px; font-weight:700;
-  padding:2px 8px; border-radius:100px;
-  letter-spacing:.08em; text-transform:uppercase;
-  margin-bottom:7px;
-}
-.v3-chip-desc { font-size:12px; color:rgba(255,255,255,.8); line-height:1.65; }
-
-.v3-chip-tip {
-  width:0; height:0;
-  border-left:11px solid transparent; border-right:11px solid transparent;
-  border-top:14px solid rgba(255,255,255,.16);
-  margin:0 auto;
-  transition:border-top-color .35s;
-}
-.v3-chip:hover .v3-chip-tip { border-top-color:var(--vc); }
-
-@media(max-width:720px) {
-  .v2-layout { grid-template-columns:1fr; }
-  .v2-panel { min-height:280px; }
-}
-
-/* ================================================================
    VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
 ================================================================ */
-.v4-map-wrap {
-  position:relative; border-radius:20px; overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  min-height:480px;
+.v4-map-box {
+  position:relative; width:100vw; height:100vh;
 }
-.v4-map-wrap img { width:100%; display:block; }
+.v4-map-box img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+}
 .v4-chips { position:absolute; inset:0; pointer-events:none; }
 
 .v4-chip {
@@ -381,7 +209,6 @@ img { display:block; max-width:100%; }
   border-color:rgba(255,255,255,.28);
   border-radius:18px;
 }
-
 .v4-pill {
   display:flex; align-items:center; gap:8px;
   padding:10px 16px; white-space:nowrap; flex-shrink:0;
@@ -393,7 +220,6 @@ img { display:block; max-width:100%; }
   text-transform:uppercase; letter-spacing:.05em;
   text-shadow:0 1px 4px rgba(0,0,0,.4);
 }
-
 .v4-expand {
   max-width:0; overflow:hidden; padding:0;
   border-left:1px solid rgba(255,255,255,0);
@@ -412,7 +238,6 @@ img { display:block; max-width:100%; }
   margin-bottom:5px; white-space:nowrap;
 }
 .v4-desc { font-size:11px; color:rgba(255,255,255,.9); line-height:1.5; white-space:nowrap; }
-
 .v4-tip {
   width:0; height:0;
   border-left:11px solid transparent; border-right:11px solid transparent;
@@ -420,7 +245,6 @@ img { display:block; max-width:100%; }
   margin:0 auto; transition:border-top-color .35s;
 }
 .v4-chip:hover .v4-tip { border-top-color:var(--vc); }
-
 .v4--down {
   display:flex; flex-direction:column-reverse;
   transform:translate(-50%,0);
@@ -436,13 +260,14 @@ img { display:block; max-width:100%; }
 /* ================================================================
    VARIANTE 5 · PINS + FOOTER STRIP
 ================================================================ */
-.v5-wrap { display:flex; flex-direction:column; }
 .v5-map-box {
-  position:relative;
-  border-radius:20px 20px 0 0; overflow:hidden;
-  min-height:420px;
+  position:relative; width:100vw; height:100vh;
 }
-.v5-map-box img { width:100%; display:block; }
+.v5-map-box img {
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+}
 .v5-pins { position:absolute; inset:0; pointer-events:none; }
 
 .v5-pin {
@@ -461,26 +286,24 @@ img { display:block; max-width:100%; }
 }
 
 .v5-footer {
-  border:1.5px solid rgba(255,255,255,.12); border-top:none;
-  border-radius:0 0 20px 20px;
-  background:rgba(255,255,255,.05);
-  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-  overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(10,22,40,.82);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,.1);
+  z-index:100;
 }
 .v5-footer-default {
   display:flex; align-items:center; justify-content:center;
-  gap:10px; padding:24px 32px;
-  color:rgba(255,255,255,.3); font-size:13px; font-weight:500; letter-spacing:.04em;
+  gap:10px; padding:22px 32px;
+  color:rgba(255,255,255,.35); font-size:13px; font-weight:500; letter-spacing:.04em;
 }
-
 .v5-zone-strip {
-  display:none; padding:20px 32px;
-  align-items:center; gap:22px;
+  display:none; padding:20px 40px;
+  align-items:center; gap:24px;
 }
 .v5-zone-strip.v5-show { display:flex; animation:v5In .3s ease; }
 @keyframes v5In {
-  from { opacity:0; transform:translateY(8px); }
+  from { opacity:0; transform:translateY(10px); }
   to   { opacity:1; transform:translateY(0); }
 }
 .v5-color-bar { width:4px; min-height:72px; border-radius:100px; flex-shrink:0; }
@@ -512,388 +335,227 @@ img { display:block; max-width:100%; }
 </head>
 <body>
 
-<div class="page">
+<!-- ── TABS FLOTANTES ────────────────────────────────────────────── -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="setTab(1)">Blobs orgánicos</button>
+  <button class="tab-btn"        onclick="setTab(4)">Chips → derecha</button>
+  <button class="tab-btn"        onclick="setTab(5)">Pins + footer</button>
+</div>
 
-  <div class="page-header">
-    <h1>Zonas de conservación · Bahía de La Paz</h1>
-    <p>5 variantes de presentación del mapa interactivo — Colectivo La Duna BCS</p>
-  </div>
+<!-- ================================================================
+     VARIANTE 1 · BLOBS ORGÁNICOS
+================================================================ -->
+<div class="variant active" id="v1">
+  <div class="v1-map-box map-bg">
+    <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
-  <div class="tabs">
-    <button class="tab-btn active" onclick="setTab(1)">
-      <span class="num">Variante 1</span>Blobs orgánicos
-    </button>
-    <button class="tab-btn" onclick="setTab(2)">
-      <span class="num">Variante 2</span>Pins + Panel lateral
-    </button>
-    <button class="tab-btn" onclick="setTab(3)">
-      <span class="num">Variante 3</span>Chips glassmorphism
-    </button>
-    <button class="tab-btn" onclick="setTab(4)">
-      <span class="num">Variante 4</span>Chips → derecha
-    </button>
-    <button class="tab-btn" onclick="setTab(5)">
-      <span class="num">Variante 5</span>Pins + footer
-    </button>
-  </div>
+    <div class="v1-tags">
 
-  <!-- ==============================================================
-       VARIANTE 1 · BLOBS ORGÁNICOS
-  ============================================================== -->
-  <div class="variant active" id="v1">
-    <p class="v-label">Blobs orgánicos — card-face slide · goo liquid fill · hover scale</p>
-
-    <div class="v1-map-wrap">
-      <div class="v1-map-box map-bg">
-        <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
-
-        <div class="v1-tags">
-
-          <!-- El Cajete · rojo · card face -->
-          <div class="zt zt--pich" style="left:28%;top:42%;--zt-bg:#D32F2F;--zt-badge:#B71C1C">
-            <div class="zt-blob">
-              <div class="zt-pich-face1">
-                <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
-                <div class="zt-info">
-                  <div class="zt-title">EL<br>CAJETE</div>
-                  <div class="zt-badge">Dunas interiores</div>
-                </div>
-              </div>
-              <div class="zt-pich-face2"><span class="zt-pich-icon">🌋</span></div>
+      <!-- El Cajete · rojo · card face -->
+      <div class="zt zt--pich" style="left:28%;top:42%;--zt-bg:#D32F2F;--zt-badge:#B71C1C">
+        <div class="zt-blob">
+          <div class="zt-pich-face1">
+            <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
+            <div class="zt-info">
+              <div class="zt-title">EL<br>CAJETE</div>
+              <div class="zt-badge">Dunas interiores</div>
             </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
           </div>
-
-          <!-- Las Pacas · violeta -->
-          <div class="zt zt--down" style="left:50%;top:30%;--zt-bg:#7B1FA2;--zt-badge:#6A1B9A">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
-              <div class="zt-info">
-                <div class="zt-title">LAS<br>PACAS</div>
-                <div class="zt-badge">Flora costera</div>
-              </div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-
-          <!-- Punta León · azul -->
-          <div class="zt" style="left:73%;top:48%;--zt-bg:#1565C0;--zt-badge:#0D47A1">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
-              <div class="zt-info">
-                <div class="zt-title">PUNTA<br>LEÓN</div>
-                <div class="zt-badge">Geomorfología</div>
-              </div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-
-          <!-- Cactimar · verde · goo -->
-          <div class="zt zt--goo zt--down" style="left:18%;top:72%;--zt-bg:#2E7D32;--zt-badge:#1B5E20">
-            <div class="zt-blob">
-              <div class="zt-goo-wrap">
-                <span class="zt-goo-blobs">
-                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-                  <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
-                </span>
-              </div>
-              <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
-              <div class="zt-info">
-                <div class="zt-title">CACTIMAR</div>
-                <div class="zt-badge">Ecosistema mixto</div>
-              </div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-
-          <!-- Mogote · amarillo -->
-          <div class="zt" style="left:62%;top:76%;--zt-bg:#F57F17;--zt-badge:#E65100">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
-              <div class="zt-info">
-                <div class="zt-title">MOGOTE</div>
-                <div class="zt-badge">Cordón dunar</div>
-              </div>
-            </div>
-            <div class="zt-tip"></div><div class="zt-arrow"></div>
-          </div>
-
+          <div class="zt-pich-face2"><span class="zt-pich-icon">🌋</span></div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==============================================================
-       VARIANTE 2 · PINS NUMERADOS + PANEL LATERAL
-  ============================================================== -->
-  <div class="variant" id="v2">
-    <p class="v-label">Pins numerados — hover activa panel lateral con descripción completa</p>
-
-    <div class="v2-layout">
-
-      <div class="v2-map-wrap map-bg" id="v2map">
-        <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
-
-        <div class="v2-pin" style="left:28%;top:42%;background:#D32F2F;--pc:#D32F2F" data-zone="0" onmouseenter="showPanel(0)" onmouseleave="scheduleHide()">1</div>
-        <div class="v2-pin" style="left:50%;top:30%;background:#7B1FA2;--pc:#7B1FA2" data-zone="1" onmouseenter="showPanel(1)" onmouseleave="scheduleHide()">2</div>
-        <div class="v2-pin" style="left:73%;top:48%;background:#1565C0;--pc:#1565C0" data-zone="2" onmouseenter="showPanel(2)" onmouseleave="scheduleHide()">3</div>
-        <div class="v2-pin" style="left:18%;top:72%;background:#2E7D32;--pc:#2E7D32" data-zone="3" onmouseenter="showPanel(3)" onmouseleave="scheduleHide()">4</div>
-        <div class="v2-pin" style="left:62%;top:76%;background:#F57F17;--pc:#F57F17" data-zone="4" onmouseenter="showPanel(4)" onmouseleave="scheduleHide()">5</div>
+        <div class="zt-tip"></div><div class="zt-arrow"></div>
       </div>
 
-      <div class="v2-panel" id="v2panel" onmouseenter="cancelHide()" onmouseleave="scheduleHide()">
-        <!-- Estado por defecto -->
-        <div class="v2-panel-inner v2-default" id="v2default">
-          <span class="v2-default-icon">🗺️</span>
-          <p>Pasa el cursor sobre un pin para ver la información de la zona.</p>
-        </div>
-        <!-- Estado con zona -->
-        <div class="v2-panel-inner v2-zone-info" id="v2zoneInfo">
-          <div class="v2-zone-head">
-            <div class="v2-zone-emoji-wrap" id="v2emoji"></div>
-            <div>
-              <div class="v2-zone-name" id="v2name"></div>
-              <div class="v2-zone-sub" id="v2sub"></div>
-            </div>
+      <!-- Las Pacas · violeta -->
+      <div class="zt zt--down" style="left:50%;top:30%;--zt-bg:#7B1FA2;--zt-badge:#6A1B9A">
+        <div class="zt-blob">
+          <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
+          <div class="zt-info">
+            <div class="zt-title">LAS<br>PACAS</div>
+            <div class="zt-badge">Flora costera</div>
           </div>
-          <div class="v2-zone-body">
-            <p class="v2-zone-desc" id="v2desc"></p>
-            <div class="v2-zone-tags" id="v2tags"></div>
-          </div>
-          <div class="v2-zone-bar" id="v2bar"></div>
         </div>
+        <div class="zt-tip"></div><div class="zt-arrow"></div>
+      </div>
+
+      <!-- Punta León · azul -->
+      <div class="zt" style="left:73%;top:48%;--zt-bg:#1565C0;--zt-badge:#0D47A1">
+        <div class="zt-blob">
+          <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
+          <div class="zt-info">
+            <div class="zt-title">PUNTA<br>LEÓN</div>
+            <div class="zt-badge">Geomorfología</div>
+          </div>
+        </div>
+        <div class="zt-tip"></div><div class="zt-arrow"></div>
+      </div>
+
+      <!-- Cactimar · verde · goo -->
+      <div class="zt zt--goo zt--down" style="left:18%;top:72%;--zt-bg:#2E7D32;--zt-badge:#1B5E20">
+        <div class="zt-blob">
+          <div class="zt-goo-wrap">
+            <span class="zt-goo-blobs">
+              <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
+              <span class="zt-goo-blob"></span><span class="zt-goo-blob"></span>
+            </span>
+          </div>
+          <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
+          <div class="zt-info">
+            <div class="zt-title">CACTIMAR</div>
+            <div class="zt-badge">Ecosistema mixto</div>
+          </div>
+        </div>
+        <div class="zt-tip"></div><div class="zt-arrow"></div>
+      </div>
+
+      <!-- Mogote · amarillo -->
+      <div class="zt" style="left:62%;top:76%;--zt-bg:#F57F17;--zt-badge:#E65100">
+        <div class="zt-blob">
+          <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
+          <div class="zt-info">
+            <div class="zt-title">MOGOTE</div>
+            <div class="zt-badge">Cordón dunar</div>
+          </div>
+        </div>
+        <div class="zt-tip"></div><div class="zt-arrow"></div>
       </div>
 
     </div>
   </div>
+</div>
 
-  <!-- ==============================================================
-       VARIANTE 3 · CHIPS GLASSMORPHISM EXPANDIBLES
-  ============================================================== -->
-  <div class="variant" id="v3">
-    <p class="v-label">Chips glassmorphism — hover llena de color y expande descripción</p>
+<!-- ================================================================
+     VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
+================================================================ -->
+<div class="variant" id="v4">
+  <div class="v4-map-box map-bg">
+    <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
 
-    <div class="v3-map-wrap map-bg">
-      <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
+    <div class="v4-chips">
 
-      <div class="v3-chips">
-
-        <!-- El Cajete -->
-        <div class="v3-chip" style="left:28%;top:42%;--vc:#D32F2F">
-          <div class="v3-chip-body">
-            <div class="v3-chip-pill">
-              <span class="v3-chip-emoji">🌋</span>
-              <span class="v3-chip-name">El Cajete</span>
-            </div>
-            <div class="v3-chip-expand">
-              <span class="v3-chip-sub">Dunas interiores</span>
-              <p class="v3-chip-desc">Sistema de origen volcánico con las dunas más altas de la bahía y tepetate aflorante.</p>
-            </div>
+      <!-- El Cajete -->
+      <div class="v4-chip" style="left:28%;top:42%;--vc:#D32F2F">
+        <div class="v4-chip-row">
+          <div class="v4-pill"><span class="v4-emoji">🌋</span><span class="v4-name">El Cajete</span></div>
+          <div class="v4-expand">
+            <span class="v4-sub">Dunas interiores</span>
+            <p class="v4-desc">Dunas volcánicas y tepetate aflorante.</p>
           </div>
-          <div class="v3-chip-tip"></div>
         </div>
-
-        <!-- Las Pacas -->
-        <div class="v3-chip" style="left:50%;top:30%;--vc:#7B1FA2">
-          <div class="v3-chip-body">
-            <div class="v3-chip-pill">
-              <span class="v3-chip-emoji">🦋</span>
-              <span class="v3-chip-name">Las Pacas</span>
-            </div>
-            <div class="v3-chip-expand">
-              <span class="v3-chip-sub">Flora costera</span>
-              <p class="v3-chip-desc">Zona de transición con flora endémica sudcaliforniana de alto valor botánico.</p>
-            </div>
-          </div>
-          <div class="v3-chip-tip"></div>
-        </div>
-
-        <!-- Punta León -->
-        <div class="v3-chip" style="left:73%;top:48%;--vc:#1565C0">
-          <div class="v3-chip-body">
-            <div class="v3-chip-pill">
-              <span class="v3-chip-emoji">🦁</span>
-              <span class="v3-chip-name">Punta León</span>
-            </div>
-            <div class="v3-chip-expand">
-              <span class="v3-chip-sub">Geomorfología</span>
-              <p class="v3-chip-desc">Acumulación activa de sedimentos marinos con ciclos de erosión bien documentados.</p>
-            </div>
-          </div>
-          <div class="v3-chip-tip"></div>
-        </div>
-
-        <!-- Cactimar -->
-        <div class="v3-chip" style="left:18%;top:72%;--vc:#2E7D32">
-          <div class="v3-chip-body">
-            <div class="v3-chip-pill">
-              <span class="v3-chip-emoji">🌵</span>
-              <span class="v3-chip-name">Cactimar</span>
-            </div>
-            <div class="v3-chip-expand">
-              <span class="v3-chip-sub">Ecosistema mixto</span>
-              <p class="v3-chip-desc">Vegetación xerófita y flora costera pionera coexistiendo; hábitat de lagartija dunera.</p>
-            </div>
-          </div>
-          <div class="v3-chip-tip"></div>
-        </div>
-
-        <!-- Mogote -->
-        <div class="v3-chip" style="left:62%;top:76%;--vc:#F57F17">
-          <div class="v3-chip-body">
-            <div class="v3-chip-pill">
-              <span class="v3-chip-emoji">🏖️</span>
-              <span class="v3-chip-name">Mogote</span>
-            </div>
-            <div class="v3-chip-expand">
-              <span class="v3-chip-sub">Cordón dunar</span>
-              <p class="v3-chip-desc">Hábitat crítico para más de 40 especies de aves playeras migratorias.</p>
-            </div>
-          </div>
-          <div class="v3-chip-tip"></div>
-        </div>
-
+        <div class="v4-tip"></div>
       </div>
+
+      <!-- Las Pacas · abajo -->
+      <div class="v4-chip v4--down" style="left:50%;top:30%;--vc:#7B1FA2">
+        <div class="v4-chip-row">
+          <div class="v4-pill"><span class="v4-emoji">🦋</span><span class="v4-name">Las Pacas</span></div>
+          <div class="v4-expand">
+            <span class="v4-sub">Flora costera</span>
+            <p class="v4-desc">Flora endémica de alta biodiversidad.</p>
+          </div>
+        </div>
+        <div class="v4-tip"></div>
+      </div>
+
+      <!-- Punta León -->
+      <div class="v4-chip" style="left:73%;top:48%;--vc:#1565C0">
+        <div class="v4-chip-row">
+          <div class="v4-pill"><span class="v4-emoji">🦁</span><span class="v4-name">Punta León</span></div>
+          <div class="v4-expand">
+            <span class="v4-sub">Geomorfología</span>
+            <p class="v4-desc">Sedimentos marinos y erosión costera.</p>
+          </div>
+        </div>
+        <div class="v4-tip"></div>
+      </div>
+
+      <!-- Cactimar · abajo -->
+      <div class="v4-chip v4--down" style="left:18%;top:72%;--vc:#2E7D32">
+        <div class="v4-chip-row">
+          <div class="v4-pill"><span class="v4-emoji">🌵</span><span class="v4-name">Cactimar</span></div>
+          <div class="v4-expand">
+            <span class="v4-sub">Ecosistema mixto</span>
+            <p class="v4-desc">Xerófitas y lagartija dunera endémica.</p>
+          </div>
+        </div>
+        <div class="v4-tip"></div>
+      </div>
+
+      <!-- Mogote -->
+      <div class="v4-chip" style="left:62%;top:76%;--vc:#F57F17">
+        <div class="v4-chip-row">
+          <div class="v4-pill"><span class="v4-emoji">🏖️</span><span class="v4-name">Mogote</span></div>
+          <div class="v4-expand">
+            <span class="v4-sub">Cordón dunar</span>
+            <p class="v4-desc">+40 especies de aves playeras migratorias.</p>
+          </div>
+        </div>
+        <div class="v4-tip"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     VARIANTE 5 · PINS + FOOTER STRIP
+================================================================ -->
+<div class="variant" id="v5">
+  <div class="v5-map-box map-bg">
+    <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
+
+    <div class="v5-pins">
+      <div class="v5-pin" style="left:28%;top:42%;background:#D32F2F" onmouseenter="showV5(0)">1</div>
+      <div class="v5-pin" style="left:50%;top:30%;background:#7B1FA2" onmouseenter="showV5(1)">2</div>
+      <div class="v5-pin" style="left:73%;top:48%;background:#1565C0" onmouseenter="showV5(2)">3</div>
+      <div class="v5-pin" style="left:18%;top:72%;background:#2E7D32" onmouseenter="showV5(3)">4</div>
+      <div class="v5-pin" style="left:62%;top:76%;background:#F57F17" onmouseenter="showV5(4)">5</div>
     </div>
   </div>
 
-  <!-- ==============================================================
-       VARIANTE 4 · CHIPS EXPANDIBLES A LA DERECHA
-  ============================================================== -->
-  <div class="variant" id="v4">
-    <p class="v-label">Chips glassmorphism — hover expande panel a la derecha · 2 y 4 apuntan arriba</p>
-
-    <div class="v4-map-wrap map-bg">
-      <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
-
-      <div class="v4-chips">
-
-        <!-- El Cajete -->
-        <div class="v4-chip" style="left:28%;top:42%;--vc:#D32F2F">
-          <div class="v4-chip-row">
-            <div class="v4-pill"><span class="v4-emoji">🌋</span><span class="v4-name">El Cajete</span></div>
-            <div class="v4-expand">
-              <span class="v4-sub">Dunas interiores</span>
-              <p class="v4-desc">Dunas volcánicas y tepetate aflorante.</p>
-            </div>
-          </div>
-          <div class="v4-tip"></div>
-        </div>
-
-        <!-- Las Pacas · abajo -->
-        <div class="v4-chip v4--down" style="left:50%;top:30%;--vc:#7B1FA2">
-          <div class="v4-chip-row">
-            <div class="v4-pill"><span class="v4-emoji">🦋</span><span class="v4-name">Las Pacas</span></div>
-            <div class="v4-expand">
-              <span class="v4-sub">Flora costera</span>
-              <p class="v4-desc">Flora endémica de alta biodiversidad.</p>
-            </div>
-          </div>
-          <div class="v4-tip"></div>
-        </div>
-
-        <!-- Punta León -->
-        <div class="v4-chip" style="left:73%;top:48%;--vc:#1565C0">
-          <div class="v4-chip-row">
-            <div class="v4-pill"><span class="v4-emoji">🦁</span><span class="v4-name">Punta León</span></div>
-            <div class="v4-expand">
-              <span class="v4-sub">Geomorfología</span>
-              <p class="v4-desc">Sedimentos marinos y erosión costera.</p>
-            </div>
-          </div>
-          <div class="v4-tip"></div>
-        </div>
-
-        <!-- Cactimar · abajo -->
-        <div class="v4-chip v4--down" style="left:18%;top:72%;--vc:#2E7D32">
-          <div class="v4-chip-row">
-            <div class="v4-pill"><span class="v4-emoji">🌵</span><span class="v4-name">Cactimar</span></div>
-            <div class="v4-expand">
-              <span class="v4-sub">Ecosistema mixto</span>
-              <p class="v4-desc">Xerófitas y lagartija dunera endémica.</p>
-            </div>
-          </div>
-          <div class="v4-tip"></div>
-        </div>
-
-        <!-- Mogote -->
-        <div class="v4-chip" style="left:62%;top:76%;--vc:#F57F17">
-          <div class="v4-chip-row">
-            <div class="v4-pill"><span class="v4-emoji">🏖️</span><span class="v4-name">Mogote</span></div>
-            <div class="v4-expand">
-              <span class="v4-sub">Cordón dunar</span>
-              <p class="v4-desc">+40 especies de aves playeras migratorias.</p>
-            </div>
-          </div>
-          <div class="v4-tip"></div>
-        </div>
-
+  <div class="v5-footer">
+    <div class="v5-footer-default" id="v5default">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5-8 14-8 14S4 15 4 10a8 8 0 0 1 8-8z"/></svg>
+      Pasa el cursor sobre un pin para explorar la zona
+    </div>
+    <div class="v5-zone-strip" id="v5strip">
+      <div class="v5-color-bar" id="v5bar"></div>
+      <div class="v5-zone-emoji" id="v5zemoji"></div>
+      <div class="v5-zone-content">
+        <div class="v5-zone-name" id="v5name"></div>
+        <div class="v5-zone-sub" id="v5sub"></div>
+        <div class="v5-zone-desc" id="v5desc"></div>
+        <div class="v5-zone-tags" id="v5tags"></div>
       </div>
+      <div class="v5-nav-dots" id="v5dots"></div>
     </div>
   </div>
-
-  <!-- ==============================================================
-       VARIANTE 5 · PINS + FOOTER STRIP
-  ============================================================== -->
-  <div class="variant" id="v5">
-    <p class="v-label">Pins en mapa — hover activa franja informativa debajo del mapa</p>
-
-    <div class="v5-wrap">
-      <div class="v5-map-box map-bg">
-        <img src="mapa.png" alt="Mapa" onerror="this.style.opacity=0">
-
-        <div class="v5-pins">
-          <div class="v5-pin" style="left:28%;top:42%;background:#D32F2F" onmouseenter="showV5(0)">1</div>
-          <div class="v5-pin" style="left:50%;top:30%;background:#7B1FA2" onmouseenter="showV5(1)">2</div>
-          <div class="v5-pin" style="left:73%;top:48%;background:#1565C0" onmouseenter="showV5(2)">3</div>
-          <div class="v5-pin" style="left:18%;top:72%;background:#2E7D32" onmouseenter="showV5(3)">4</div>
-          <div class="v5-pin" style="left:62%;top:76%;background:#F57F17" onmouseenter="showV5(4)">5</div>
-        </div>
-      </div>
-
-      <div class="v5-footer">
-        <div class="v5-footer-default" id="v5default">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5-8 14-8 14S4 15 4 10a8 8 0 0 1 8-8z"/></svg>
-          Pasa el cursor sobre un pin para explorar la zona
-        </div>
-        <div class="v5-zone-strip" id="v5strip">
-          <div class="v5-color-bar" id="v5bar"></div>
-          <div class="v5-zone-emoji" id="v5zemoji"></div>
-          <div class="v5-zone-content">
-            <div class="v5-zone-name" id="v5name"></div>
-            <div class="v5-zone-sub" id="v5sub"></div>
-            <div class="v5-zone-desc" id="v5desc"></div>
-            <div class="v5-zone-tags" id="v5tags"></div>
-          </div>
-          <div class="v5-nav-dots" id="v5dots"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /page -->
+</div>
 
 <!-- SVG Goo filter (Variante 1 · Cactimar) -->
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="position:absolute;width:0;height:0;overflow:hidden">
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">
   <defs>
     <filter id="goo">
-      <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"></feGaussianBlur>
-      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -7" result="goo"></feColorMatrix>
-      <feBlend in2="goo" in="SourceGraphic" result="mix"></feBlend>
+      <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"/>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -7" result="goo"/>
+      <feBlend in2="goo" in="SourceGraphic" result="mix"/>
     </filter>
   </defs>
 </svg>
 
 <script>
 /* ── Tab switching ─────────────────────────────────────────────── */
+const TAB_IDS = [1, 4, 5];
+
 function setTab(n) {
   document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('v' + n).classList.add('active');
-  document.querySelectorAll('.tab-btn')[n - 1].classList.add('active');
+  const idx = TAB_IDS.indexOf(n);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
 }
 
-/* ── Variante 2 · zona data ────────────────────────────────────── */
+/* ── Zone data ─────────────────────────────────────────────────── */
 const zones = [
   {
     name:'El Cajete', sub:'Dunas interiores', emoji:'🌋', color:'#D32F2F',
@@ -922,31 +584,7 @@ const zones = [
   }
 ];
 
-let hideTimer = null;
-
-function showPanel(idx) {
-  clearTimeout(hideTimer);
-  const z = zones[idx];
-  document.getElementById('v2emoji').textContent = z.emoji;
-  document.getElementById('v2emoji').style.background = z.color + '28';
-  document.getElementById('v2name').textContent = z.name;
-  document.getElementById('v2sub').textContent = z.sub;
-  document.getElementById('v2desc').textContent = z.desc;
-  document.getElementById('v2bar').style.background = z.color;
-  document.getElementById('v2tags').innerHTML = z.tags.map(t =>
-    `<span class="v2-ztag">${t}</span>`).join('');
-  document.getElementById('v2zoneInfo').classList.add('show');
-}
-
-function scheduleHide() {
-  hideTimer = setTimeout(() => {
-    document.getElementById('v2zoneInfo').classList.remove('show');
-  }, 250);
-}
-
-function cancelHide() { clearTimeout(hideTimer); }
-
-/* ── Variante 5 · footer strip ─────────────────────────────── */
+/* ── Variante 5 ─────────────────────────────────────────────────── */
 function showV5(idx) {
   const z = zones[idx];
   document.querySelectorAll('.v5-pin').forEach((p, i) => p.classList.toggle('v5-active', i === idx));
