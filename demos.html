@@ -14,7 +14,7 @@
 @font-face { font-family:'Le Petit Cochon'; src:local('Le Petit Cochon'),local('LePetitCochon'); font-display:swap; }
 @font-face { font-family:'Amsterdam Two';   src:local('Amsterdam Two'),local('AmsterdamTwo'); font-display:swap; }
 @font-face { font-family:'TT Commons Pro';  src:local('TT Commons Pro'),local('TTCommonsPro'); font-display:swap; }
-@font-face { font-family:'More Sugar';      src:local('More Sugar'),local('MoreSugar'); font-display:swap; }
+@font-face { font-family:'More Sugar'; src:url('MoreSugar-Thin.ttf') format('truetype'),local('More Sugar'),local('MoreSugar'); font-display:swap; }
 </style>
 
 
@@ -756,194 +756,98 @@ img { display:block; max-width:100%; }
 .form-note { font-size:11.5px; color:#AAA; text-align:center; margin-top:12px; }
 
 /* ================================================================
-   MAPA ZONAS — Project tags estilo Mossy Earth
+   MAPA ZONAS
 ================================================================ */
-.zt-map-section {
-  position: relative;
-  margin-top: 52px;
-}
+.zt-map-section { position:relative; margin-top:52px; }
 .zt-map-img-layer {
-  border-radius: var(--r);
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,.5);
-  background: linear-gradient(160deg,
-    #7FBDCA 0%, #9BCDD4 12%, #AACBBF 28%,
-    #C2D6A8 42%, #D4D09A 55%, #D4C28A 66%,
-    #C8AD78 76%, #8AADB8 90%);
-  min-height: 460px;
+  border-radius:var(--r); overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+  background:linear-gradient(160deg,
+    #7FBDCA 0%,#9BCDD4 12%,#AACBBF 28%,
+    #C2D6A8 42%,#D4D09A 55%,#D4C28A 66%,
+    #C8AD78 76%,#8AADB8 90%);
+  min-height:460px;
 }
-.zt-map-img-layer img {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-}
-.zt-tags-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
+.zt-map-img-layer img { width:100%; height:auto; display:block; }
+.zt-tags-layer { position:absolute; inset:0; pointer-events:none; }
 
-/* ─── Individual tag ─────────────────────────────────────────── */
-.zt {
-  position: absolute;
-  pointer-events: auto;
-  cursor: pointer;
-  transform: translate(-50%, -100%);
-  transition: transform .32s cubic-bezier(.34,1.56,.64,1),
-              filter .25s ease;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,.38));
-  z-index: 10;
+/* ── Chip ───────────────────────────────────────────────────── */
+.map-chip {
+  position:absolute; pointer-events:auto; cursor:pointer;
+  transform:translate(-50%,-100%);
+  z-index:10; filter:drop-shadow(0 5px 16px rgba(0,0,0,.38));
+  transition:filter .25s;
 }
-.zt:hover {
-  transform: translate(-50%, -100%) scale(1.1);
-  filter: drop-shadow(0 18px 40px rgba(0,0,0,.55));
-  z-index: 20;
-}
+.map-chip:hover,.map-chip.open { filter:drop-shadow(0 12px 32px rgba(0,0,0,.55)); z-index:20; }
 
-/* Blob body */
-.zt-blob {
-  width: 150px;
-  height: 176px;
-  border-radius: 54% 46% 48% 52% / 46% 44% 56% 54%;
-  overflow: hidden;
-  border: 3px solid rgba(255,255,255,.88);
-  position: relative;
-  background: var(--zt-bg, var(--mare));
+.map-chip-row {
+  display:flex; align-items:center;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border:1.5px solid rgba(255,255,255,.42);
+  border-radius:100px; overflow:hidden;
+  transition:background .35s, border-color .35s, border-radius .45s;
 }
+.map-chip:hover .map-chip-row,
+.map-chip.open .map-chip-row {
+  background:var(--mc); border-color:rgba(255,255,255,.28); border-radius:18px;
+}
+.map-chip-pill {
+  display:flex; align-items:center; gap:8px;
+  padding:9px 14px; white-space:nowrap; flex-shrink:0;
+}
+.map-chip-emoji { font-size:18px; line-height:1; }
+.map-chip-name {
+  font-family:'More Sugar','Playfair Display',serif;
+  font-size:12px; font-weight:900; color:#fff;
+  text-transform:uppercase; letter-spacing:.05em;
+  text-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.map-chip-expand {
+  max-width:0; overflow:hidden; padding:0;
+  border-left:1px solid rgba(255,255,255,0);
+  display:flex; flex-direction:column; justify-content:center;
+  transition:max-width .45s cubic-bezier(.34,1.2,.64,1), padding .45s, border-color .4s;
+}
+.map-chip:hover .map-chip-expand,
+.map-chip.open .map-chip-expand {
+  max-width:200px; padding:8px 16px 8px 12px;
+  border-left-color:rgba(255,255,255,.2);
+}
+.map-chip-sub {
+  display:inline-block; background:rgba(255,255,255,.22); color:#fff;
+  font-size:9px; font-weight:700; padding:2px 7px;
+  border-radius:100px; letter-spacing:.08em; text-transform:uppercase;
+  margin-bottom:4px; white-space:nowrap;
+}
+.map-chip-desc { font-size:10px; color:rgba(255,255,255,.9); line-height:1.5; white-space:nowrap; }
+.map-chip-tip {
+  width:0; height:0;
+  border-left:10px solid transparent; border-right:10px solid transparent;
+  border-top:12px solid rgba(255,255,255,.18);
+  margin:0 auto; transition:border-top-color .35s;
+}
+.map-chip:hover .map-chip-tip,
+.map-chip.open .map-chip-tip { border-top-color:var(--mc); }
 
-/* Photo / emoji interior */
-.zt-photo {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 54px;
-  transition: transform .35s ease;
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width:768px) {
+  .map-chip-pill { padding:6px 10px; gap:5px; }
+  .map-chip-emoji { font-size:14px; }
+  .map-chip-name { font-size:10px; }
+  .map-chip:hover .map-chip-expand,
+  .map-chip.open .map-chip-expand { max-width:160px; padding:6px 12px 6px 10px; }
+  .map-chip-sub { font-size:8px; }
+  .map-chip-desc { font-size:9px; }
+  .map-chip-tip { border-left-width:8px; border-right-width:8px; border-top-width:10px; }
 }
-.zt:hover .zt-photo { transform: scale(1.08); }
-
-/* Gradient text overlay */
-.zt-info {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  padding: 24px 10px 12px;
-  background: linear-gradient(transparent, rgba(0,0,0,.72) 52%);
+@media (max-width:480px) {
+  .map-chip-pill { padding:5px 8px; gap:3px; }
+  .map-chip-emoji { font-size:12px; }
+  .map-chip-name { font-size:9px; letter-spacing:.02em; }
+  .map-chip:hover .map-chip-expand,
+  .map-chip.open .map-chip-expand { max-width:140px; }
 }
-.zt-title {
-  font-family: var(--ff-display);
-  font-size: 12.5px;
-  font-weight: 900;
-  color: #fff;
-  text-transform: uppercase;
-  line-height: 1.12;
-  letter-spacing: .01em;
-  margin-bottom: 6px;
-  text-shadow: 0 1px 6px rgba(0,0,0,.55);
-}
-.zt-badge {
-  display: inline-flex;
-  background: var(--zt-badge, var(--mare));
-  color: #fff;
-  font-family: var(--ff-body);
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 100px;
-  letter-spacing: .05em;
-}
-
-/* Triangle pointer (base of blob) */
-.zt-tip {
-  width: 0; height: 0;
-  border-left: 13px solid transparent;
-  border-right: 13px solid transparent;
-  border-top: 16px solid var(--zt-bg, var(--mare));
-  margin: 0 auto;
-}
-/* Yellow accent arrow (como Mossy Earth) */
-.zt-arrow {
-  width: 0; height: 0;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 12px solid #F5C218;
-  margin: 0 auto;
-  margin-top: -5px;
-}
-
-/* ─── Card face slide effect (Zona Pichilingue) ─────────────────── */
-.zt-pich-face1 {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-.zt-pich-face2 {
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: 2;
-  background: linear-gradient(45deg, #7F0000, #D32F2F);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: height 0.5s;
-  overflow: hidden;
-}
-.zt-pich-face2::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 50%; height: 100%;
-  background: rgba(255,255,255,.1);
-}
-.zt-pich-icon {
-  font-size: 4.5em;
-  line-height: 1;
-  position: relative;
-  transition: font-size 0.5s;
-  text-shadow: 0 2px 5px rgba(0,0,0,.2);
-}
-.zt--pich:hover .zt-pich-face2 { height: 46px; }
-.zt--pich:hover .zt-pich-icon  { font-size: 1.6em; }
-
-/* ─── Goo blob hover effect (Zona Punta Norte) ────────────────── */
-.zt-goo-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  overflow: hidden;
-}
-.zt-goo-blobs {
-  display: block;
-  position: relative;
-  height: 100%;
-  filter: url('#goo');
-}
-.zt-goo-blob {
-  position: absolute;
-  top: 2px;
-  width: 25%;
-  height: 100%;
-  background: #2E7D32;
-  border-radius: 50%;
-  transform: translate3d(0, 150%, 0) scale(1.7);
-  transition: transform 0.45s;
-}
-@supports (filter: url('#goo')) {
-  .zt-goo-blob { transform: translate3d(0, 150%, 0) scale(1.4); }
-}
-.zt-goo-blob:nth-child(1) { left: 0%;   transition-delay: 0s; }
-.zt-goo-blob:nth-child(2) { left: 25%;  transition-delay: 0.08s; }
-.zt-goo-blob:nth-child(3) { left: 50%;  transition-delay: 0.16s; }
-.zt-goo-blob:nth-child(4) { left: 75%;  transition-delay: 0.24s; }
-
-.zt--goo:hover .zt-goo-blob { transform: translateZ(0) scale(1.7); }
-@supports (filter: url('#goo')) {
-  .zt--goo:hover .zt-goo-blob { transform: translateZ(0) scale(1.4); }
-}
-.zt--goo .zt-photo { z-index: 1; }
-.zt--goo .zt-info  { z-index: 3; }
 
 /* ================================================================
    FOOTER
@@ -1222,82 +1126,49 @@ footer { background:var(--ink); padding:80px 0 36px; }
 
         <div class="zt-tags-layer">
 
-          <!-- ① El Cajete (rojo · card face effect) -->
-          <div class="zt zt--pich" style="left:12%;top:14%;--zt-bg:#D32F2F;--zt-badge:#B71C1C">
-            <div class="zt-blob">
-              <div class="zt-pich-face1">
-                <div class="zt-photo" style="background:linear-gradient(160deg,#7F0000,#D32F2F)">🌋</div>
-                <div class="zt-info">
-                  <div class="zt-title">EL<br>CAJETE</div>
-                  <div class="zt-badge">Dunas interiores</div>
-                </div>
-              </div>
-              <div class="zt-pich-face2">
-                <span class="zt-pich-icon">🌋</span>
-              </div>
+          <!-- ① El Cajete (rojo) -->
+          <div class="map-chip" style="left:12%;top:14%;--mc:#D32F2F">
+            <div class="map-chip-row">
+              <div class="map-chip-pill"><span class="map-chip-emoji">🌋</span><span class="map-chip-name">El Cajete</span></div>
+              <div class="map-chip-expand"><span class="map-chip-sub">Dunas interiores</span><p class="map-chip-desc">Dunas volcánicas y tepetate aflorante.</p></div>
             </div>
-            <div class="zt-tip"></div>
-            <div class="zt-arrow"></div>
+            <div class="map-chip-tip"></div>
           </div>
 
           <!-- ② Las Pacas (violeta) -->
-          <div class="zt" style="left:16%;top:26%;--zt-bg:#7B1FA2;--zt-badge:#6A1B9A">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#4A148C,#7B1FA2)">🦋</div>
-              <div class="zt-info">
-                <div class="zt-title">LAS<br>PACAS</div>
-                <div class="zt-badge">Flora costera</div>
-              </div>
+          <div class="map-chip" style="left:17%;top:27%;--mc:#7B1FA2">
+            <div class="map-chip-row">
+              <div class="map-chip-pill"><span class="map-chip-emoji">🦋</span><span class="map-chip-name">Las Pacas</span></div>
+              <div class="map-chip-expand"><span class="map-chip-sub">Flora costera</span><p class="map-chip-desc">Flora endémica de alta biodiversidad.</p></div>
             </div>
-            <div class="zt-tip"></div>
-            <div class="zt-arrow"></div>
+            <div class="map-chip-tip"></div>
           </div>
 
           <!-- ③ Punta León (azul) -->
-          <div class="zt" style="left:21%;top:36%;--zt-bg:#1565C0;--zt-badge:#0D47A1">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#0D47A1,#1565C0)">🦁</div>
-              <div class="zt-info">
-                <div class="zt-title">PUNTA<br>LEÓN</div>
-                <div class="zt-badge">Geomorfología</div>
-              </div>
+          <div class="map-chip" style="left:22%;top:36%;--mc:#1565C0">
+            <div class="map-chip-row">
+              <div class="map-chip-pill"><span class="map-chip-emoji">🦁</span><span class="map-chip-name">Punta León</span></div>
+              <div class="map-chip-expand"><span class="map-chip-sub">Geomorfología</span><p class="map-chip-desc">Sedimentos marinos y erosión costera.</p></div>
             </div>
-            <div class="zt-tip"></div>
-            <div class="zt-arrow"></div>
+            <div class="map-chip-tip"></div>
           </div>
 
-          <!-- ④ Cactimar (verde · goo effect) -->
-          <div class="zt zt--goo" style="left:30%;top:41%;--zt-bg:#2E7D32;--zt-badge:#1B5E20">
-            <div class="zt-blob">
-              <div class="zt-goo-wrap">
-                <span class="zt-goo-blobs">
-                  <span class="zt-goo-blob"></span>
-                  <span class="zt-goo-blob"></span>
-                  <span class="zt-goo-blob"></span>
-                  <span class="zt-goo-blob"></span>
-                </span>
-              </div>
-              <div class="zt-photo" style="background:linear-gradient(160deg,#1B5E20,#2E7D32)">🌵</div>
-              <div class="zt-info">
-                <div class="zt-title">CACTIMAR</div>
-                <div class="zt-badge">Ecosistema mixto</div>
-              </div>
+          <!-- ④ Cactimar (verde) -->
+          <div class="map-chip" style="left:30%;top:41%;--mc:#2E7D32">
+            <div class="map-chip-row">
+              <div class="map-chip-pill"><span class="map-chip-emoji">🌵</span><span class="map-chip-name">Cactimar</span></div>
+              <div class="map-chip-expand"><span class="map-chip-sub">Ecosistema mixto</span><p class="map-chip-desc">Xerófitas y lagartija dunera endémica.</p></div>
             </div>
-            <div class="zt-tip"></div>
-            <div class="zt-arrow"></div>
+            <div class="map-chip-tip"></div>
           </div>
 
           <!-- ⑤ Mogote (amarillo) -->
-          <div class="zt" style="left:46%;top:48%;--zt-bg:#F57F17;--zt-badge:#E65100">
-            <div class="zt-blob">
-              <div class="zt-photo" style="background:linear-gradient(160deg,#E65100,#F57F17)">🏖️</div>
-              <div class="zt-info">
-                <div class="zt-title">MOGOTE</div>
-                <div class="zt-badge">Cordón dunar</div>
-              </div>
+          <div class="map-chip" style="left:48%;top:49%;--mc:#F57F17">
+            <div class="map-chip-row">
+              <div class="map-chip-pill"><span class="map-chip-emoji">🏖️</span><span class="map-chip-name">Mogote</span></div>
+              <div class="map-chip-expand"><span class="map-chip-sub">Cordón dunar</span><p class="map-chip-desc">+40 especies de aves playeras.</p></div>
             </div>
-            <div class="zt-tip"></div>
-            <div class="zt-arrow"></div>
+            <div class="map-chip-tip"></div>
           </div>
 
         </div><!-- /.zt-tags-layer -->
@@ -1563,6 +1434,19 @@ const cObs = new IntersectionObserver(entries => {
 }, { threshold: 0.3 });
 cObs.observe(document.getElementById('stats'));
 
+/* -------- Map chips touch toggle -------- */
+document.querySelectorAll('.map-chip').forEach(chip => {
+  chip.addEventListener('click', e => {
+    const isOpen = chip.classList.contains('open');
+    document.querySelectorAll('.map-chip.open').forEach(c => c.classList.remove('open'));
+    if (!isOpen) chip.classList.add('open');
+    e.stopPropagation();
+  });
+});
+document.addEventListener('click', () => {
+  document.querySelectorAll('.map-chip.open').forEach(c => c.classList.remove('open'));
+});
+
 /* -------- Download button -------- */
 function handleDl(btn) {
   const orig = btn.innerHTML;
@@ -1579,16 +1463,6 @@ function handleDl(btn) {
   }, 1600);
 }
 </script>
-<!-- SVG Goo filter para efecto blob en Zona Punta Norte -->
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="position:absolute;width:0;height:0;overflow:hidden">
-  <defs>
-    <filter id="goo">
-      <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"></feGaussianBlur>
-      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -7" result="goo"></feColorMatrix>
-      <feBlend in2="goo" in="SourceGraphic" result="mix"></feBlend>
-    </filter>
-  </defs>
-</svg>
 
 </body>
 </html>
