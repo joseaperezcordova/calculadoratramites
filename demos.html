@@ -872,6 +872,44 @@ img { display:block; max-width:100%; }
   margin-top: -5px;
 }
 
+/* ─── Goo blob hover effect (Zona Punta Norte) ────────────────── */
+.zt-goo-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+}
+.zt-goo-blobs {
+  display: block;
+  position: relative;
+  height: 100%;
+  filter: url('#goo');
+}
+.zt-goo-blob {
+  position: absolute;
+  top: 2px;
+  width: 25%;
+  height: 100%;
+  background: #066C79;
+  border-radius: 50%;
+  transform: translate3d(0, 150%, 0) scale(1.7);
+  transition: transform 0.45s;
+}
+@supports (filter: url('#goo')) {
+  .zt-goo-blob { transform: translate3d(0, 150%, 0) scale(1.4); }
+}
+.zt-goo-blob:nth-child(1) { left: 0%;   transition-delay: 0s; }
+.zt-goo-blob:nth-child(2) { left: 25%;  transition-delay: 0.08s; }
+.zt-goo-blob:nth-child(3) { left: 50%;  transition-delay: 0.16s; }
+.zt-goo-blob:nth-child(4) { left: 75%;  transition-delay: 0.24s; }
+
+.zt--goo:hover .zt-goo-blob { transform: translateZ(0) scale(1.7); }
+@supports (filter: url('#goo')) {
+  .zt--goo:hover .zt-goo-blob { transform: translateZ(0) scale(1.4); }
+}
+.zt--goo .zt-photo { z-index: 1; }
+.zt--goo .zt-info  { z-index: 3; }
+
 /* ================================================================
    FOOTER
 ================================================================ */
@@ -1188,9 +1226,17 @@ footer { background:var(--ink); padding:80px 0 36px; }
             <div class="zt-arrow"></div>
           </div>
 
-          <!-- ④ Zona Punta Norte -->
-          <div class="zt" style="left:18%;top:72%;--zt-bg:#066C79;--zt-badge:#034A52">
+          <!-- ④ Zona Punta Norte (goo effect) -->
+          <div class="zt zt--goo" style="left:18%;top:72%;--zt-bg:#066C79;--zt-badge:#034A52">
             <div class="zt-blob">
+              <div class="zt-goo-wrap">
+                <span class="zt-goo-blobs">
+                  <span class="zt-goo-blob"></span>
+                  <span class="zt-goo-blob"></span>
+                  <span class="zt-goo-blob"></span>
+                  <span class="zt-goo-blob"></span>
+                </span>
+              </div>
               <div class="zt-photo" style="background:linear-gradient(160deg,#010E1E,#066C79)">🦎</div>
               <div class="zt-info">
                 <div class="zt-title">ZONA<br>PUNTA NORTE</div>
@@ -1493,5 +1539,16 @@ function handleDl(btn) {
   }, 1600);
 }
 </script>
+<!-- SVG Goo filter para efecto blob en Zona Punta Norte -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <filter id="goo">
+      <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"></feGaussianBlur>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 21 -7" result="goo"></feColorMatrix>
+      <feBlend in2="goo" in="SourceGraphic" result="mix"></feBlend>
+    </filter>
+  </defs>
+</svg>
+
 </body>
 </html>
